@@ -58,12 +58,6 @@
             ]
           },
           {
-            "group": "Analytics",
-            "pages": [
-              "api-reference/analytics/get-analytics"
-            ]
-          },
-          {
             "group": "Balances",
             "pages": [
               "api-reference/balances/get-balances"
