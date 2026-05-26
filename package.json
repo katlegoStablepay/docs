@@ -1,0 +1,13 @@
+{
+  "name": "stablepay-api-docs",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "mintlify dev --port 3333",
+    "start": "mintlify dev --port ${PORT:-3333} --host 0.0.0.0",
+    "build": "echo 'no build step'"
+  },
+  "devDependencies": {
+    "mintlify": "^4.0.0"
+  }
+}

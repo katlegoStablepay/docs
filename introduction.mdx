@@ -1,0 +1,37 @@
+---
+title: Introduction
+description: "Stablepay — stablecoin-to-fiat off-ramp API for Africa"
+---
+
+Stablepay lets businesses send fiat money to mobile wallets and bank accounts across Africa by spending USDC. You submit a payment, Stablepay handles the on-chain transfer and fiat delivery, and the recipient receives local currency.
+
+## How it works
+
+1. **Get a quote** — lock the current exchange rate for a given fiat amount and destination currency. Quotes are valid for 60 seconds and include a full fee breakdown.
+2. **Submit a payment** — provide recipient details and the quote ID. Stablepay signs and broadcasts the USDC transfer from your custody wallet automatically. If the payment provider is temporarily down, submission returns `502` immediately — no payment record is created.
+3. **Track the payment** — poll `GET /v1/payments/:id` or listen for webhook events as the payment moves through `initiated` → `provider_accepted` → `onchain_broadcast` → `succeeded`.
+4. **Monitor your wallets** — `GET /v1/balances` returns both USDC and native token balances (BNB / SOL). Payments require sufficient gas in the native token as well as USDC.
+5. **Review analytics** — `GET /v1/analytics` provides pre-aggregated volume, success rates, corridor breakdowns, and a 30-day daily series for dashboards.
+
+## Supported corridors
+
+| Destination | Currency | Methods |
+|---|---|---|
+| Kenya | KES | M-Pesa, Paybill, Till |
+| Ghana | GHS | Mobile money |
+| Nigeria | NGN | Bank, mobile money |
+| Tanzania | TZS | Mobile money |
+| Uganda | UGX | Mobile money |
+| Zambia | ZMW | Mobile money |
+
+## Base URL
+
+```
+https://stablepay-money-api-production.up.railway.app
+```
+
+All endpoints are versioned under `/v1/`.
+
+## API playground
+
+Use the **Bearer token** field at the top of any reference page to paste your API key and try requests directly from the browser.

@@ -1,0 +1,31 @@
+---
+title: Errors
+description: "HTTP error codes and error response format"
+---
+
+## Error format
+
+```json
+{
+  "statusCode": 400,
+  "message": "fiatAmount must be a positive number"
+}
+```
+
+Validation errors include a `details` array with per-field messages.
+
+## Status codes
+
+| Code | Meaning |
+|---|---|
+| `400` | Validation failed — missing field, wrong type, or invalid enum value |
+| `401` | Missing or invalid API key |
+| `404` | Resource not found |
+| `409` | Idempotency key reused with a different request body |
+| `422` | Request is valid but can't be processed (e.g. insufficient USDC balance, payment not refundable) |
+| `502` | Payment provider circuit breaker is open — provider is temporarily unavailable. No payment is created. Retry after the indicated interval. |
+| `5xx` | Server error — retry with exponential backoff, contact support if it persists |
+
+## Idempotency
+
+Payment submission accepts an `Idempotency-Key` header. Retrying with the same key and body returns the original response. Same key, different body returns `409`. Keys expire after 24 hours.

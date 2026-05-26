@@ -1,0 +1,8 @@
+---
+title: "Register Webhook"
+openapi: "POST /v1/webhooks/register"
+---
+
+<Note>
+The `secret` field is returned **only once** at registration time. Store it securely — it cannot be retrieved again. Use it to verify incoming `Stablepay-Signature` headers on your endpoint.
+</Note>
