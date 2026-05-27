@@ -510,17 +510,7 @@ paths:
       operationId: fxConvert
       summary: Get a live FX rate (informational)
       description: |
-        Returns a live indicative exchange rate and fee breakdown for a given
-        fiat amount. **No rate is locked and nothing is written to the database.**
-
-        Use this endpoint to display pricing to your users before they commit.
-        Once the user confirms, call `POST /v1/quotes` to lock the rate for 10 minutes,
-        or submit directly via `POST /v1/payments/moneyout` (live rate path).
-
-        **Rate calculation:**
-        - `optionalIssuerFee: YES` → 1.5% rate markup (1% base + 0.5% issuer).
-        - `optionalIssuerFee: NO` → 1.0% rate markup (base margin only).
-        - Chain is auto-derived from the corridor — you do not need to specify it.
+        Convert between stablecoins and supported currencies using current exchange rates.
       tags: [FX]
       parameters:
         - name: amount
@@ -698,27 +688,7 @@ paths:
       operationId: submitMoneyout
       summary: Submit a money-out payment
       description: |
-        Submit a stablecoin-to-fiat payout request. Processing is asynchronous —
-        the response is `202 Accepted` with an initial `status: initiated`.
-
-        **Idempotency:** Pass a unique `Idempotency-Key` header. Resubmitting
-        the same key returns the original response without creating a duplicate payment.
-
-        **Two rate paths:**
-        1. **Quote path** — call `POST /v1/quotes` first, then pass `quoteId` here.
-           The locked rate and fee breakdown from the quote are applied. `optionalIssuerFee` is ignored.
-        2. **Direct path** — omit `quoteId` and provide `optionalIssuerFee` instead.
-           A live rate is fetched at submission time. Use `GET /v1/fx/convert` beforehand
-           to show indicative pricing to your user without committing.
-
-        **Reference:** Pass your own `reference` (e.g. `csh-abc123`). The first 3 characters
-        are your merchant identifier prefix. The format is merchant-defined — Stablepay stores
-        and returns it as-is and forwards it to the provider. Filter by reference using
-        `GET /v1/payments?reference=csh-abc123`.
-
-        **Settlement:** USDC is signed and broadcast on-chain automatically from the tenant's
-        Privy custody wallet. Ensure sufficient USDC balance before submitting.
-        Track status via `payment.succeeded` / `payment.failed` webhooks or poll `GET /v1/payments/:id`.
+        Submit a payout request
       tags: [Payments]
       parameters:
         - name: Idempotency-Key
