@@ -472,14 +472,7 @@ paths:
       description: |
         Lock an FX rate. The returned `quoteId` must be passed
         to `POST /v1/payments/moneyout` before `expiryTimestamp` to use the locked rate.
-
-        Rates are fetched live from the provider's rate API at quote time and locked
-        for 60 seconds. Falls back to a cached value on network failure.
-
-        **Fee model:**
-        - `optionalIssuerFee: YES` adds a 1.5% markup on top of the provider's spread.
-        - `optionalIssuerFee: NO` (default) uses the base 1.0% spread only.
-        - Payout fee varies by corridor — some currencies charge a percentage, others a flat fiat amount.
+        
       tags: [Quotes]
       requestBody:
         required: true
