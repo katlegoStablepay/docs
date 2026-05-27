@@ -5,10 +5,10 @@ info:
     The Stablepay Money API enables wallet issuers to execute stablecoin-to-fiat
     payouts across Sub-Saharan Africa via M-Pesa, mobile money, and bank transfers.
 
-    **Phase 1 scope:** Honeycoin off-ramp. Both BSC and Solana chains supported. KES, GHS, NGN, TZS, UGX, ZMW live. Live FX rates fetched from Honeycoin's rate API.
+    **Current scope:** Two off-ramp providers. Honeycoin serves KES, GHS, NGN, TZS, UGX, ZMW, ZAR (BSC). KotaniPay serves XAF, XOF, ETB (Solana). Chain is selected automatically based on payout currency — callers do not specify it.
 
     **Settlement model:** Each tenant has a dedicated Privy server wallet (BSC + Solana). USDC is sent on-chain from the tenant's wallet to the provider escrow. No credit lines — payments require sufficient on-chain USDC balance.
-  version: 0.4.0
+  version: 0.5.0
   contact:
     name: Stablepay Engineering
     email: hello@stablepay.io
@@ -91,6 +91,47 @@ components:
       example: "10.500000"
 
     # -------------------------------------------------------------------------
+    # FX convert (informational, no rate lock)
+    # -------------------------------------------------------------------------
+    FxConvertResponse:
+      type: object
+      description: |
+        Indicative exchange rate and fee breakdown for a given fiat amount.
+        No rate is locked and nothing is written to the database.
+        Use `POST /v1/quotes` to lock a rate before submitting a payment.
+      properties:
+        sourceCurrency:
+          $ref: '#/components/schemas/CurrencyOut'
+        destinationCurrency:
+          $ref: '#/components/schemas/CurrencyIn'
+        fiatAmount:
+          type: string
+          description: Fiat amount used for the calculation (6dp).
+          example: "1350.000000"
+        convertedAmount:
+          $ref: '#/components/schemas/UsdcAmount'
+          description: Total USDC the merchant must send (fiatAmount + payoutFee) / exchangeRate.
+        exchangeRate:
+          type: string
+          description: Marked-up exchange rate — fiat units per 1 USDC.
+          example: "128.218000"
+        payoutFee:
+          type: string
+          description: Provider payout fee in fiat.
+          example: "20.250000"
+        settlementUsdc:
+          $ref: '#/components/schemas/UsdcAmount'
+          description: Net USDC forwarded to the provider (excludes Stablepay spread).
+        providerId:
+          type: string
+          description: Provider that will handle this corridor.
+          example: honeycoin
+        chain:
+          $ref: '#/components/schemas/Blockchain'
+          description: Blockchain the payment will settle on (auto-derived from corridor).
+      required: [sourceCurrency, destinationCurrency, fiatAmount, convertedAmount, exchangeRate, payoutFee, settlementUsdc, providerId, chain]
+
+    # -------------------------------------------------------------------------
     # Quote
     # -------------------------------------------------------------------------
     QuoteResponse:
@@ -143,8 +184,6 @@ components:
           type: string
           description: Prefixed ULID for this payment.
           example: pay_01HV8KZMRJPQR9S7T3XABCDEF
-        direction:
-          $ref: '#/components/schemas/PaymentDirection'
         status:
           $ref: '#/components/schemas/PaymentStatus'
         paymentMethod:
@@ -163,17 +202,18 @@ components:
           nullable: true
           description: Provider's transaction ID. Null until the provider accepts.
           example: CC4SOjQu8UUarKaOGZy9
-        quoteId:
+        reference:
           type: string
           nullable: true
-          example: qt_01HV8KZMRJPQR9S7T3XABCDEF
+          description: Caller's own reference code (e.g. "csh-abc123"). Stored as supplied in the payment request.
+          example: csh-txn-20260506-001
         createdAt:
           type: string
           format: date-time
         updatedAt:
           type: string
           format: date-time
-      required: [id, direction, status, paymentMethod, amountUsdc, amountFiat, currency, providerRef, quoteId, createdAt, updatedAt]
+      required: [id, status, paymentMethod, amountUsdc, amountFiat, currency, providerRef, reference, createdAt, updatedAt]
 
     # -------------------------------------------------------------------------
     # Balances
@@ -463,6 +503,90 @@ paths:
                 required: [ok, version, commit]
 
   # ---------------------------------------------------------------------------
+  # FX convert
+  # ---------------------------------------------------------------------------
+  /v1/fx/convert:
+    get:
+      operationId: fxConvert
+      summary: Get a live FX rate (informational)
+      description: |
+        Returns a live indicative exchange rate and fee breakdown for a given
+        fiat amount. **No rate is locked and nothing is written to the database.**
+
+        Use this endpoint to display pricing to your users before they commit.
+        Once the user confirms, call `POST /v1/quotes` to lock the rate for 10 minutes,
+        or submit directly via `POST /v1/payments/moneyout` (live rate path).
+
+        **Rate calculation:**
+        - `optionalIssuerFee: YES` → 1.5% rate markup (1% base + 0.5% issuer).
+        - `optionalIssuerFee: NO` → 1.0% rate markup (base margin only).
+        - Chain is auto-derived from the corridor — you do not need to specify it.
+      tags: [FX]
+      parameters:
+        - name: amount
+          in: query
+          required: true
+          schema:
+            type: number
+            example: 1350
+          description: Fiat amount the recipient will receive.
+        - name: sourceCurrency
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/CurrencyOut'
+          description: Fiat currency the recipient receives.
+        - name: destinationCurrency
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/CurrencyIn'
+          description: Stablecoin the merchant sends on-chain.
+        - name: paymentMethod
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/PaymentMethod'
+        - name: optionalIssuerFee
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [YES, NO]
+          description: |
+            Whether to include the 0.5% issuer surcharge in the markup.
+            `YES` → 1.5% total. `NO` → 1.0% base only.
+      responses:
+        "200":
+          description: Indicative FX rate and fee breakdown.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FxConvertResponse'
+              example:
+                sourceCurrency: KES
+                destinationCurrency: USDC
+                fiatAmount: "1350.000000"
+                convertedAmount: "10.680000"
+                exchangeRate: "128.218000"
+                payoutFee: "20.250000"
+                settlementUsdc: "10.424000"
+                providerId: honeycoin
+                chain: BSC
+        "400":
+          description: Validation error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "401":
+          description: Invalid or missing API key.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # ---------------------------------------------------------------------------
   # Quotes
   # ---------------------------------------------------------------------------
   /v1/quotes:
@@ -472,7 +596,18 @@ paths:
       description: |
         Lock an FX rate. The returned `quoteId` must be passed
         to `POST /v1/payments/moneyout` before `expiryTimestamp` to use the locked rate.
-        
+
+        Rates are fetched live from the provider's rate API at quote time and locked
+        for 60 seconds. Falls back to a cached value on network failure.
+
+        **Chain selection:** The settlement blockchain is determined automatically from the
+        payout currency — you do not need to specify it. KotaniPay corridors (XAF, XOF, ETB)
+        settle on Solana; all other corridors settle on BSC.
+
+        **Fee model:**
+        - `optionalIssuerFee: YES` adds a 1.5% markup on top of the provider's spread.
+        - `optionalIssuerFee: NO` (default) uses the base 1.0% spread only.
+        - Payout fee varies by corridor — some currencies charge a percentage, others a flat fiat amount.
       tags: [Quotes]
       requestBody:
         required: true
@@ -493,8 +628,6 @@ paths:
                   description: Stablecoin the tenant's wallet sends. Defaults to USDC.
                 paymentMethod:
                   $ref: '#/components/schemas/PaymentMethod'
-                chain:
-                  $ref: '#/components/schemas/Blockchain'
                 optionalIssuerFee:
                   type: string
                   enum: [YES, NO]
@@ -502,13 +635,12 @@ paths:
                     Whether to include the optional issuer markup on top of the base spread.
                     `YES` → 1.5% total markup. `NO` → 1.0% base spread only. Default: NO.
                   example: NO
-              required: [amount, sourceCurrency, paymentMethod, chain]
+              required: [amount, sourceCurrency, paymentMethod]
             example:
               amount: 1350
               sourceCurrency: KES
               destinationCurrency: USDC
               paymentMethod: MOMO
-              chain: SOLANA
               optionalIssuerFee: NO
       responses:
         "201":
@@ -566,8 +698,27 @@ paths:
       operationId: submitMoneyout
       summary: Submit a money-out payment
       description: |
-        Enable peer-to-peer transfers, pay merchants or off-ramp stablecoins across Africa.
+        Submit a stablecoin-to-fiat payout request. Processing is asynchronous —
+        the response is `202 Accepted` with an initial `status: initiated`.
 
+        **Idempotency:** Pass a unique `Idempotency-Key` header. Resubmitting
+        the same key returns the original response without creating a duplicate payment.
+
+        **Two rate paths:**
+        1. **Quote path** — call `POST /v1/quotes` first, then pass `quoteId` here.
+           The locked rate and fee breakdown from the quote are applied. `optionalIssuerFee` is ignored.
+        2. **Direct path** — omit `quoteId` and provide `optionalIssuerFee` instead.
+           A live rate is fetched at submission time. Use `GET /v1/fx/convert` beforehand
+           to show indicative pricing to your user without committing.
+
+        **Reference:** Pass your own `reference` (e.g. `csh-abc123`). The first 3 characters
+        are your merchant identifier prefix. The format is merchant-defined — Stablepay stores
+        and returns it as-is and forwards it to the provider. Filter by reference using
+        `GET /v1/payments?reference=csh-abc123`.
+
+        **Settlement:** USDC is signed and broadcast on-chain automatically from the tenant's
+        Privy custody wallet. Ensure sufficient USDC balance before submitting.
+        Track status via `payment.succeeded` / `payment.failed` webhooks or poll `GET /v1/payments/:id`.
       tags: [Payments]
       parameters:
         - name: Idempotency-Key
@@ -588,9 +739,9 @@ paths:
                   type: number
                   description: Amount the recipient receives in local fiat.
                   example: 1350
-                currencyIn:
+                sourceCurrency:
                   $ref: '#/components/schemas/CurrencyIn'
-                currencyOut:
+                destinationCurrency:
                   $ref: '#/components/schemas/CurrencyOut'
                 country:
                   $ref: '#/components/schemas/Country'
@@ -629,12 +780,22 @@ paths:
                   example: jane@example.com
                 quoteId:
                   type: string
-                  description: Quote ID from `POST /v1/quotes`. Required — the rate and fee breakdown from the quote are applied to this payment.
+                  description: |
+                    Quote ID from `POST /v1/quotes`. Optional.
+                    When provided, the locked rate and fee breakdown are applied.
+                    When omitted, a live rate is fetched — `optionalIssuerFee` is required in that case.
                   example: qt_01HV8KZMRJPQR9S7T3XABCDEF
+                optionalIssuerFee:
+                  type: string
+                  enum: [YES, NO]
+                  description: |
+                    Required when `quoteId` is omitted. Ignored when `quoteId` is provided.
+                    `YES` → 1.5% rate markup. `NO` → 1.0% base markup.
+                  example: NO
               required:
                 - fiatAmount
-                - currencyIn
-                - currencyOut
+                - sourceCurrency
+                - destinationCurrency
                 - country
                 - blockchain
                 - paymentMethod
@@ -643,20 +804,37 @@ paths:
                 - paymentCode
                 - reference
                 - refundAddress
-                - quoteId
-            example:
-              fiatAmount: 1350
-              currencyIn: USDC
-              currencyOut: KES
-              country: KE
-              blockchain: SOLANA
-              paymentMethod: MOMO
-              accountName: Jane Doe
-              accountNumber: "254712345678"
-              paymentCode: MPESA
-              reference: cashi-txn-20260506-001
-              refundAddress: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
-              quoteId: qt_01HV8KZMRJPQR9S7T3XABCDEF
+            examples:
+              withQuote:
+                summary: Quote path (locked rate)
+                value:
+                  fiatAmount: 1350
+                  sourceCurrency: USDC
+                  destinationCurrency: KES
+                  country: KE
+                  blockchain: BSC
+                  paymentMethod: MOMO
+                  accountName: Jane Doe
+                  accountNumber: "254712345678"
+                  paymentCode: MPESA
+                  reference: csh-txn-20260506-001
+                  refundAddress: "0xAbCd1234AbCd1234AbCd1234AbCd1234AbCd1234"
+                  quoteId: qt_01HV8KZMRJPQR9S7T3XABCDEF
+              directPath:
+                summary: Direct path (live rate)
+                value:
+                  fiatAmount: 1350
+                  sourceCurrency: USDC
+                  destinationCurrency: KES
+                  country: KE
+                  blockchain: BSC
+                  paymentMethod: MOMO
+                  accountName: Jane Doe
+                  accountNumber: "254712345678"
+                  paymentCode: MPESA
+                  reference: csh-txn-20260506-002
+                  refundAddress: "0xAbCd1234AbCd1234AbCd1234AbCd1234AbCd1234"
+                  optionalIssuerFee: NO
       responses:
         "202":
           description: Payment accepted. Processing is async — poll or await webhook.
@@ -740,7 +918,11 @@ paths:
     get:
       operationId: listPayments
       summary: List payments
-      description: Paginated list of payments for the authenticated tenant, newest first.
+      description: |
+        Paginated list of payments for the authenticated tenant, newest first.
+
+        Use the `reference` parameter to look up payments by your own reference ID
+        (e.g. `csh-abc123`). The filter is an exact match.
       tags: [Payments]
       parameters:
         - name: limit
@@ -756,6 +938,13 @@ paths:
             type: integer
             default: 0
           description: Number of results to skip (for pagination).
+        - name: reference
+          in: query
+          schema:
+            type: string
+          description: |
+            Exact-match filter on the caller's own reference code.
+            E.g. `?reference=csh-abc123` returns only payments with that reference.
       responses:
         "200":
           description: Paginated list of payments.
