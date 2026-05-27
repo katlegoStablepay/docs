@@ -43,13 +43,44 @@
         "tab": "API Reference",
         "groups": [
           {
-            "group": "Stablepay Money API",
+            "group": "Payments",
             "pages": [
               "api-reference/payments/submit-moneyout",
               "api-reference/payments/get-payment",
+              "api-reference/payments/list-payments"
+            ]
+          },
+          {
+            "group": "FX Rates",
+            "pages": [
+              "api-reference/fx/convert"
+            ]
+          },
+          {
+            "group": "Quotes",
+            "pages": [
               "api-reference/quotes/create-quote",
+              "api-reference/quotes/get-quote"
+            ]
+          },
+          {
+            "group": "Balances",
+            "pages": [
+              "api-reference/balances/get-balances"
+            ]
+          },
+          {
+            "group": "Webhooks",
+            "pages": [
               "api-reference/webhooks/register",
+              "api-reference/webhooks/list-events",
               "api-reference/webhooks/replay-event"
+            ]
+          },
+          {
+            "group": "Analytics",
+            "pages": [
+              "api-reference/analytics/get-analytics"
             ]
           }
         ]
