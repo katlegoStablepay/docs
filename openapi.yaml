@@ -573,20 +573,8 @@ paths:
       operationId: submitMoneyout
       summary: Submit a money-out payment
       description: |
-        Submit a stablecoin-to-fiat payout request. Processing is asynchronous —
-        the response is `202 Accepted` with an initial `status: initiated`.
+        Enable peer-to-peer transfers, pay merchants or off-ramp stablecoins across Africa.
 
-        **Idempotency:** Pass a unique `Idempotency-Key` header. Resubmitting
-        the same key returns the original response without creating a duplicate payment.
-
-        **Quote flow (required):** Create a quote first with `POST /v1/quotes`,
-        then pass the `quoteId` here. This locks the FX rate and fee breakdown.
-        `quoteId` is required — requests without it are rejected.
-
-        **Settlement:** The USDC amount is signed and broadcast on-chain automatically
-        from the tenant's Privy custody wallet. Ensure your wallet has sufficient
-        USDC before submitting. Track status via `payment.succeeded` / `payment.failed`
-        outbound webhooks, or poll `GET /v1/payments/:id`.
       tags: [Payments]
       parameters:
         - name: Idempotency-Key

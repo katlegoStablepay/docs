@@ -46,8 +46,7 @@
             "group": "Payments",
             "pages": [
               "api-reference/payments/submit-moneyout",
-              "api-reference/payments/get-payment",
-              "api-reference/payments/list-payments"
+              "api-reference/payments/get-payment"
             ]
           },
           {
