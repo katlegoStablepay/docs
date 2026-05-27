@@ -510,7 +510,25 @@ paths:
       operationId: fxConvert
       summary: Get a live FX rate (informational)
       description: |
-        Convert between stablecoins and supported currencies using current exchange rates.
+        Returns a live indicative exchange rate and full fee breakdown for a given
+        fiat amount and corridor. **No rate is locked and nothing is written to the database.**
+
+        Use this endpoint to show your users a preview of what they'll pay before
+        they commit. To lock a rate for 10 minutes before submitting a payment, use
+        `POST /v1/quotes` instead.
+
+        **Fee breakdown returned:**
+        - `exchangeRate` — marked-up rate (fiat units per 1 USDC). This is the rate your user sees.
+        - `payoutFee` — provider fee in fiat, passed through at cost.
+        - `convertedAmount` — total USDC you must send: `(amount + payoutFee) / exchangeRate`.
+        - `settlementUsdc` — net USDC forwarded to the provider (excludes Stablepay's spread).
+
+        **Markup:**
+        - `optionalIssuerFee=YES` → 1.5% total markup (1.0% base + 0.5% issuer surcharge).
+        - `optionalIssuerFee=NO` → 1.0% markup (base margin only).
+
+        **Chain is auto-derived** from the corridor — you do not need to specify it.
+        KES, GHS, NGN, TZS, UGX, ZMW, ZAR settle on BSC. XAF, XOF, ETB settle on Solana.
       tags: [FX]
       parameters:
         - name: amount
@@ -519,62 +537,91 @@ paths:
           schema:
             type: number
             example: 1350
-          description: Fiat amount the recipient will receive.
+          description: Fiat amount the recipient will receive, in the payout currency.
+          example: 1350
         - name: sourceCurrency
           in: query
           required: true
           schema:
             $ref: '#/components/schemas/CurrencyOut'
-          description: Fiat currency the recipient receives.
+          description: Fiat currency the recipient receives (the payout currency).
+          example: KES
         - name: destinationCurrency
           in: query
           required: true
           schema:
             $ref: '#/components/schemas/CurrencyIn'
-          description: Stablecoin the merchant sends on-chain.
+          description: Stablecoin the merchant sends on-chain. Use `USDC`.
+          example: USDC
         - name: paymentMethod
           in: query
           required: true
           schema:
             $ref: '#/components/schemas/PaymentMethod'
+          description: Payout method for the recipient.
+          example: MOMO
         - name: optionalIssuerFee
           in: query
           required: true
           schema:
             type: string
             enum: [YES, NO]
+            example: YES
           description: |
-            Whether to include the 0.5% issuer surcharge in the markup.
-            `YES` → 1.5% total. `NO` → 1.0% base only.
+            Whether to include the 0.5% issuer surcharge in the rate markup.
+            Pass the same value you intend to use when submitting the payment.
+            `YES` → 1.5% total markup. `NO` → 1.0% base only.
+          example: YES
       responses:
         "200":
-          description: Indicative FX rate and fee breakdown.
+          description: Indicative FX rate and fee breakdown for the requested corridor.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/FxConvertResponse'
-              example:
-                sourceCurrency: KES
-                destinationCurrency: USDC
-                fiatAmount: "1350.000000"
-                convertedAmount: "10.680000"
-                exchangeRate: "128.218000"
-                payoutFee: "20.250000"
-                settlementUsdc: "10.424000"
-                providerId: honeycoin
-                chain: BSC
-        "400":
-          description: Validation error.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                kesMomo:
+                  summary: KES via M-Pesa (Honeycoin / BSC)
+                  value:
+                    sourceCurrency: KES
+                    destinationCurrency: USDC
+                    fiatAmount: "1350.000000"
+                    convertedAmount: "10.680000"
+                    exchangeRate: "128.218000"
+                    payoutFee: "20.250000"
+                    settlementUsdc: "10.424000"
+                    providerId: honeycoin
+                    chain: BSC
+                xafMomo:
+                  summary: XAF via MTN Mobile Money (KotaniPay / Solana)
+                  value:
+                    sourceCurrency: XAF
+                    destinationCurrency: USDC
+                    fiatAmount: "5000.000000"
+                    convertedAmount: "8.120000"
+                    exchangeRate: "622.500000"
+                    payoutFee: "50.000000"
+                    settlementUsdc: "8.010000"
+                    providerId: kotanipay
+                    chain: SOLANA
         "401":
           description: Invalid or missing API key.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+        "422":
+          description: Validation error — missing or invalid query parameter.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                statusCode: 422
+                message: Unprocessable Entity
+                errors:
+                  fieldErrors:
+                    sourceCurrency: ["Invalid enum value. Expected 'ETB' | 'GHS' | 'KES' | 'NGN' | 'TZS' | 'UGX' | 'XAF' | 'XOF' | 'ZAR' | 'ZMW'"]
 
   # ---------------------------------------------------------------------------
   # Quotes
