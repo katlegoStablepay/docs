@@ -566,28 +566,29 @@ paths:
                   example: 1350
                 sourceCurrency:
                   $ref: '#/components/schemas/CurrencyIn'
-                  description: Stablecoin sent on-chain. Use USDC.
+                  description: "Stablecoin sent onchain for payment settlement. Available options: `USDC`"
                 destinationCurrency:
                   $ref: '#/components/schemas/CurrencyOut'
-                  description: Fiat currency the recipient receives.
+                  description: Fiat currency received by the recipient.
                 country:
                   $ref: '#/components/schemas/Country'
                 blockchain:
                   $ref: '#/components/schemas/Blockchain'
-                  description: Settlement blockchain. KotaniPay corridors (XAF, XOF, ETB) require SOLANA.
+                  description: Supported blockchains for onchain settlement.
                 paymentMethod:
                   $ref: '#/components/schemas/PaymentMethod'
+                  description: The supported payment method used to deliver funds to the recipient.
                 accountName:
                   type: string
-                  description: The account name of the payment method.
+                  description: Recipient full name associated with the payment method.
                   example: Jane Doe
                 accountNumber:
                   type: string
-                  description: The account number of the payment method.
+                  description: Recipient phone number or account number.
                   example: "254712345678"
                 paymentCode:
                   type: string
-                  description: "MNO code: MPESA, MTN, AIRTEL, TIGO, TELEBIRR, CBE, ZAMTEL. Bank code: OPAY, PALMPAY, MONIEPOINT."
+                  description: "Mobile network operator or bank code. Available MNO options: MPESA, MTN, AIRTEL, TIGO, TELEBIRR, CBE, ZAMTEL. Available bank options: OPAY, PALMPAY, MONIEPOINT."
                   example: MPESA
                 reference:
                   type: string
@@ -599,13 +600,8 @@ paths:
                   example: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
                 businessNumber:
                   type: string
-                  description: Required for PAYBILL only. M-Pesa Paybill business number (6 digits).
+                  description: "Only required for PAYBILL: M-Pesa Paybill business number (6 digits)."
                   example: "123456"
-                email:
-                  type: string
-                  format: email
-                  description: Required for BANK only. Customer email.
-                  example: jane@example.com
                 optionalIssuerFee:
                   type: string
                   enum: [YES, NO]
