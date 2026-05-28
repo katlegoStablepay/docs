@@ -40,10 +40,10 @@
   "navigation": {
     "tabs": [
       {
-        "tab": "Stablepay Money Out API",
+        "tab": "API Reference",
         "groups": [
           {
-            "group": "Stablepay Endpoints",
+            "group": "Stablepay Money Out API",
             "pages": [
               "api-reference/payments/submit-moneyout",
               "api-reference/payments/get-payment",
