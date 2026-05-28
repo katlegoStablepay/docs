@@ -45,7 +45,7 @@ components:
     CurrencyOut:
       type: string
       enum: [ETB, GHS, KES, NGN, TZS, UGX, XAF, XOF, ZAR, ZMW]
-      description: ISO 4217 fiat currency the recipient receives.
+      description: Fiat currency the recipient receives.
 
     CurrencyIn:
       type: string
@@ -93,7 +93,6 @@ components:
     # -------------------------------------------------------------------------
     FxConvertResponse:
       type: object
-      description: Indicative exchange rate and fee breakdown for a given fiat amount.
       properties:
         convertedAmount:
           $ref: '#/components/schemas/UsdcAmount'
@@ -109,8 +108,8 @@ components:
         expiryTimestamp:
           type: string
           format: date-time
-          description: ISO 8601 timestamp after which this rate should be considered stale.
-          example: "2024-01-15T10:31:30.000Z"
+          description: Timestamp (Unix timestamp) when the conversion amount expires
+          example: "1705314690"
       required: [convertedAmount, exchangeRate, payoutFee, expiryTimestamp]
 
     # -------------------------------------------------------------------------
@@ -135,7 +134,7 @@ components:
           $ref: '#/components/schemas/PaymentMethod'
         amountUsdc:
           $ref: '#/components/schemas/UsdcAmount'
-          description: Total USDC charged (settlement + spread + provider fee).
+          description: Total USDC charged.
         amountFiat:
           type: string
           description: Fiat amount the recipient receives.
@@ -150,7 +149,7 @@ components:
         reference:
           type: string
           nullable: true
-          description: Caller's own reference code (e.g. "csh-abc123"). Stored as supplied in the payment request.
+          description: Caller's own reference code (e.g. "csh-txn-20260506-001"). Stored as supplied in the payment request.
           example: csh-txn-20260506-001
         createdAt:
           type: string
@@ -159,54 +158,6 @@ components:
           type: string
           format: date-time
       required: [id, status, paymentMethod, amountUsdc, amountFiat, currency, providerRef, reference, createdAt, updatedAt]
-
-    # -------------------------------------------------------------------------
-    # Balances
-    # -------------------------------------------------------------------------
-    BalanceResponse:
-      type: object
-      description: |
-        Live on-chain balances for the tenant's Privy custody wallets.
-        Includes both USDC (used for payments) and native token balances
-        (BNB on BSC, SOL on Solana — required for gas fees).
-      properties:
-        bscAddress:
-          type: string
-          nullable: true
-          description: The tenant's BSC wallet address (0x…). Null if not yet provisioned.
-          example: "0xAbCd1234AbCd1234AbCd1234AbCd1234AbCd1234"
-        solanaAddress:
-          type: string
-          nullable: true
-          description: The tenant's Solana wallet address (base58). Null if not yet provisioned.
-          example: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
-        bscUsdcBalance:
-          $ref: '#/components/schemas/UsdcAmount'
-          nullable: true
-          description: Live USDC balance on BSC. Null if wallet not provisioned.
-        solanaUsdcBalance:
-          $ref: '#/components/schemas/UsdcAmount'
-          nullable: true
-          description: Live USDC balance on Solana. Null if wallet not provisioned.
-        bscNativeBalance:
-          type: string
-          nullable: true
-          description: |
-            Live BNB balance on BSC (6 decimal places). Used to pay gas on BSC transactions.
-            Wallets need a small BNB balance to broadcast USDC transfers.
-          example: "0.012500"
-        solanaNativeBalance:
-          type: string
-          nullable: true
-          description: |
-            Live SOL balance on Solana (6 decimal places). Used to pay transaction fees on Solana.
-            Wallets need at least ~0.05 SOL to submit transactions reliably.
-          example: "0.082340"
-        walletProvisioned:
-          type: boolean
-          description: True when both BSC and Solana wallets have been created for this tenant.
-          example: true
-      required: [bscAddress, solanaAddress, bscUsdcBalance, solanaUsdcBalance, bscNativeBalance, solanaNativeBalance, walletProvisioned]
 
     # -------------------------------------------------------------------------
     # Webhooks outbound
@@ -245,157 +196,6 @@ components:
           type: string
           format: date-time
       required: [id, eventType, entityId, url, status, attempt, lastError, nextRetryAt, createdAt, updatedAt]
-
-    # -------------------------------------------------------------------------
-    # Admin — tenant
-    # -------------------------------------------------------------------------
-    TenantListItem:
-      type: object
-      properties:
-        tenantId:
-          type: string
-          format: uuid
-        name:
-          type: string
-          example: TenantName
-        bscAddress:
-          type: string
-          nullable: true
-          example: "0xAbCd1234AbCd1234AbCd1234AbCd1234AbCd1234"
-        solanaAddress:
-          type: string
-          nullable: true
-          example: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
-        walletProvisioned:
-          type: boolean
-        createdAt:
-          type: string
-          format: date-time
-      required: [tenantId, name, bscAddress, solanaAddress, walletProvisioned, createdAt]
-
-    WalletResponse:
-      type: object
-      properties:
-        tenantId:
-          type: string
-          format: uuid
-        walletProvisioned:
-          type: boolean
-        bscAddress:
-          type: string
-          nullable: true
-          example: "0xAbCd1234AbCd1234AbCd1234AbCd1234AbCd1234"
-        solanaAddress:
-          type: string
-          nullable: true
-          example: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
-        bscUsdcBalance:
-          $ref: '#/components/schemas/UsdcAmount'
-          nullable: true
-        solanaUsdcBalance:
-          $ref: '#/components/schemas/UsdcAmount'
-          nullable: true
-        bscNativeBalance:
-          type: string
-          nullable: true
-          description: Live BNB balance on BSC (6 decimal places).
-          example: "0.012500"
-        solanaNativeBalance:
-          type: string
-          nullable: true
-          description: Live SOL balance on Solana (6 decimal places).
-          example: "0.082340"
-      required: [tenantId, walletProvisioned, bscAddress, solanaAddress, bscUsdcBalance, solanaUsdcBalance, bscNativeBalance, solanaNativeBalance]
-
-    # -------------------------------------------------------------------------
-    # Analytics
-    # -------------------------------------------------------------------------
-    AnalyticsCurrencyRow:
-      type: object
-      properties:
-        currency:
-          $ref: '#/components/schemas/CurrencyOut'
-        count:
-          type: integer
-          description: Total payment count for this currency in the last 30 days.
-          example: 48
-        volumeUsdc:
-          $ref: '#/components/schemas/UsdcAmount'
-          description: Total USDC volume for this currency in the last 30 days.
-        volumeFiat:
-          type: string
-          description: Total fiat payout amount for this currency in the last 30 days.
-          example: "64800.000000"
-        successRate:
-          type: number
-          nullable: true
-          description: Percentage of terminal payments (succeeded / failed) that succeeded. Null if no terminal payments.
-          example: 95.8
-      required: [currency, count, volumeUsdc, volumeFiat, successRate]
-
-    AnalyticsDayRow:
-      type: object
-      properties:
-        date:
-          type: string
-          format: date
-          description: UTC date in YYYY-MM-DD format.
-          example: "2026-05-20"
-        volumeUsdc:
-          $ref: '#/components/schemas/UsdcAmount'
-          description: Total succeeded USDC volume on this day.
-        count:
-          type: integer
-          description: Number of succeeded payments on this day.
-          example: 12
-      required: [date, volumeUsdc, count]
-
-    AnalyticsSummary:
-      type: object
-      description: Pre-aggregated payment analytics for the authenticated tenant.
-      properties:
-        totalVolumeUsdc:
-          $ref: '#/components/schemas/UsdcAmount'
-          description: Total USDC volume of all succeeded payments (all time).
-        successRate:
-          type: number
-          nullable: true
-          description: |
-            Overall success rate across terminal payments, as a percentage with one decimal place.
-            Null if there are no terminal payments yet.
-          example: 94.2
-        totalTransactions:
-          type: integer
-          description: Total number of payments ever submitted by this tenant.
-          example: 312
-        byStatus:
-          type: object
-          description: Count of payments in each status (all time).
-          properties:
-            succeeded:
-              type: integer
-              example: 294
-            failed:
-              type: integer
-              example: 11
-            initiated:
-              type: integer
-              example: 5
-            processing:
-              type: integer
-              example: 2
-          required: [succeeded, failed, initiated, processing]
-        byCurrency:
-          type: array
-          description: Per-corridor breakdown for the last 30 days, ordered by USDC volume descending.
-          items:
-            $ref: '#/components/schemas/AnalyticsCurrencyRow'
-        dailySeries:
-          type: array
-          description: Daily succeeded payment volume for the last 30 days, ordered ascending by date.
-          items:
-            $ref: '#/components/schemas/AnalyticsDayRow'
-      required: [totalVolumeUsdc, successRate, totalTransactions, byStatus, byCurrency, dailySeries]
 
     # -------------------------------------------------------------------------
     # Errors
@@ -440,7 +240,6 @@ paths:
           required: true
           schema:
             $ref: '#/components/schemas/CurrencyIn'
-          description: Stablecoin sent on-chain. Use `USDC`.
           example: USDC
         - name: destinationCurrency
           in: query
@@ -454,7 +253,6 @@ paths:
           required: true
           schema:
             $ref: '#/components/schemas/PaymentMethod'
-          description: Payout method for the recipient.
           example: MOMO
         - name: optionalIssuerFee
           in: query
@@ -462,7 +260,6 @@ paths:
           schema:
             type: string
             enum: [YES, NO]
-          description: "`YES` → 1.5% markup. `NO` → 1.0% markup."
           example: YES
       responses:
         "200":
