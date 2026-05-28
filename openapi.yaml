@@ -36,7 +36,6 @@ components:
     # -------------------------------------------------------------------------
     PaymentCode:
       type: string
-      enum: [MPESA, MTN, AIRTEL, TIGO, TELEBIRR, CBE, ZAMTEL, OPAY, PALMPAY, MONIEPOINT]
       description: |
         Mobile network operator or bank code. Required for money-out payments.
         MNO options: MPESA, MTN, AIRTEL, TIGO, TELEBIRR, CBE, ZAMTEL, ORANGE, MOOV, FREE.
@@ -45,12 +44,12 @@ components:
     CurrencyOut:
       type: string
       enum: [ETB, GHS, KES, NGN, TZS, UGX, XAF, XOF, ZAR, ZMW]
-      description: Fiat currency the recipient receives.
+      description: Fiat currency received by the recipient.
 
     CurrencyIn:
       type: string
       enum: [USDC]
-      description: Stablecoin sent on-chain to the provider escrow.
+      description: Stablecoin sent onchain for payment settlement.
 
     Blockchain:
       type: string
@@ -65,7 +64,7 @@ components:
     Country:
       type: string
       enum: [BF, BJ, CI, CM, ET, GH, KE, NG, SN, TZ, UG, ZA, ZM]
-      description: ISO 3166-1 alpha-2 recipient country code.
+      description: Recipient country code.
 
     PaymentStatus:
       type: string
@@ -103,7 +102,7 @@ components:
           example: "128.218000"
         payoutFee:
           type: string
-          description: Mobile network operator or bank processing fee, in fiat.
+          description: The payout fee comprises the mobile network operator or bank processing fee. 
           example: "20.250000"
         expiryTimestamp:
           type: string
@@ -115,12 +114,6 @@ components:
     # -------------------------------------------------------------------------
     # Payment
     # -------------------------------------------------------------------------
-    PaymentDirection:
-      type: string
-      enum: [money_out, money_in]
-      description: Direction of the payment. Phase 1 always returns `money_out`.
-      example: money_out
-
     PaymentResponse:
       type: object
       properties:
@@ -225,7 +218,7 @@ paths:
     get:
       operationId: fxConvert
       summary: Get a live FX rate (informational)
-      description: Returns a live indicative exchange rate and fee breakdown for a given fiat amount. 
+      description: Convert between stablecoins and supported currencies using current exchange rates. 
       tags: [FX]
       parameters:
         - name: amount
@@ -246,7 +239,7 @@ paths:
           required: true
           schema:
             $ref: '#/components/schemas/CurrencyOut'
-          description: Fiat currency the recipient receives.
+          description: Fiat currency received by the recipient.
           example: KES
         - name: paymentMethod
           in: query
@@ -259,8 +252,8 @@ paths:
           required: true
           schema:
             type: string
+            description: "Optional wallet issuer fee. "
             enum: [YES, NO]
-          example: YES
       responses:
         "200":
           description: Indicative FX rate and fee breakdown for the requested corridor.
@@ -362,7 +355,7 @@ paths:
                   example: csh-txn-20260506-001
                 refundAddress:
                   type: string
-                  description: On-chain address to return funds to if the payout fails.
+                  description: Onchain address to return funds to if the payout fails.
                   example: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
                 businessNumber:
                   type: string
@@ -371,7 +364,6 @@ paths:
                 optionalIssuerFee:
                   type: string
                   enum: [YES, NO]
-                  description: "`YES` → 1.5% markup. `NO` → 1.0% markup."
                   example: NO
               required:
                 - fiatAmount
