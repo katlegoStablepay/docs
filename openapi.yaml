@@ -39,7 +39,7 @@ components:
       enum: [MPESA, MTN, AIRTEL, TIGO, TELEBIRR, CBE, ZAMTEL, OPAY, PALMPAY, MONIEPOINT]
       description: |
         Mobile network operator or bank code. Required for money-out payments.
-        MNO options: MPESA, MTN, AIRTEL, TIGO, TELEBIRR, CBE, ZAMTEL.
+        MNO options: MPESA, MTN, AIRTEL, TIGO, TELEBIRR, CBE, ZAMTEL, ORANGE, MOOV, FREE.
         Bank options: OPAY, PALMPAY, MONIEPOINT.
 
     CurrencyOut:
@@ -64,7 +64,7 @@ components:
 
     Country:
       type: string
-      enum: [ET, GH, KE, NG, TZ, UG, ZA, ZM]
+      enum: [BF, BJ, CI, CM, ET, GH, KE, NG, SN, TZ, UG, ZA, ZM]
       description: ISO 3166-1 alpha-2 recipient country code.
 
     PaymentStatus:
