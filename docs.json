@@ -38,24 +38,34 @@
     }
   },
   "navigation": {
-    "tabs": [
-      {
-        "tab": "API Reference",
-        "groups": [
-          {
-            "group": "Stablepay Money Out API",
-            "pages": [
-              "api-reference/payments/submit-moneyout",
-              "api-reference/payments/get-payment",
-              "api-reference/fx/convert",
-              "api-reference/webhooks/register",
-              "api-reference/webhooks/list-events"
-            ]
-          }
-        ]
-      }
-    ]
-  },
+  "tabs": [
+    {
+      "tab": "Stablepay Moneyout API",
+      "groups": [
+        {
+          "group": "Payments",
+          "pages": [
+            "api-reference/payments/submit-moneyout",
+            "api-reference/payments/get-payment"
+          ]
+        },
+        {
+          "group": "FX",
+          "pages": [
+            "api-reference/fx/convert"
+          ]
+        },
+        {
+          "group": "Webhooks",
+          "pages": [
+            "api-reference/webhooks/register",
+            "api-reference/webhooks/replay-event"
+          ]
+        }
+      ]
+    }
+  ]
+},
   "footer": {
     "socials": {
       "github": "https://github.com/katlegorphele/stablepay"
