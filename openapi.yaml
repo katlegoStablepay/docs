@@ -97,14 +97,6 @@ components:
       type: object
       description: Indicative exchange rate and fee breakdown for a given fiat amount. No rate is locked and nothing is written to the database.
       properties:
-        sourceCurrency:
-          $ref: '#/components/schemas/CurrencyOut'
-        destinationCurrency:
-          $ref: '#/components/schemas/CurrencyIn'
-        fiatAmount:
-          type: string
-          description: Fiat amount used for the calculation (6dp).
-          example: "1350.000000"
         convertedAmount:
           $ref: '#/components/schemas/UsdcAmount'
           description: Total converted amount in the destination currency (inclusive of network fee, optional issuer fee and payout fee).
@@ -116,17 +108,12 @@ components:
           type: string
           description: Mobile network operator or bank processing fee, in fiat.
           example: "20.250000"
-        settlementUsdc:
-          $ref: '#/components/schemas/UsdcAmount'
-          description: Net USDC forwarded to the provider (excludes Stablepay spread).
-        providerId:
+        expiryTimestamp:
           type: string
-          description: Provider that will handle this corridor.
-          example: honeycoin
-        chain:
-          $ref: '#/components/schemas/Blockchain'
-          description: Blockchain the payment will settle on (auto-derived from corridor).
-      required: [sourceCurrency, destinationCurrency, fiatAmount, convertedAmount, exchangeRate, payoutFee, settlementUsdc, providerId, chain]
+          format: date-time
+          description: ISO 8601 timestamp after which this rate should be considered stale.
+          example: "2024-01-15T10:31:30.000Z"
+      required: [convertedAmount, exchangeRate, payoutFee, expiryTimestamp]
 
     # -------------------------------------------------------------------------
     # Payment
@@ -526,29 +513,19 @@ paths:
                 $ref: '#/components/schemas/FxConvertResponse'
               examples:
                 kesMomo:
-                  summary: KES via M-Pesa (Honeycoin / BSC)
+                  summary: KES via M-Pesa
                   value:
-                    sourceCurrency: KES
-                    destinationCurrency: USDC
-                    fiatAmount: "1350.000000"
                     convertedAmount: "10.680000"
                     exchangeRate: "128.218000"
                     payoutFee: "20.250000"
-                    settlementUsdc: "10.424000"
-                    providerId: honeycoin
-                    chain: BSC
+                    expiryTimestamp: "2024-01-15T10:31:30.000Z"
                 xafMomo:
-                  summary: XAF via MTN Mobile Money (KotaniPay / Solana)
+                  summary: XAF via MTN Mobile Money
                   value:
-                    sourceCurrency: XAF
-                    destinationCurrency: USDC
-                    fiatAmount: "5000.000000"
                     convertedAmount: "8.120000"
                     exchangeRate: "622.500000"
                     payoutFee: "50.000000"
-                    settlementUsdc: "8.010000"
-                    providerId: kotanipay
-                    chain: SOLANA
+                    expiryTimestamp: "2024-01-15T10:31:00.000Z"
         "401":
           description: Invalid or missing API key.
           content:
@@ -1682,8 +1659,8 @@ paths:
 tags:
   - name: Health
     description: Service liveness check.
-  - name: Quotes
-    description: Lock an FX rate before submitting a payment.
+  - name: FX
+    description: Live FX rate conversion between USDC and local fiat currencies.
   - name: Payments
     description: Submit and track stablecoin-to-fiat payout requests.
   - name: Balances
