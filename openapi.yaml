@@ -95,7 +95,7 @@ components:
     # -------------------------------------------------------------------------
     FxConvertResponse:
       type: object
-      description: Indicative exchange rate and fee breakdown for a given fiat amount. No rate is locked and nothing is written to the database.
+      description: Indicative exchange rate and fee breakdown for a given fiat amount.
       properties:
         convertedAmount:
           $ref: '#/components/schemas/UsdcAmount'
@@ -456,7 +456,7 @@ paths:
     get:
       operationId: fxConvert
       summary: Get a live FX rate (informational)
-      description: Returns a live indicative exchange rate and fee breakdown for a given fiat amount. No rate is locked and nothing is written to the database.
+      description: Returns a live indicative exchange rate and fee breakdown for a given fiat amount. 
       tags: [FX]
       parameters:
         - name: amount
