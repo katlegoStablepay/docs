@@ -5,7 +5,7 @@ info:
     The Stablepay Money API enables wallet issuers to execute stablecoin-to-fiat
     payouts across Sub-Saharan Africa via M-Pesa, mobile money, and bank transfers.
 
-    **Current scope:** Two off-ramp providers. Honeycoin serves KES, GHS, NGN, TZS, UGX, ZMW, ZAR (BSC). KotaniPay serves XAF, XOF, ETB (Solana). Chain is selected automatically based on payout currency — callers do not specify it.
+    **Current scope:** Two off-ramp providers. Honeycoin serves KES, GHS, NGN, TZS, UGX, ZMW, ZAR (BSC and Solana). KotaniPay serves XAF, XOF, ETB (Solana only). Callers specify the blockchain in each request; KotaniPay corridors reject non-Solana requests.
 
     **Settlement model:** Each tenant has a dedicated Privy server wallet (BSC + Solana). USDC is sent on-chain from the tenant's wallet to the provider escrow. No credit lines — payments require sufficient on-chain USDC balance.
   version: 0.5.0
@@ -95,10 +95,7 @@ components:
     # -------------------------------------------------------------------------
     FxConvertResponse:
       type: object
-      description: |
-        Indicative exchange rate and fee breakdown for a given fiat amount.
-        No rate is locked and nothing is written to the database.
-        Use `POST /v1/quotes` to lock a rate before submitting a payment.
+      description: Indicative exchange rate and fee breakdown for a given fiat amount. No rate is locked and nothing is written to the database.
       properties:
         sourceCurrency:
           $ref: '#/components/schemas/CurrencyOut'
@@ -110,14 +107,14 @@ components:
           example: "1350.000000"
         convertedAmount:
           $ref: '#/components/schemas/UsdcAmount'
-          description: Total USDC the merchant must send (fiatAmount + payoutFee) / exchangeRate.
+          description: Total converted amount in the destination currency (inclusive of network fee, optional issuer fee and payout fee).
         exchangeRate:
           type: string
-          description: Marked-up exchange rate — fiat units per 1 USDC.
+          description: Market exchange rate sourced from local liquidity partners (inclusive of network fee and optional issuer fee).
           example: "128.218000"
         payoutFee:
           type: string
-          description: Provider payout fee in fiat.
+          description: Mobile network operator or bank processing fee, in fiat.
           example: "20.250000"
         settlementUsdc:
           $ref: '#/components/schemas/UsdcAmount'
@@ -130,43 +127,6 @@ components:
           $ref: '#/components/schemas/Blockchain'
           description: Blockchain the payment will settle on (auto-derived from corridor).
       required: [sourceCurrency, destinationCurrency, fiatAmount, convertedAmount, exchangeRate, payoutFee, settlementUsdc, providerId, chain]
-
-    # -------------------------------------------------------------------------
-    # Quote
-    # -------------------------------------------------------------------------
-    QuoteResponse:
-      type: object
-      properties:
-        quoteId:
-          type: string
-          description: Prefixed ULID for this quote. Pass to `POST /v1/payments/moneyout` before expiry.
-          example: qt_01HV8KZMRJPQR9S7T3XABCDEF
-        convertedAmount:
-          $ref: '#/components/schemas/UsdcAmount'
-          description: Total USDC the tenant's wallet will be debited (settlement + fees).
-        exchangeRate:
-          type: string
-          description: Locked FX rate — fiat units per 1 USDC.
-          example: "129.500000"
-        payoutFee:
-          type: string
-          description: |
-            Provider payout fee in USDC. May be a percentage of `convertedAmount`
-            or a flat fiat amount converted to USDC, depending on the corridor.
-          example: "0.150000"
-        settlementUsdc:
-          $ref: '#/components/schemas/UsdcAmount'
-          description: Net USDC forwarded to the provider after fees are deducted.
-        expiryTimestamp:
-          type: integer
-          format: int64
-          description: Unix timestamp (seconds). Quote is invalid after this time (60 seconds from creation).
-          example: 1746526860
-        status:
-          type: string
-          enum: [active, expired, consumed]
-          example: active
-      required: [quoteId, convertedAmount, exchangeRate, payoutFee, settlementUsdc, expiryTimestamp, status]
 
     # -------------------------------------------------------------------------
     # Payment
@@ -510,25 +470,13 @@ paths:
       operationId: fxConvert
       summary: Get a live FX rate (informational)
       description: |
-        Returns a live indicative exchange rate and full fee breakdown for a given
-        fiat amount and corridor. **No rate is locked and nothing is written to the database.**
+        Returns a live indicative exchange rate and full fee breakdown for a given fiat amount and corridor. No rate is locked and nothing is written to the database.
 
-        Use this endpoint to show your users a preview of what they'll pay before
-        they commit. To lock a rate for 10 minutes before submitting a payment, use
-        `POST /v1/quotes` instead.
+        Use this endpoint to show users a preview of what they'll pay before submitting a payment.
 
-        **Fee breakdown returned:**
-        - `exchangeRate` — marked-up rate (fiat units per 1 USDC). This is the rate your user sees.
-        - `payoutFee` — provider fee in fiat, passed through at cost.
-        - `convertedAmount` — total USDC you must send: `(amount + payoutFee) / exchangeRate`.
-        - `settlementUsdc` — net USDC forwarded to the provider (excludes Stablepay's spread).
+        **Markup:** `optionalIssuerFee=YES` → 1.5% total markup. `optionalIssuerFee=NO` → 1.0% base only.
 
-        **Markup:**
-        - `optionalIssuerFee=YES` → 1.5% total markup (1.0% base + 0.5% issuer surcharge).
-        - `optionalIssuerFee=NO` → 1.0% markup (base margin only).
-
-        **Chain is auto-derived** from the corridor — you do not need to specify it.
-        KES, GHS, NGN, TZS, UGX, ZMW, ZAR settle on BSC. XAF, XOF, ETB settle on Solana.
+        **Chain is auto-derived** from the corridor. KES, GHS, NGN, TZS, UGX, ZMW, ZAR → BSC. XAF, XOF, ETB → Solana.
       tags: [FX]
       parameters:
         - name: amount
@@ -537,7 +485,7 @@ paths:
           schema:
             type: number
             example: 1350
-          description: Fiat amount the recipient will receive, in the payout currency.
+          description: Amount to convert.
           example: 1350
         - name: sourceCurrency
           in: query
@@ -567,10 +515,7 @@ paths:
             type: string
             enum: [YES, NO]
             example: YES
-          description: |
-            Whether to include the 0.5% issuer surcharge in the rate markup.
-            Pass the same value you intend to use when submitting the payment.
-            `YES` → 1.5% total markup. `NO` → 1.0% base only.
+          description: "`YES` → 1.5% markup. `NO` → 1.0% markup."
           example: YES
       responses:
         "200":
@@ -624,118 +569,13 @@ paths:
                     sourceCurrency: ["Invalid enum value. Expected 'ETB' | 'GHS' | 'KES' | 'NGN' | 'TZS' | 'UGX' | 'XAF' | 'XOF' | 'ZAR' | 'ZMW'"]
 
   # ---------------------------------------------------------------------------
-  # Quotes
-  # ---------------------------------------------------------------------------
-  /v1/quotes:
-    post:
-      operationId: createQuote
-      summary: Create a quote
-      description: |
-        Lock an FX rate. The returned `quoteId` must be passed
-        to `POST /v1/payments/moneyout` before `expiryTimestamp` to use the locked rate.
-
-        Rates are fetched live from the provider's rate API at quote time and locked
-        for 60 seconds. Falls back to a cached value on network failure.
-
-        **Chain selection:** The settlement blockchain is determined automatically from the
-        payout currency — you do not need to specify it. KotaniPay corridors (XAF, XOF, ETB)
-        settle on Solana; all other corridors settle on BSC.
-
-        **Fee model:**
-        - `optionalIssuerFee: YES` adds a 1.5% markup on top of the provider's spread.
-        - `optionalIssuerFee: NO` (default) uses the base 1.0% spread only.
-        - Payout fee varies by corridor — some currencies charge a percentage, others a flat fiat amount.
-      tags: [Quotes]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                amount:
-                  type: number
-                  description: Amount the recipient will receive in local fiat.
-                  example: 1350
-                sourceCurrency:
-                  $ref: '#/components/schemas/CurrencyOut'
-                  description: Fiat currency the recipient receives.
-                destinationCurrency:
-                  $ref: '#/components/schemas/CurrencyIn'
-                  description: Stablecoin the tenant's wallet sends. Defaults to USDC.
-                paymentMethod:
-                  $ref: '#/components/schemas/PaymentMethod'
-                optionalIssuerFee:
-                  type: string
-                  enum: [YES, NO]
-                  description: |
-                    Whether to include the optional issuer markup on top of the base spread.
-                    `YES` → 1.5% total markup. `NO` → 1.0% base spread only. Default: NO.
-                  example: NO
-              required: [amount, sourceCurrency, paymentMethod]
-            example:
-              amount: 1350
-              sourceCurrency: KES
-              destinationCurrency: USDC
-              paymentMethod: MOMO
-              optionalIssuerFee: NO
-      responses:
-        "201":
-          description: Quote created and rate locked.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/QuoteResponse'
-        "400":
-          description: Validation error.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        "401":
-          description: Invalid or missing API key.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
-  /v1/quotes/{quoteId}:
-    get:
-      operationId: getQuote
-      summary: Get a quote
-      description: Retrieve a previously created quote by its ID. Returns status `expired` or `consumed` for terminal quotes.
-      tags: [Quotes]
-      parameters:
-        - name: quoteId
-          in: path
-          required: true
-          schema:
-            type: string
-          description: The `qt_`-prefixed quote ID.
-          example: qt_01HV8KZMRJPQR9S7T3XABCDEF
-      responses:
-        "200":
-          description: Quote found.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/QuoteResponse'
-        "404":
-          description: Quote not found or belongs to another tenant.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
-  # ---------------------------------------------------------------------------
   # Payments
   # ---------------------------------------------------------------------------
   /v1/payments/moneyout:
     post:
       operationId: submitMoneyout
       summary: Submit a money-out payment
-      description: |
-        Submit a payout request
+      description: Submit a stablecoin-to-fiat payout. A live FX rate is fetched at submission time and USDC is debited from the tenant's on-chain wallet.
       tags: [Payments]
       parameters:
         - name: Idempotency-Key
@@ -754,60 +594,54 @@ paths:
               properties:
                 fiatAmount:
                   type: number
-                  description: Amount the recipient receives in local fiat.
+                  description: The payment amount in local currency.
                   example: 1350
                 sourceCurrency:
                   $ref: '#/components/schemas/CurrencyIn'
+                  description: Stablecoin sent on-chain. Use USDC.
                 destinationCurrency:
                   $ref: '#/components/schemas/CurrencyOut'
+                  description: Fiat currency the recipient receives.
                 country:
                   $ref: '#/components/schemas/Country'
                 blockchain:
                   $ref: '#/components/schemas/Blockchain'
+                  description: Settlement blockchain. KotaniPay corridors (XAF, XOF, ETB) require SOLANA.
                 paymentMethod:
                   $ref: '#/components/schemas/PaymentMethod'
                 accountName:
                   type: string
-                  description: Recipient account or wallet name.
+                  description: The account name of the payment method.
                   example: Jane Doe
                 accountNumber:
                   type: string
-                  description: Recipient phone number or account number.
+                  description: The account number of the payment method.
                   example: "254712345678"
                 paymentCode:
                   type: string
-                  description: MNO or bank code (e.g. MPESA, MTN, AIRTEL, OPAY).
+                  description: "MNO code: MPESA, MTN, AIRTEL, TIGO, TELEBIRR, CBE, ZAMTEL. Bank code: OPAY, PALMPAY, MONIEPOINT."
                   example: MPESA
                 reference:
                   type: string
-                  description: Your own unique reference for this payment. Stored and forwarded to the provider.
+                  description: Wallet issuer's unique reference.
                   example: cashi-txn-20260506-001
                 refundAddress:
                   type: string
-                  description: On-chain address to return USDC to if the payout fails. BSC addresses begin with `0x`; Solana addresses are base58-encoded (32–44 chars).
+                  description: On-chain address to return funds to if the payout fails.
                   example: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
                 businessNumber:
                   type: string
-                  description: "M-Pesa Paybill business number (6 digits). Required for paymentMethod: PAYBILL."
+                  description: Required for PAYBILL only. M-Pesa Paybill business number (6 digits).
                   example: "123456"
                 email:
                   type: string
                   format: email
-                  description: "Customer email. Required for paymentMethod: BANK."
+                  description: Required for BANK only. Customer email.
                   example: jane@example.com
-                quoteId:
-                  type: string
-                  description: |
-                    Quote ID from `POST /v1/quotes`. Optional.
-                    When provided, the locked rate and fee breakdown are applied.
-                    When omitted, a live rate is fetched — `optionalIssuerFee` is required in that case.
-                  example: qt_01HV8KZMRJPQR9S7T3XABCDEF
                 optionalIssuerFee:
                   type: string
                   enum: [YES, NO]
-                  description: |
-                    Required when `quoteId` is omitted. Ignored when `quoteId` is provided.
-                    `YES` → 1.5% rate markup. `NO` → 1.0% base markup.
+                  description: "`YES` → 1.5% markup. `NO` → 1.0% markup."
                   example: NO
               required:
                 - fiatAmount
@@ -821,9 +655,10 @@ paths:
                 - paymentCode
                 - reference
                 - refundAddress
+                - optionalIssuerFee
             examples:
-              withQuote:
-                summary: Quote path (locked rate)
+              kesBscMomo:
+                summary: KES via M-Pesa on BSC
                 value:
                   fiatAmount: 1350
                   sourceCurrency: USDC
@@ -836,22 +671,22 @@ paths:
                   paymentCode: MPESA
                   reference: csh-txn-20260506-001
                   refundAddress: "0xAbCd1234AbCd1234AbCd1234AbCd1234AbCd1234"
-                  quoteId: qt_01HV8KZMRJPQR9S7T3XABCDEF
-              directPath:
-                summary: Direct path (live rate)
-                value:
-                  fiatAmount: 1350
-                  sourceCurrency: USDC
-                  destinationCurrency: KES
-                  country: KE
-                  blockchain: BSC
-                  paymentMethod: MOMO
-                  accountName: Jane Doe
-                  accountNumber: "254712345678"
-                  paymentCode: MPESA
-                  reference: csh-txn-20260506-002
-                  refundAddress: "0xAbCd1234AbCd1234AbCd1234AbCd1234AbCd1234"
                   optionalIssuerFee: NO
+              xafSolana:
+                summary: XAF via MTN MoMo on Solana (KotaniPay)
+                value:
+                  fiatAmount: 5000
+                  sourceCurrency: USDC
+                  destinationCurrency: XAF
+                  country: CM
+                  blockchain: SOLANA
+                  paymentMethod: MOMO
+                  accountName: Jean Dupont
+                  accountNumber: "237612345678"
+                  paymentCode: MTN
+                  reference: csh-txn-20260506-002
+                  refundAddress: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
+                  optionalIssuerFee: YES
       responses:
         "202":
           description: Payment accepted. Processing is async — poll or await webhook.
@@ -860,7 +695,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/PaymentResponse'
         "400":
-          description: Validation error (missing field, bad format, or expired/consumed quote).
+          description: Validation error (missing field or bad format).
           content:
             application/json:
               schema:
