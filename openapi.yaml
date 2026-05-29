@@ -104,12 +104,12 @@ components:
           type: string
           description: The payout fee comprises the mobile network operator or bank processing fee. 
           example: "20.250000"
-        expiryTimestamp:
+        expiresAt:
           type: string
           format: date-time
-          description: Timestamp (Unix timestamp) when the conversion amount expires
-          example: "1705314690"
-      required: [convertedAmount, exchangeRate, payoutFee, expiryTimestamp]
+          description: Timestamp after which this rate should be considered stale.
+          example: "2024-01-15T10:31:30.000Z"
+      required: [convertedAmount, exchangeRate, payoutFee, expiresAt]
 
     # -------------------------------------------------------------------------
     # Payment
@@ -128,11 +128,11 @@ components:
         amountUsdc:
           $ref: '#/components/schemas/UsdcAmount'
           description: Total USDC charged.
-        amountFiat:
+        fiatAmount:
           type: string
           description: Fiat amount the recipient receives.
           example: "1350.000000"
-        currency:
+        destinationCurrency:
           $ref: '#/components/schemas/CurrencyOut'
         providerRef:
           type: string
@@ -150,7 +150,7 @@ components:
         updatedAt:
           type: string
           format: date-time
-      required: [id, status, paymentMethod, amountUsdc, amountFiat, currency, providerRef, reference, createdAt, updatedAt]
+      required: [id, status, paymentMethod, amountUsdc, fiatAmount, destinationCurrency, providerRef, reference, createdAt, updatedAt]
 
     # -------------------------------------------------------------------------
     # Webhooks outbound
@@ -268,14 +268,14 @@ paths:
                     convertedAmount: "10.680000"
                     exchangeRate: "128.218000"
                     payoutFee: "20.250000"
-                    expiryTimestamp: "2024-01-15T10:31:30.000Z"
+                    expiresAt: "2024-01-15T10:31:30.000Z"
                 xafMomo:
                   summary: XAF via MTN Mobile Money
                   value:
                     convertedAmount: "8.120000"
                     exchangeRate: "622.500000"
                     payoutFee: "50.000000"
-                    expiryTimestamp: "2024-01-15T10:31:00.000Z"
+                    expiresAt: "2024-01-15T10:31:00.000Z"
         "401":
           description: Invalid or missing API key.
           content:
