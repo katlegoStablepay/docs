@@ -46,12 +46,7 @@
           "group": "Payments",
           "pages": [
             "api-reference/payments/submit-moneyout",
-            "api-reference/payments/get-payment"
-          ]
-        },
-        {
-          "group": "FX",
-          "pages": [
+            "api-reference/payments/get-payment",
             "api-reference/fx/convert"
           ]
         },
