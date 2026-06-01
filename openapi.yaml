@@ -234,19 +234,7 @@ paths:
       operationId: validateAccount
       summary: Validate a recipient account
       description: |
-        Resolves an account number to its registered name. Use this before submitting a payment
-        to confirm the recipient is who the sender intends to pay.
-
-        The returned `accountName` should be shown to the end user for confirmation.
-
-        Supported combinations today:
-
-        | destinationCurrency | paymentMethod | Notes |
-        |---|---|---|
-        | KES | MOMO | M-Pesa number — no bankCode required |
-        | KES | BANK | Requires `bankCode` |
-        | KES | PAYBILL | M-Pesa Paybill number |
-        | KES | TILL | M-Pesa Till number |
+        Resolves an account number to its registered name.
         | NGN | BANK | Requires `bankCode` |
       tags: [Account]
       security:
