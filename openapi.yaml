@@ -63,23 +63,14 @@ components:
 
     Country:
       type: string
-      enum: [BF, BJ, CI, CM, ET, GH, KE, NG, SN, TZ, UG, ZA, ZM]
+      enum: [BF, BJ, CI, CM, GH, KE, NG, SN, TZ, UG, ZA, ZM]
       description: Recipient country code.
 
     PaymentStatus:
       type: string
-      enum:
-        - initiated
-        - provider_accepted
-        - onchain_broadcast
-        - provider_processing
-        - succeeded
-        - failed
-        - refunded
       description: |
         Current state of the payment in the state machine.
-        `initiated` → `provider_accepted` → `onchain_broadcast` → `provider_processing`
-        → `succeeded` | `failed` | `refunded`
+        `initiated` → `provider_accepted` → `succeeded` | `failed` | `refunded`
 
     UsdcAmount:
       type: string
@@ -197,7 +188,7 @@ components:
       properties:
         accountName:
           type: string
-          description: The registered name on the account, as returned by the provider. Show this to the end user for confirmation before submitting a payment.
+          description: The registered name on the account, as returned by the provider.
           example: "Jane Wanjiku"
         accountNumber:
           type: string
@@ -252,7 +243,6 @@ paths:
                 destinationCurrency:
                   enum: [KES, NGN]
                   description: Fiat currency associated with the account.
-                  example: KES
                 paymentMethod:
                   $ref: '#/components/schemas/PaymentMethod'
                 bankCode:
@@ -566,7 +556,7 @@ paths:
     get:
       operationId: getPayment
       summary: Get a payment
-      description: Retrieve a single payment by ID. Only returns payments belonging to the authenticated tenant.
+      description: Retrieve a single payment by ID.
       tags: [Payments]
       parameters:
         - name: paymentId
