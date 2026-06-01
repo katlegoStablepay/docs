@@ -38,7 +38,7 @@ components:
       type: string
       description: |
         Mobile network operator or bank code. Required for money-out payments.
-        MNO options: MPESA, MTN, AIRTEL, TIGO, TELEBIRR, CBE, ZAMTEL, ORANGE, MOOV, FREE.
+        MNO options: MPESA, MTN, AIRTEL, TIGO, ZAMTEL, ORANGE, MOOV, FREE.
         Bank options: OPAY, PALMPAY, MONIEPOINT.
 
     CurrencyOut:
@@ -48,7 +48,7 @@ components:
 
     CurrencyIn:
       type: string
-      enum: [USDC]
+      enum: [USDC, USDT]
       description: Stablecoin sent onchain for payment settlement.
 
     Blockchain:
@@ -233,8 +233,7 @@ paths:
     post:
       operationId: validateAccount
       summary: Validate a recipient account
-      description: |
-        Resolves an account number to its registered name.
+      description: Validate account number and resolve account name in Kenya and Nigeria.
       tags: [Account]
       security:
         - BearerAuth: []
