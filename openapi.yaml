@@ -43,7 +43,7 @@ components:
 
     CurrencyOut:
       type: string
-      enum: [ETB, GHS, KES, NGN, TZS, UGX, XAF, XOF, ZAR, ZMW]
+      enum: [GHS, KES, NGN, TZS, UGX, XAF, XOF, ZAR, ZMW]
       description: Fiat currency received by the recipient.
 
     CurrencyIn:
@@ -395,7 +395,7 @@ paths:
                 message: Unprocessable Entity
                 errors:
                   fieldErrors:
-                    destinationCurrency: ["Invalid enum value. Expected 'ETB' | 'GHS' | 'KES' | 'NGN' | 'TZS' | 'UGX' | 'XAF' | 'XOF' | 'ZAR' | 'ZMW'"]
+                    destinationCurrency: ["Invalid enum value. Expected 'GHS' | 'KES' | 'NGN' | 'TZS' | 'UGX' | 'XAF' | 'XOF' | 'ZAR' | 'ZMW'"]
 
   # ---------------------------------------------------------------------------
   # Payments
