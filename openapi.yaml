@@ -233,7 +233,14 @@ paths:
     post:
       operationId: validateAccount
       summary: Validate a recipient account
-      description: Validate account number and resolve account name in Kenya and Nigeria.
+      description: |
+        Resolve an account number or phone number to its registered name.
+
+        For **MOMO** requests the mobile operator is detected automatically from the phone number — no operator field is required.
+
+        For **BANK** requests `bankCode` is required.
+
+        Supported today: KES (MOMO, BANK, PAYBILL, TILL) and NGN (BANK). GHS (MOMO) is also supported — operator is auto-detected.
       tags: [Account]
       security:
         - BearerAuth: []
@@ -278,6 +285,12 @@ paths:
                   destinationCurrency: "NGN"
                   paymentMethod: "BANK"
                   bankCode: "057"
+              ghsMomo:
+                summary: GHS MoMo number (operator auto-detected)
+                value:
+                  accountNumber: "0241234567"
+                  destinationCurrency: "GHS"
+                  paymentMethod: "MOMO"
       responses:
         "200":
           description: Account resolved successfully.
