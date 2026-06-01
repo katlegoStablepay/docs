@@ -43,6 +43,12 @@
       "tab": "Stablepay Money Out API",
       "groups": [
         {
+          "group": "Account",
+          "pages": [
+            "api-reference/account/validate"
+          ]
+        },
+        {
           "group": "Payments",
           "pages": [
             "api-reference/payments/submit-moneyout",

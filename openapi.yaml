@@ -83,8 +83,7 @@ components:
 
     UsdcAmount:
       type: string
-      pattern: '^\d+\.\d{6}$'
-      description: USDC amount as a decimal string with 6 decimal places.
+      description: USDC amount as a decimal string with exactly 6 decimal places. For example, `"10.500000"`.
       example: "10.500000"
 
     # -------------------------------------------------------------------------
@@ -191,6 +190,22 @@ components:
       required: [id, eventType, entityId, url, status, attempt, lastError, nextRetryAt, createdAt, updatedAt]
 
     # -------------------------------------------------------------------------
+    # Account validation
+    # -------------------------------------------------------------------------
+    ValidateAccountResponse:
+      type: object
+      properties:
+        accountName:
+          type: string
+          description: The registered name on the account, as returned by the provider. Show this to the end user for confirmation before submitting a payment.
+          example: "Jane Wanjiku"
+        accountNumber:
+          type: string
+          description: The account number as submitted.
+          example: "0722000001"
+      required: [accountName, accountNumber]
+
+    # -------------------------------------------------------------------------
     # Errors
     # -------------------------------------------------------------------------
     ErrorResponse:
@@ -210,6 +225,98 @@ components:
       required: [statusCode, message]
 
 paths:
+
+  # ---------------------------------------------------------------------------
+  # Account validation
+  # ---------------------------------------------------------------------------
+  /v1/account/validate:
+    post:
+      operationId: validateAccount
+      summary: Validate a recipient account
+      description: |
+        Resolves an account number to its registered name. Use this before submitting a payment
+        to confirm the recipient is who the sender intends to pay.
+
+        The returned `accountName` should be shown to the end user for confirmation.
+
+        Supported combinations today:
+
+        | destinationCurrency | paymentMethod | Notes |
+        |---|---|---|
+        | KES | MOMO | M-Pesa number — no bankCode required |
+        | KES | BANK | Requires `bankCode` |
+        | KES | PAYBILL | M-Pesa Paybill number |
+        | KES | TILL | M-Pesa Till number |
+        | NGN | BANK | Requires `bankCode` |
+      tags: [Account]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                accountNumber:
+                  type: string
+                  description: The account number or phone number to resolve.
+                  example: "0722000001"
+                destinationCurrency:
+                  $ref: '#/components/schemas/CurrencyOut'
+                paymentMethod:
+                  $ref: '#/components/schemas/PaymentMethod'
+                bankCode:
+                  type: string
+                  description: Bank code — required when paymentMethod is BANK. Use the GET /v1/account/banks endpoint to look up valid codes.
+                  example: "01"
+              required: [accountNumber, destinationCurrency, paymentMethod]
+            examples:
+              kesMomo:
+                summary: KES M-Pesa number
+                value:
+                  accountNumber: "0722000001"
+                  destinationCurrency: "KES"
+                  paymentMethod: "MOMO"
+              kesBank:
+                summary: KES bank account
+                value:
+                  accountNumber: "1234567890"
+                  destinationCurrency: "KES"
+                  paymentMethod: "BANK"
+                  bankCode: "01"
+              ngnBank:
+                summary: NGN bank account
+                value:
+                  accountNumber: "0123456789"
+                  destinationCurrency: "NGN"
+                  paymentMethod: "BANK"
+                  bankCode: "057"
+      responses:
+        "200":
+          description: Account resolved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidateAccountResponse'
+              examples:
+                result:
+                  summary: Resolved account
+                  value:
+                    accountName: "Jane Wanjiku"
+                    accountNumber: "0722000001"
+        "401":
+          description: Invalid or missing API key.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "422":
+          description: Validation error, unsupported currency/method combination, or account not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   # ---------------------------------------------------------------------------
   # FX convert
