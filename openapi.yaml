@@ -235,7 +235,6 @@ paths:
       summary: Validate a recipient account
       description: |
         Resolves an account number to its registered name.
-        | NGN | BANK | Requires `bankCode` |
       tags: [Account]
       security:
         - BearerAuth: []
