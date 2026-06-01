@@ -7,7 +7,8 @@
     "light": "#FFFFFF",
     "dark": "#111111"
   },
-  "favicon": "/favicon.svg",
+
+  "favicon": "/favicon.png",
   "logo": {
     "light": "/logo/light.svg",
     "dark": "/logo/dark.svg"
@@ -38,24 +39,35 @@
     }
   },
   "navigation": {
-    "tabs": [
-      {
-        "tab": "API Reference",
-        "groups": [
-          {
-            "group": "Stablepay Money API",
-            "pages": [
-              "api-reference/payments/submit-moneyout",
-              "api-reference/payments/get-payment",
-              "api-reference/quotes/create-quote",
-              "api-reference/webhooks/register",
-              "api-reference/webhooks/replay-event"
-            ]
-          }
-        ]
-      }
-    ]
-  },
+  "tabs": [
+    {
+      "tab": "Stablepay Money Out API",
+      "groups": [
+        {
+          "group": "Account",
+          "pages": [
+            "api-reference/account/validate"
+          ]
+        },
+        {
+          "group": "Payments",
+          "pages": [
+            "api-reference/payments/submit-moneyout",
+            "api-reference/payments/get-payment",
+            "api-reference/fx/convert"
+          ]
+        },
+        {
+          "group": "Webhooks",
+          "pages": [
+            "api-reference/webhooks/register",
+            "api-reference/webhooks/replay-event"
+          ]
+        }
+      ]
+    }
+  ]
+},
   "footer": {
     "socials": {
       "github": "https://github.com/katlegorphele/stablepay"

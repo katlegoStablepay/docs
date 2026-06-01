@@ -4,11 +4,7 @@ info:
   description: |
     The Stablepay Money API enables wallet issuers to execute stablecoin-to-fiat
     payouts across Sub-Saharan Africa via M-Pesa, mobile money, and bank transfers.
-
-    **Phase 1 scope:** Honeycoin off-ramp. Both BSC and Solana chains supported. KES, GHS, NGN, TZS, UGX, ZMW live. Live FX rates fetched from Honeycoin's rate API.
-
-    **Settlement model:** Each tenant has a dedicated Privy server wallet (BSC + Solana). USDC is sent on-chain from the tenant's wallet to the provider escrow. No credit lines — payments require sufficient on-chain USDC balance.
-  version: 0.4.0
+  version: 0.5.0
   contact:
     name: Stablepay Engineering
     email: hello@stablepay.io
@@ -27,7 +23,6 @@ components:
       scheme: bearer
       description: |
         Stablepay API key. Include as `Authorization: Bearer <key>`.
-        Obtain your key from the Stablepay dashboard or ask your integration contact.
     AdminBearerAuth:
       type: http
       scheme: bearer
@@ -39,103 +34,76 @@ components:
     # -------------------------------------------------------------------------
     # Shared / enums
     # -------------------------------------------------------------------------
+    PaymentCode:
+      type: string
+      description: |
+        Mobile network operator or bank code. Required for money-out payments.
+        MNO options: MPESA, MTN, AIRTEL, TIGO, ZAMTEL, ORANGE, MOOV, FREE.
+        Bank options: OPAY, PALMPAY, MONIEPOINT.
+
     CurrencyOut:
       type: string
-      enum: [ETB, GHS, KES, NGN, TZS, UGX, XAF, XOF, ZAR, ZMW]
-      description: ISO 4217 fiat currency the recipient receives.
-      example: KES
+      enum: [GHS, KES, NGN, TZS, UGX, XAF, XOF, ZAR, ZMW]
+      description: Fiat currency received by the recipient.
 
     CurrencyIn:
       type: string
       enum: [USDC, USDT]
-      description: Stablecoin sent on-chain to the provider escrow.
-      example: USDC
+      description: Stablecoin sent onchain for payment settlement.
 
     Blockchain:
       type: string
       enum: [BSC, SOLANA]
       description: Blockchain the stablecoin is sent on. Both BSC and Solana are supported.
-      example: SOLANA
 
     PaymentMethod:
       type: string
       enum: [BANK, MOMO, PAYBILL, TILL]
       description: How the recipient receives funds.
-      example: MOMO
 
     Country:
       type: string
-      enum: [ET, GH, KE, NG, TZ, UG, ZA, ZM]
-      description: ISO 3166-1 alpha-2 recipient country code.
-      example: KE
+      enum: [BF, BJ, CI, CM, GH, KE, NG, SN, TZ, UG, ZA, ZM]
+      description: Recipient country code.
 
     PaymentStatus:
       type: string
-      enum:
-        - initiated
-        - provider_accepted
-        - onchain_broadcast
-        - provider_processing
-        - succeeded
-        - failed
-        - refunded
       description: |
         Current state of the payment in the state machine.
-        `initiated` → `provider_accepted` → `onchain_broadcast` → `provider_processing`
-        → `succeeded` | `failed` | `refunded`
+        `initiated` → `provider_accepted` → `succeeded` | `failed` | `refunded`
 
     UsdcAmount:
       type: string
-      pattern: '^\d+\.\d{6}$'
-      description: USDC amount as a decimal string with 6 decimal places.
+      description: USDC amount as a decimal string with exactly 6 decimal places. For example, `"10.500000"`.
       example: "10.500000"
 
     # -------------------------------------------------------------------------
-    # Quote
+    # FX convert (informational, no rate lock)
     # -------------------------------------------------------------------------
-    QuoteResponse:
+    FxConvertResponse:
       type: object
       properties:
-        quoteId:
-          type: string
-          description: Prefixed ULID for this quote. Pass to `POST /v1/payments/moneyout` before expiry.
-          example: qt_01HV8KZMRJPQR9S7T3XABCDEF
         convertedAmount:
           $ref: '#/components/schemas/UsdcAmount'
-          description: Total USDC the tenant's wallet will be debited (settlement + fees).
+          description: Total converted amount in the destination currency (inclusive of network fee, optional issuer fee and payout fee).
         exchangeRate:
           type: string
-          description: Locked FX rate — fiat units per 1 USDC.
-          example: "129.500000"
+          description: Market exchange rate sourced from local liquidity partners (inclusive of network fee and optional issuer fee).
+          example: "128.218000"
         payoutFee:
           type: string
-          description: |
-            Provider payout fee in USDC. May be a percentage of `convertedAmount`
-            or a flat fiat amount converted to USDC, depending on the corridor.
-          example: "0.150000"
-        settlementUsdc:
-          $ref: '#/components/schemas/UsdcAmount'
-          description: Net USDC forwarded to the provider after fees are deducted.
-        expiryTimestamp:
-          type: integer
-          format: int64
-          description: Unix timestamp (seconds). Quote is invalid after this time (60 seconds from creation).
-          example: 1746526860
-        status:
+          description: The payout fee comprises the mobile network operator or bank processing fee. 
+          example: "20.250000"
+        expiresAt:
           type: string
-          enum: [active, expired, consumed]
-          example: active
-      required: [quoteId, convertedAmount, exchangeRate, payoutFee, settlementUsdc, expiryTimestamp, status]
+          format: date-time
+          description: Timestamp after which this rate should be considered stale.
+          example: "2024-01-15T10:31:30.000Z"
+      required: [convertedAmount, exchangeRate, payoutFee, expiresAt]
 
     # -------------------------------------------------------------------------
     # Payment
     # -------------------------------------------------------------------------
-    PaymentDirection:
-      type: string
-      enum: [money_out, money_in]
-      description: Direction of the payment. Phase 1 always returns `money_out`.
-      example: money_out
-
     PaymentResponse:
       type: object
       properties:
@@ -143,85 +111,36 @@ components:
           type: string
           description: Prefixed ULID for this payment.
           example: pay_01HV8KZMRJPQR9S7T3XABCDEF
-        direction:
-          $ref: '#/components/schemas/PaymentDirection'
         status:
           $ref: '#/components/schemas/PaymentStatus'
         paymentMethod:
           $ref: '#/components/schemas/PaymentMethod'
         amountUsdc:
           $ref: '#/components/schemas/UsdcAmount'
-          description: Total USDC charged (settlement + spread + provider fee).
-        amountFiat:
+          description: Total USDC charged.
+        fiatAmount:
           type: string
           description: Fiat amount the recipient receives.
           example: "1350.000000"
-        currency:
+        destinationCurrency:
           $ref: '#/components/schemas/CurrencyOut'
         providerRef:
           type: string
           nullable: true
           description: Provider's transaction ID. Null until the provider accepts.
           example: CC4SOjQu8UUarKaOGZy9
-        quoteId:
+        reference:
           type: string
           nullable: true
-          example: qt_01HV8KZMRJPQR9S7T3XABCDEF
+          description: Caller's own reference code (e.g. "csh-txn-20260506-001"). Stored as supplied in the payment request.
+          example: csh-txn-20260506-001
         createdAt:
           type: string
           format: date-time
         updatedAt:
           type: string
           format: date-time
-      required: [id, direction, status, paymentMethod, amountUsdc, amountFiat, currency, providerRef, quoteId, createdAt, updatedAt]
-
-    # -------------------------------------------------------------------------
-    # Balances
-    # -------------------------------------------------------------------------
-    BalanceResponse:
-      type: object
-      description: |
-        Live on-chain balances for the tenant's Privy custody wallets.
-        Includes both USDC (used for payments) and native token balances
-        (BNB on BSC, SOL on Solana — required for gas fees).
-      properties:
-        bscAddress:
-          type: string
-          nullable: true
-          description: The tenant's BSC wallet address (0x…). Null if not yet provisioned.
-          example: "0xAbCd1234AbCd1234AbCd1234AbCd1234AbCd1234"
-        solanaAddress:
-          type: string
-          nullable: true
-          description: The tenant's Solana wallet address (base58). Null if not yet provisioned.
-          example: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
-        bscUsdcBalance:
-          $ref: '#/components/schemas/UsdcAmount'
-          nullable: true
-          description: Live USDC balance on BSC. Null if wallet not provisioned.
-        solanaUsdcBalance:
-          $ref: '#/components/schemas/UsdcAmount'
-          nullable: true
-          description: Live USDC balance on Solana. Null if wallet not provisioned.
-        bscNativeBalance:
-          type: string
-          nullable: true
-          description: |
-            Live BNB balance on BSC (6 decimal places). Used to pay gas on BSC transactions.
-            Wallets need a small BNB balance to broadcast USDC transfers.
-          example: "0.012500"
-        solanaNativeBalance:
-          type: string
-          nullable: true
-          description: |
-            Live SOL balance on Solana (6 decimal places). Used to pay transaction fees on Solana.
-            Wallets need at least ~0.05 SOL to submit transactions reliably.
-          example: "0.082340"
-        walletProvisioned:
-          type: boolean
-          description: True when both BSC and Solana wallets have been created for this tenant.
-          example: true
-      required: [bscAddress, solanaAddress, bscUsdcBalance, solanaUsdcBalance, bscNativeBalance, solanaNativeBalance, walletProvisioned]
+      required: [id, status, paymentMethod, amountUsdc, fiatAmount, destinationCurrency, providerRef, reference, createdAt, updatedAt]
 
     # -------------------------------------------------------------------------
     # Webhooks outbound
@@ -262,155 +181,20 @@ components:
       required: [id, eventType, entityId, url, status, attempt, lastError, nextRetryAt, createdAt, updatedAt]
 
     # -------------------------------------------------------------------------
-    # Admin — tenant
+    # Account validation
     # -------------------------------------------------------------------------
-    TenantListItem:
+    ValidateAccountResponse:
       type: object
       properties:
-        tenantId:
+        accountName:
           type: string
-          format: uuid
-        name:
+          description: The registered name on the account, as returned by the provider.
+          example: "Jane Wanjiku"
+        accountNumber:
           type: string
-          example: Cashi
-        bscAddress:
-          type: string
-          nullable: true
-          example: "0xAbCd1234AbCd1234AbCd1234AbCd1234AbCd1234"
-        solanaAddress:
-          type: string
-          nullable: true
-          example: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
-        walletProvisioned:
-          type: boolean
-        createdAt:
-          type: string
-          format: date-time
-      required: [tenantId, name, bscAddress, solanaAddress, walletProvisioned, createdAt]
-
-    WalletResponse:
-      type: object
-      properties:
-        tenantId:
-          type: string
-          format: uuid
-        walletProvisioned:
-          type: boolean
-        bscAddress:
-          type: string
-          nullable: true
-          example: "0xAbCd1234AbCd1234AbCd1234AbCd1234AbCd1234"
-        solanaAddress:
-          type: string
-          nullable: true
-          example: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
-        bscUsdcBalance:
-          $ref: '#/components/schemas/UsdcAmount'
-          nullable: true
-        solanaUsdcBalance:
-          $ref: '#/components/schemas/UsdcAmount'
-          nullable: true
-        bscNativeBalance:
-          type: string
-          nullable: true
-          description: Live BNB balance on BSC (6 decimal places).
-          example: "0.012500"
-        solanaNativeBalance:
-          type: string
-          nullable: true
-          description: Live SOL balance on Solana (6 decimal places).
-          example: "0.082340"
-      required: [tenantId, walletProvisioned, bscAddress, solanaAddress, bscUsdcBalance, solanaUsdcBalance, bscNativeBalance, solanaNativeBalance]
-
-    # -------------------------------------------------------------------------
-    # Analytics
-    # -------------------------------------------------------------------------
-    AnalyticsCurrencyRow:
-      type: object
-      properties:
-        currency:
-          $ref: '#/components/schemas/CurrencyOut'
-        count:
-          type: integer
-          description: Total payment count for this currency in the last 30 days.
-          example: 48
-        volumeUsdc:
-          $ref: '#/components/schemas/UsdcAmount'
-          description: Total USDC volume for this currency in the last 30 days.
-        volumeFiat:
-          type: string
-          description: Total fiat payout amount for this currency in the last 30 days.
-          example: "64800.000000"
-        successRate:
-          type: number
-          nullable: true
-          description: Percentage of terminal payments (succeeded / failed) that succeeded. Null if no terminal payments.
-          example: 95.8
-      required: [currency, count, volumeUsdc, volumeFiat, successRate]
-
-    AnalyticsDayRow:
-      type: object
-      properties:
-        date:
-          type: string
-          format: date
-          description: UTC date in YYYY-MM-DD format.
-          example: "2026-05-20"
-        volumeUsdc:
-          $ref: '#/components/schemas/UsdcAmount'
-          description: Total succeeded USDC volume on this day.
-        count:
-          type: integer
-          description: Number of succeeded payments on this day.
-          example: 12
-      required: [date, volumeUsdc, count]
-
-    AnalyticsSummary:
-      type: object
-      description: Pre-aggregated payment analytics for the authenticated tenant.
-      properties:
-        totalVolumeUsdc:
-          $ref: '#/components/schemas/UsdcAmount'
-          description: Total USDC volume of all succeeded payments (all time).
-        successRate:
-          type: number
-          nullable: true
-          description: |
-            Overall success rate across terminal payments, as a percentage with one decimal place.
-            Null if there are no terminal payments yet.
-          example: 94.2
-        totalTransactions:
-          type: integer
-          description: Total number of payments ever submitted by this tenant.
-          example: 312
-        byStatus:
-          type: object
-          description: Count of payments in each status (all time).
-          properties:
-            succeeded:
-              type: integer
-              example: 294
-            failed:
-              type: integer
-              example: 11
-            initiated:
-              type: integer
-              example: 5
-            processing:
-              type: integer
-              example: 2
-          required: [succeeded, failed, initiated, processing]
-        byCurrency:
-          type: array
-          description: Per-corridor breakdown for the last 30 days, ordered by USDC volume descending.
-          items:
-            $ref: '#/components/schemas/AnalyticsCurrencyRow'
-        dailySeries:
-          type: array
-          description: Daily succeeded payment volume for the last 30 days, ordered ascending by date.
-          items:
-            $ref: '#/components/schemas/AnalyticsDayRow'
-      required: [totalVolumeUsdc, successRate, totalTransactions, byStatus, byCurrency, dailySeries]
+          description: The account number as submitted.
+          example: "0722000001"
+      required: [accountName, accountNumber]
 
     # -------------------------------------------------------------------------
     # Errors
@@ -434,46 +218,17 @@ components:
 paths:
 
   # ---------------------------------------------------------------------------
-  # Health
+  # Account validation
   # ---------------------------------------------------------------------------
-  /v1/health:
-    get:
-      operationId: getHealth
-      summary: Health check
-      description: Returns the service's liveness status and last deployed commit SHA.
-      tags: [Health]
-      security: []
-      responses:
-        "200":
-          description: Service is healthy.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  ok:
-                    type: boolean
-                    example: true
-                  version:
-                    type: string
-                    example: "0.4.0"
-                  commit:
-                    type: string
-                    example: ec91a47
-                required: [ok, version, commit]
-
-  # ---------------------------------------------------------------------------
-  # Quotes
-  # ---------------------------------------------------------------------------
-  /v1/quotes:
+  /v1/account/validate:
     post:
-      operationId: createQuote
-      summary: Create a quote
+      operationId: validateAccount
+      summary: Validate a recipient account
       description: |
-        Lock an FX rate. The returned `quoteId` must be passed
-        to `POST /v1/payments/moneyout` before `expiryTimestamp` to use the locked rate.
-        
-      tags: [Quotes]
+        Resolve an account number or phone number to its registered name.
+      tags: [Account]
+      security:
+        - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -481,82 +236,156 @@ paths:
             schema:
               type: object
               properties:
-                amount:
-                  type: number
-                  description: Amount the recipient will receive in local fiat.
-                  example: 1350
-                sourceCurrency:
-                  $ref: '#/components/schemas/CurrencyOut'
-                  description: Fiat currency the recipient receives.
+                accountNumber:
+                  type: string
+                  description: The account number or phone number to resolve.
+                  example: "0722000001"
                 destinationCurrency:
-                  $ref: '#/components/schemas/CurrencyIn'
-                  description: Stablecoin the tenant's wallet sends. Defaults to USDC.
+                  enum: [KES, NGN]
+                  description: Fiat currency associated with the account.
                 paymentMethod:
                   $ref: '#/components/schemas/PaymentMethod'
-                chain:
-                  $ref: '#/components/schemas/Blockchain'
-                optionalIssuerFee:
+                bankCode:
                   type: string
-                  enum: [YES, NO]
-                  description: |
-                    Whether to include the optional issuer markup on top of the base spread.
-                    `YES` → 1.5% total markup. `NO` → 1.0% base spread only. Default: NO.
-                  example: NO
-              required: [amount, sourceCurrency, paymentMethod, chain]
-            example:
-              amount: 1350
-              sourceCurrency: KES
-              destinationCurrency: USDC
-              paymentMethod: MOMO
-              chain: SOLANA
-              optionalIssuerFee: NO
+                  description: Bank code — required when paymentMethod is BANK.
+                  example: "01"
+              required: [accountNumber, destinationCurrency, paymentMethod]
+            examples:
+              kesMomo:
+                summary: KES M-Pesa number
+                value:
+                  accountNumber: "0722000001"
+                  destinationCurrency: "KES"
+                  paymentMethod: "MOMO"
+              kesBank:
+                summary: KES bank account
+                value:
+                  accountNumber: "1234567890"
+                  destinationCurrency: "KES"
+                  paymentMethod: "BANK"
+                  bankCode: "01"
+              ngnBank:
+                summary: NGN bank account
+                value:
+                  accountNumber: "0123456789"
+                  destinationCurrency: "NGN"
+                  paymentMethod: "BANK"
+                  bankCode: "057"
+              ghsMomo:
+                summary: GHS MoMo number (operator auto-detected)
+                value:
+                  accountNumber: "0241234567"
+                  destinationCurrency: "GHS"
+                  paymentMethod: "MOMO"
       responses:
-        "201":
-          description: Quote created and rate locked.
+        "200":
+          description: Account resolved successfully.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/QuoteResponse'
-        "400":
-          description: Validation error.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/ValidateAccountResponse'
+              examples:
+                result:
+                  summary: Resolved account
+                  value:
+                    accountName: "Jane Wanjiku"
+                    accountNumber: "0722000001"
         "401":
           description: Invalid or missing API key.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-
-  /v1/quotes/{quoteId}:
-    get:
-      operationId: getQuote
-      summary: Get a quote
-      description: Retrieve a previously created quote by its ID. Returns status `expired` or `consumed` for terminal quotes.
-      tags: [Quotes]
-      parameters:
-        - name: quoteId
-          in: path
-          required: true
-          schema:
-            type: string
-          description: The `qt_`-prefixed quote ID.
-          example: qt_01HV8KZMRJPQR9S7T3XABCDEF
-      responses:
-        "200":
-          description: Quote found.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/QuoteResponse'
-        "404":
-          description: Quote not found or belongs to another tenant.
+        "422":
+          description: Validation error, unsupported currency/method combination, or account not found.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+
+  # ---------------------------------------------------------------------------
+  # FX convert
+  # ---------------------------------------------------------------------------
+  /v1/fx/convert:
+    get:
+      operationId: fxConvert
+      summary: Get a live FX rate (informational)
+      description: Convert between stablecoins and supported currencies using current exchange rates. 
+      tags: [FX]
+      parameters:
+        - name: amount
+          in: query
+          required: true
+          schema:
+            type: number
+            example: 1350
+          description: Amount to convert.
+        - name: sourceCurrency
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/CurrencyIn'
+          example: USDC
+        - name: destinationCurrency
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/CurrencyOut'
+          description: Fiat currency received by the recipient.
+          example: KES
+        - name: paymentMethod
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/PaymentMethod'
+          example: MOMO
+        - name: optionalIssuerFee
+          in: query
+          required: true
+          schema:
+            type: string
+            description: "Optional wallet issuer fee. "
+            enum: [YES, NO]
+      responses:
+        "200":
+          description: Indicative FX rate and fee breakdown for the requested corridor.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FxConvertResponse'
+              examples:
+                kesMomo:
+                  summary: KES via M-Pesa
+                  value:
+                    convertedAmount: "10.680000"
+                    exchangeRate: "128.218000"
+                    payoutFee: "20.250000"
+                    expiresAt: "2024-01-15T10:31:30.000Z"
+                xafMomo:
+                  summary: XAF via MTN Mobile Money
+                  value:
+                    convertedAmount: "8.120000"
+                    exchangeRate: "622.500000"
+                    payoutFee: "50.000000"
+                    expiresAt: "2024-01-15T10:31:00.000Z"
+        "401":
+          description: Invalid or missing API key.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "422":
+          description: Validation error — missing or invalid query parameter.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                statusCode: 422
+                message: Unprocessable Entity
+                errors:
+                  fieldErrors:
+                    destinationCurrency: ["Invalid enum value. Expected 'GHS' | 'KES' | 'NGN' | 'TZS' | 'UGX' | 'XAF' | 'XOF' | 'ZAR' | 'ZMW'"]
 
   # ---------------------------------------------------------------------------
   # Payments
@@ -565,9 +394,7 @@ paths:
     post:
       operationId: submitMoneyout
       summary: Submit a money-out payment
-      description: |
-        Enable peer-to-peer transfers, pay merchants or off-ramp stablecoins across Africa.
-
+      description: Submit a stablecoin-to-fiat payout.
       tags: [Payments]
       parameters:
         - name: Idempotency-Key
@@ -586,55 +413,54 @@ paths:
               properties:
                 fiatAmount:
                   type: number
-                  description: Amount the recipient receives in local fiat.
+                  description: The payment amount in local currency.
                   example: 1350
-                currencyIn:
+                sourceCurrency:
                   $ref: '#/components/schemas/CurrencyIn'
-                currencyOut:
+                  description: "Stablecoin sent onchain for payment settlement."
+                destinationCurrency:
                   $ref: '#/components/schemas/CurrencyOut'
+                  description: Fiat currency received by the recipient.
                 country:
                   $ref: '#/components/schemas/Country'
                 blockchain:
                   $ref: '#/components/schemas/Blockchain'
+                  description: Supported blockchains for onchain settlement.
                 paymentMethod:
                   $ref: '#/components/schemas/PaymentMethod'
+                  description: The supported payment method used to deliver funds to the recipient.
                 accountName:
                   type: string
-                  description: Recipient account or wallet name.
+                  description: Recipient full name associated with the payment method.
                   example: Jane Doe
                 accountNumber:
                   type: string
                   description: Recipient phone number or account number.
                   example: "254712345678"
                 paymentCode:
-                  type: string
-                  description: MNO or bank code (e.g. MPESA, MTN, AIRTEL, OPAY).
-                  example: MPESA
+                  $ref: '#/components/schemas/PaymentCode'
+                  description: "Mobile network operator or bank code. Available MNO options: MPESA, MTN, AIRTEL, TIGO, TELEBIRR, CBE, ZAMTEL. Available bank options: OPAY, PALMPAY, MONIEPOINT."
+                
                 reference:
                   type: string
-                  description: Your own unique reference for this payment. Stored and forwarded to the provider.
-                  example: cashi-txn-20260506-001
+                  description: Wallet issuer's unique reference.
+                  example: csh-txn-20260506-001
                 refundAddress:
                   type: string
-                  description: On-chain address to return USDC to if the payout fails. BSC addresses begin with `0x`; Solana addresses are base58-encoded (32–44 chars).
+                  description: Onchain address to return funds to if the payout fails.
                   example: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
                 businessNumber:
                   type: string
-                  description: "M-Pesa Paybill business number (6 digits). Required for paymentMethod: PAYBILL."
+                  description: "Only required for PAYBILL: M-Pesa Paybill business number (6 digits)."
                   example: "123456"
-                email:
+                optionalIssuerFee:
                   type: string
-                  format: email
-                  description: "Customer email. Required for paymentMethod: BANK."
-                  example: jane@example.com
-                quoteId:
-                  type: string
-                  description: Quote ID from `POST /v1/quotes`. Required — the rate and fee breakdown from the quote are applied to this payment.
-                  example: qt_01HV8KZMRJPQR9S7T3XABCDEF
+                  enum: [YES, NO]
+                  example: NO
               required:
                 - fiatAmount
-                - currencyIn
-                - currencyOut
+                - sourceCurrency
+                - destinationCurrency
                 - country
                 - blockchain
                 - paymentMethod
@@ -643,20 +469,38 @@ paths:
                 - paymentCode
                 - reference
                 - refundAddress
-                - quoteId
-            example:
-              fiatAmount: 1350
-              currencyIn: USDC
-              currencyOut: KES
-              country: KE
-              blockchain: SOLANA
-              paymentMethod: MOMO
-              accountName: Jane Doe
-              accountNumber: "254712345678"
-              paymentCode: MPESA
-              reference: cashi-txn-20260506-001
-              refundAddress: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
-              quoteId: qt_01HV8KZMRJPQR9S7T3XABCDEF
+                - optionalIssuerFee
+            examples:
+              kesBscMomo:
+                summary: KES via M-Pesa on BSC
+                value:
+                  fiatAmount: 1350
+                  sourceCurrency: USDC
+                  destinationCurrency: KES
+                  country: KE
+                  blockchain: BSC
+                  paymentMethod: MOMO
+                  accountName: Jane Doe
+                  accountNumber: "254712345678"
+                  paymentCode: MPESA
+                  reference: csh-txn-20260506-001
+                  refundAddress: "0xAbCd1234AbCd1234AbCd1234AbCd1234AbCd1234"
+                  optionalIssuerFee: NO
+              xafSolana:
+                summary: XAF via MTN MoMo on Solana (KotaniPay)
+                value:
+                  fiatAmount: 5000
+                  sourceCurrency: USDC
+                  destinationCurrency: XAF
+                  country: CM
+                  blockchain: SOLANA
+                  paymentMethod: MOMO
+                  accountName: Jean Dupont
+                  accountNumber: "237612345678"
+                  paymentCode: MTN
+                  reference: csh-txn-20260506-002
+                  refundAddress: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
+                  optionalIssuerFee: YES
       responses:
         "202":
           description: Payment accepted. Processing is async — poll or await webhook.
@@ -665,7 +509,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/PaymentResponse'
         "400":
-          description: Validation error (missing field, bad format, or expired/consumed quote).
+          description: Validation error (missing field or bad format).
           content:
             application/json:
               schema:
@@ -712,7 +556,7 @@ paths:
     get:
       operationId: getPayment
       summary: Get a payment
-      description: Retrieve a single payment by ID. Only returns payments belonging to the authenticated tenant.
+      description: Retrieve a single payment by ID.
       tags: [Payments]
       parameters:
         - name: paymentId
@@ -731,147 +575,6 @@ paths:
                 $ref: '#/components/schemas/PaymentResponse'
         "404":
           description: Payment not found or belongs to another tenant.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
-  /v1/payments:
-    get:
-      operationId: listPayments
-      summary: List payments
-      description: Paginated list of payments for the authenticated tenant, newest first.
-      tags: [Payments]
-      parameters:
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            default: 20
-            maximum: 100
-          description: Number of results to return.
-        - name: offset
-          in: query
-          schema:
-            type: integer
-            default: 0
-          description: Number of results to skip (for pagination).
-      responses:
-        "200":
-          description: Paginated list of payments.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/PaymentResponse'
-                  total:
-                    type: integer
-                    description: Total number of payments matching the query (ignoring limit/offset).
-                    example: 142
-                  limit:
-                    type: integer
-                    example: 20
-                  offset:
-                    type: integer
-                    example: 0
-                required: [data, total, limit, offset]
-
-  # ---------------------------------------------------------------------------
-  # Balances
-  # ---------------------------------------------------------------------------
-  /v1/balances:
-    get:
-      operationId: getBalances
-      summary: Get wallet balances
-      description: |
-        Returns live on-chain balances for your BSC and Solana custody wallets.
-
-        **USDC balances** reflect the funds available to submit payments.
-
-        **Native token balances** (BNB on BSC, SOL on Solana) reflect the gas reserves
-        needed to broadcast USDC transfers on-chain. Payments will fail if the native
-        balance is too low even if USDC is sufficient. Recommended minimums:
-        - BSC: ≥ 0.005 BNB
-        - Solana: ≥ 0.05 SOL
-
-        If the wallets have not been provisioned yet, all balance fields
-        return `null` and `walletProvisioned` is `false`.
-      tags: [Balances]
-      responses:
-        "200":
-          description: Live wallet balance snapshot.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/BalanceResponse'
-              example:
-                bscAddress: "0xAbCd1234AbCd1234AbCd1234AbCd1234AbCd1234"
-                solanaAddress: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
-                bscUsdcBalance: "0.000000"
-                solanaUsdcBalance: "250.000000"
-                bscNativeBalance: "0.012500"
-                solanaNativeBalance: "0.082340"
-                walletProvisioned: true
-
-  # ---------------------------------------------------------------------------
-  # Analytics
-  # ---------------------------------------------------------------------------
-  /v1/analytics:
-    get:
-      operationId: getAnalytics
-      summary: Payment analytics summary
-      description: |
-        Returns pre-aggregated payment analytics for the authenticated tenant.
-
-        **All-time metrics:** total volume, overall success rate, transaction count by status.
-
-        **Last-30-day metrics:** per-currency corridor breakdown (volume, count, success rate),
-        and a daily time series of succeeded payment volume for charting.
-
-        Responses are suitable for dashboard display and are computed live from the
-        `payments` table on each request. Cache at the HTTP layer (up to 60 seconds)
-        if low latency is critical — numbers are for dashboards, not accounting.
-      tags: [Analytics]
-      responses:
-        "200":
-          description: Analytics summary for the authenticated tenant.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AnalyticsSummary'
-              example:
-                totalVolumeUsdc: "2847.500000"
-                successRate: 94.2
-                totalTransactions: 312
-                byStatus:
-                  succeeded: 294
-                  failed: 11
-                  initiated: 5
-                  processing: 2
-                byCurrency:
-                  - currency: KES
-                    count: 48
-                    volumeUsdc: "371.250000"
-                    volumeFiat: "48000.000000"
-                    successRate: 97.9
-                  - currency: NGN
-                    count: 21
-                    volumeUsdc: "162.750000"
-                    volumeFiat: "210000.000000"
-                    successRate: 90.0
-                dailySeries:
-                  - date: "2026-04-26"
-                    volumeUsdc: "84.500000"
-                    count: 11
-                  - date: "2026-04-27"
-                    volumeUsdc: "0.000000"
-                    count: 0
-        "401":
-          description: Invalid or missing API key.
           content:
             application/json:
               schema:
@@ -1025,624 +728,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-  # ---------------------------------------------------------------------------
-  # Webhooks — inbound from Honeycoin (no auth — HMAC verified)
-  # ---------------------------------------------------------------------------
-  /v1/webhooks/providers/honeycoin:
-    post:
-      operationId: honeycoinWebhook
-      summary: Honeycoin inbound webhook
-      description: |
-        Receive transaction lifecycle events from Honeycoin. **This endpoint is
-        for Stablepay's internal use** — you do not need to call it.
-
-        Honeycoin posts to this URL on payout status changes.
-        Signature is verified via `X-Webhook-Signature` header (raw secret, `timingSafeEqual`).
-        The endpoint always returns `200` to Honeycoin; duplicate events are silently deduplicated.
-      tags: [Webhooks]
-      security: []
-      parameters:
-        - name: X-Webhook-Signature
-          in: header
-          required: true
-          schema:
-            type: string
-          description: Raw Honeycoin webhook secret (not an HMAC digest).
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                event:
-                  type: string
-                  example: transaction_updated
-                data:
-                  type: object
-                  properties:
-                    transactionId:
-                      type: string
-                    status:
-                      type: string
-                      enum: [pending, successful, failed]
-                    type:
-                      type: string
-                      enum: [offramp, onramp]
-                    externalReference:
-                      type: string
-                      description: Stablepay payment ID.
-                timestamp:
-                  type: string
-                  format: date-time
-      responses:
-        "200":
-          description: Event received (always returned, even for duplicates).
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  received:
-                    type: boolean
-                    example: true
-        "401":
-          description: Invalid or missing X-Webhook-Signature.
-
-  # ---------------------------------------------------------------------------
-  # Admin — tenant management
-  # ---------------------------------------------------------------------------
-  /v1/admin/tenants:
-    post:
-      operationId: createTenant
-      summary: Create a tenant
-      description: |
-        Provision a new tenant end-to-end:
-        1. Creates a DB tenant record.
-        2. Issues a `client`-scoped Unkey API key with the tenant's ID in metadata.
-        3. Creates two Privy server wallets — one EVM (BSC) and one Solana.
-
-        The raw `apiKey` is returned **once** in this response. It cannot be
-        retrieved later — relay it to the operator immediately.
-
-        If Privy wallet provisioning fails, the tenant and API key are still created.
-        `bscAddress` and `solanaAddress` will be `null`. Use
-        `POST /v1/admin/tenants/:id/provision-wallet` to retry.
-
-        **Requires admin key.**
-      tags: [Admin]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                name:
-                  type: string
-                  description: Display name for the tenant (e.g. company name).
-                  example: Cashi
-                email:
-                  type: string
-                  format: email
-                  description: Primary contact email.
-                  example: eng@cashi.io
-                role:
-                  type: string
-                  enum: [client, admin]
-                  description: Role for the initial API key. Use `client` for wallet issuers.
-                  example: client
-              required: [name, role]
-            example:
-              name: Cashi
-              email: eng@cashi.io
-              role: client
-      responses:
-        "201":
-          description: Tenant created. Store the `apiKey` now — it is not retrievable later.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  tenantId:
-                    type: string
-                    format: uuid
-                  name:
-                    type: string
-                  apiKey:
-                    type: string
-                    description: Raw Stablepay API key — returned once only.
-                    example: "sk_live_abc123..."
-                  unkeyKeyId:
-                    type: string
-                  bscAddress:
-                    type: string
-                    nullable: true
-                    example: "0xAbCd1234AbCd1234AbCd1234AbCd1234AbCd1234"
-                  solanaAddress:
-                    type: string
-                    nullable: true
-                    example: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
-                required: [tenantId, name, apiKey, unkeyKeyId, bscAddress, solanaAddress]
-
-    get:
-      operationId: listTenants
-      summary: List tenants
-      description: |
-        Paginated list of all tenants, ordered by creation date.
-        Includes wallet provisioning status.
-
-        **Requires admin key.**
-      tags: [Admin]
-      parameters:
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            default: 20
-            maximum: 100
-        - name: offset
-          in: query
-          schema:
-            type: integer
-            default: 0
-      responses:
-        "200":
-          description: Paginated tenant list.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/TenantListItem'
-                  total:
-                    type: integer
-                    example: 3
-                  limit:
-                    type: integer
-                    example: 20
-                  offset:
-                    type: integer
-                    example: 0
-                required: [data, total, limit, offset]
-
-  /v1/admin/tenants/{tenantId}:
-    get:
-      operationId: getTenantSnapshot
-      summary: Tenant snapshot
-      description: |
-        Returns the tenant's profile and their 10 most recent payments.
-        Useful for ops review and support queries.
-
-        **Requires admin key.**
-      tags: [Admin]
-      parameters:
-        - name: tenantId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        "200":
-          description: Tenant snapshot.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  tenantId:
-                    type: string
-                    format: uuid
-                  name:
-                    type: string
-                  bscAddress:
-                    type: string
-                    nullable: true
-                  solanaAddress:
-                    type: string
-                    nullable: true
-                  walletProvisioned:
-                    type: boolean
-                  recentPayments:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        id:
-                          type: string
-                        status:
-                          $ref: '#/components/schemas/PaymentStatus'
-                        amountUsdc:
-                          $ref: '#/components/schemas/UsdcAmount'
-                        fiatAmount:
-                          type: string
-                        fiatCurrency:
-                          $ref: '#/components/schemas/CurrencyOut'
-                        createdAt:
-                          type: string
-                          format: date-time
-                required: [tenantId, name, bscAddress, solanaAddress, walletProvisioned, recentPayments]
-        "403":
-          description: Non-admin key.
-        "404":
-          description: Tenant not found.
-
-  /v1/admin/tenants/{tenantId}/wallet:
-    get:
-      operationId: getTenantWallet
-      summary: Tenant wallet balances
-      description: |
-        Returns the tenant's Privy custody wallet addresses and live on-chain
-        USDC balances (BSC + Solana). Both balances are fetched concurrently
-        from their respective RPC nodes at request time.
-
-        Returns `walletProvisioned: false` with null balances if the tenant's
-        wallets have not been provisioned yet.
-
-        **Requires admin key.**
-      tags: [Admin]
-      parameters:
-        - name: tenantId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        "200":
-          description: Wallet addresses and live balances.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/WalletResponse'
-        "404":
-          description: Tenant not found.
-
-  /v1/admin/tenants/{tenantId}/provision-wallet:
-    post:
-      operationId: provisionWallet
-      summary: Provision Privy wallets
-      description: |
-        Create Privy server wallets (EVM/BSC + Solana) for a tenant that was
-        provisioned before the Privy integration, or whose wallet creation failed
-        during `POST /v1/admin/tenants`.
-
-        **Idempotent** — if both wallets are already configured, returns the
-        existing addresses without calling Privy again. Safe to call multiple times.
-
-        **Requires admin key.**
-      tags: [Admin]
-      parameters:
-        - name: tenantId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        "200":
-          description: Wallets provisioned (or already existed).
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  tenantId:
-                    type: string
-                    format: uuid
-                  bscAddress:
-                    type: string
-                    example: "0xAbCd1234AbCd1234AbCd1234AbCd1234AbCd1234"
-                  solanaAddress:
-                    type: string
-                    example: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
-                  bscWalletId:
-                    type: string
-                    description: Privy internal wallet ID for BSC signing.
-                  solanaWalletId:
-                    type: string
-                    description: Privy internal wallet ID for Solana signing.
-                  alreadyProvisioned:
-                    type: boolean
-                    description: True if wallets already existed — Privy was not called.
-                    example: false
-                required: [tenantId, bscAddress, solanaAddress, bscWalletId, solanaWalletId, alreadyProvisioned]
-        "404":
-          description: Tenant not found.
-
-  /v1/admin/tenants/{tenantId}/webhooks:
-    post:
-      operationId: adminRegisterWebhook
-      summary: Register webhook for tenant
-      description: |
-        Register an outbound webhook endpoint for a specific tenant. Unlike
-        `POST /v1/webhooks/register` which uses the calling tenant's identity,
-        this endpoint allows an admin to register webhooks on behalf of any tenant.
-
-        **Requires admin key.**
-      tags: [Admin]
-      parameters:
-        - name: tenantId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                url:
-                  type: string
-                  format: uri
-                  example: https://app.cashi.io/webhooks/stablepay
-                secret:
-                  type: string
-                  description: HMAC signing secret. Stored encrypted — not retrievable after this call.
-                  example: "my-webhook-secret-32chars-minimum"
-                events:
-                  type: array
-                  items:
-                    type: string
-                  description: Event types to subscribe to. Empty array = all events.
-                  example: ["payment.succeeded", "payment.failed"]
-              required: [url, secret]
-      responses:
-        "201":
-          description: Webhook registered.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  webhookId:
-                    type: string
-                    format: uuid
-                  tenantId:
-                    type: string
-                    format: uuid
-                  url:
-                    type: string
-                    format: uri
-                  events:
-                    type: array
-                    items:
-                      type: string
-                  active:
-                    type: boolean
-                    example: true
-                required: [webhookId, tenantId, url, events, active]
-        "404":
-          description: Tenant not found.
-
-    get:
-      operationId: adminListWebhooks
-      summary: List webhooks for tenant
-      description: |
-        List all webhook registrations for a specific tenant.
-        HMAC secrets are never included in the response.
-
-        **Requires admin key.**
-      tags: [Admin]
-      parameters:
-        - name: tenantId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        "200":
-          description: Webhook registrations.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        webhookId:
-                          type: string
-                          format: uuid
-                        url:
-                          type: string
-                          format: uri
-                        events:
-                          type: array
-                          items:
-                            type: string
-                        active:
-                          type: boolean
-                        createdAt:
-                          type: string
-                          format: date-time
-                      required: [webhookId, url, events, active, createdAt]
-                required: [data]
-
-  /v1/admin/tenants/{tenantId}/webhooks/{webhookId}:
-    delete:
-      operationId: adminDeleteWebhook
-      summary: Delete webhook
-      description: |
-        Permanently remove a webhook registration. The endpoint will stop
-        receiving events immediately.
-
-        **Requires admin key.**
-      tags: [Admin]
-      parameters:
-        - name: tenantId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: webhookId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        "200":
-          description: Webhook deleted.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  deleted:
-                    type: string
-                    format: uuid
-                required: [deleted]
-        "404":
-          description: Webhook not found.
-
-  /v1/admin/tenants/{tenantId}/api-keys:
-    post:
-      operationId: createApiKey
-      summary: Issue additional API key
-      description: |
-        Issue an additional `client`-scoped Unkey API key for a tenant.
-        Useful for rotating credentials or issuing separate staging/production keys.
-
-        The raw `apiKey` is returned **once** — it cannot be retrieved later.
-
-        **Requires admin key.**
-      tags: [Admin]
-      parameters:
-        - name: tenantId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        "201":
-          description: API key issued. Store the `apiKey` now.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  keyId:
-                    type: string
-                    description: Unkey key ID. Use to revoke this key later.
-                  apiKey:
-                    type: string
-                    description: Raw API key — returned once only.
-                    example: "sk_live_abc123..."
-                  tenantId:
-                    type: string
-                    format: uuid
-                required: [keyId, apiKey, tenantId]
-        "404":
-          description: Tenant not found.
-
-  /v1/admin/tenants/{tenantId}/api-keys/{keyId}:
-    delete:
-      operationId: revokeApiKey
-      summary: Revoke API key
-      description: |
-        Revoke a specific Unkey API key by its key ID. Only the key is
-        invalidated — the tenant and their other keys are unaffected.
-
-        **Requires admin key.**
-      tags: [Admin]
-      parameters:
-        - name: tenantId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: keyId
-          in: path
-          required: true
-          schema:
-            type: string
-          description: Unkey key ID (from `POST /v1/admin/tenants/:id/api-keys`).
-      responses:
-        "200":
-          description: Key revoked.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  deleted:
-                    type: string
-                required: [deleted]
-
-  # ---------------------------------------------------------------------------
-  # Admin — payment operations
-  # ---------------------------------------------------------------------------
-  /v1/admin/payments/{paymentId}/refund:
-    post:
-      operationId: refundPayment
-      summary: Force-refund a payment
-      description: |
-        Manually refund a `succeeded` payment. Transitions status to `refunded`,
-        writes an audit event, and emits a `payment.refunded` outbound webhook.
-
-        Only valid on payments in `succeeded` status. Returns `422` for any other status.
-
-        **Requires admin key.**
-      tags: [Admin]
-      parameters:
-        - name: paymentId
-          in: path
-          required: true
-          schema:
-            type: string
-          description: The `pay_`-prefixed payment ID.
-          example: pay_01HV8KZMRJPQR9S7T3XABCDEF
-      responses:
-        "200":
-          description: Payment refunded.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  paymentId:
-                    type: string
-                  status:
-                    type: string
-                    enum: [refunded]
-                  amountUsdc:
-                    $ref: '#/components/schemas/UsdcAmount'
-                required: [paymentId, status, amountUsdc]
-        "403":
-          description: Non-admin key.
-        "404":
-          description: Payment not found.
-        "422":
-          description: Payment is not in `succeeded` status and cannot be refunded.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              example:
-                statusCode: 422
-                code: payment_not_refundable
-                message: "Payment pay_xxx cannot be refunded in status 'initiated'."
-
 tags:
   - name: Health
     description: Service liveness check.
-  - name: Quotes
-    description: Lock an FX rate before submitting a payment.
+  - name: FX
+    description: Live FX rate conversion between USDC and local fiat currencies.
   - name: Payments
     description: Submit and track stablecoin-to-fiat payout requests.
   - name: Balances
