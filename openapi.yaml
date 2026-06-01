@@ -235,12 +235,6 @@ paths:
       summary: Validate a recipient account
       description: |
         Resolve an account number or phone number to its registered name.
-
-        For **MOMO** requests the mobile operator is detected automatically from the phone number — no operator field is required.
-
-        For **BANK** requests `bankCode` is required.
-
-        Supported today: KES (MOMO, BANK, PAYBILL, TILL) and NGN (BANK). GHS (MOMO) is also supported — operator is auto-detected.
       tags: [Account]
       security:
         - BearerAuth: []
@@ -256,12 +250,14 @@ paths:
                   description: The account number or phone number to resolve.
                   example: "0722000001"
                 destinationCurrency:
-                  $ref: '#/components/schemas/CurrencyOut'
+                  enum: [KES, NGN]
+                  description: Fiat currency associated with the account.
+                  example: KES
                 paymentMethod:
                   $ref: '#/components/schemas/PaymentMethod'
                 bankCode:
                   type: string
-                  description: Bank code — required when paymentMethod is BANK. Use the GET /v1/account/banks endpoint to look up valid codes.
+                  description: Bank code — required when paymentMethod is BANK.
                   example: "01"
               required: [accountNumber, destinationCurrency, paymentMethod]
             examples:
