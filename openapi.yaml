@@ -647,7 +647,7 @@ paths:
                   type: string
                   format: uri
                   description: Your HTTPS endpoint that will receive POST requests.
-                  example: https://app.cashi.io/webhooks/stablepay
+                  example: https://app.walletIssuer.io/webhooks/stablepay
                 events:
                   type: array
                   items:
@@ -656,7 +656,7 @@ paths:
                   example: ["payment.succeeded", "payment.failed"]
               required: [url]
             example:
-              url: https://app.cashi.io/webhooks/stablepay
+              url: https://app.walletIssuer.io/webhooks/stablepay
               events: ["payment.succeeded", "payment.failed", "payment.processing"]
       responses:
         "201":
