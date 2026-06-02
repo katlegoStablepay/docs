@@ -198,7 +198,7 @@ components:
         network:
           type: string
           nullable: true
-          description: Detected MNO for MOMO requests (e.g. "MTN", "MPESA"). Null for BANK, PAYBILL, TILL.
+          description: Detected MNO for MOMO requests. Null for BANK, PAYBILL, TILL.
           example: "MPESA"
       required: [accountName, accountNumber, network]
 
@@ -247,7 +247,8 @@ paths:
                   description: The account number or phone number to resolve.
                   example: "0722000001"
                 destinationCurrency:
-                  $ref: '#/components/schemas/CurrencyOut'
+                  # $ref: '#/components/schemas/CurrencyOut'
+                  $enum: [GHS, KES, NGN, TZS, UGX, ZMW]
                   description: Fiat currency associated with the account.
                 paymentMethod:
                   $ref: '#/components/schemas/PaymentMethod'
