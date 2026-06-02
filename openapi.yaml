@@ -188,13 +188,19 @@ components:
       properties:
         accountName:
           type: string
-          description: The registered name on the account, as returned by the provider.
+          nullable: true
+          description: Registered account holder name. Null when the corridor only supports network detection.
           example: "Jane Wanjiku"
         accountNumber:
           type: string
           description: The account number as submitted.
           example: "0722000001"
-      required: [accountName, accountNumber]
+        network:
+          type: string
+          nullable: true
+          description: Detected MNO for MOMO requests (e.g. "MTN", "MPESA"). Null for BANK, PAYBILL, TILL.
+          example: "MPESA"
+      required: [accountName, accountNumber, network]
 
     # -------------------------------------------------------------------------
     # Errors
@@ -241,7 +247,7 @@ paths:
                   description: The account number or phone number to resolve.
                   example: "0722000001"
                 destinationCurrency:
-                  enum: [KES, NGN]
+                  $ref: '#/components/schemas/CurrencyOut'
                   description: Fiat currency associated with the account.
                 paymentMethod:
                   $ref: '#/components/schemas/PaymentMethod'
@@ -285,11 +291,24 @@ paths:
               schema:
                 $ref: '#/components/schemas/ValidateAccountResponse'
               examples:
-                result:
-                  summary: Resolved account
+                kesMomo:
+                  summary: KES M-Pesa (full name resolution)
                   value:
                     accountName: "Jane Wanjiku"
                     accountNumber: "0722000001"
+                    network: "MPESA"
+                ghsMomo:
+                  summary: GHS MoMo (network only)
+                  value:
+                    accountName: null
+                    accountNumber: "+233243747787"
+                    network: "MTN"
+                kesBank:
+                  summary: KES bank account
+                  value:
+                    accountName: "John Kamau"
+                    accountNumber: "1234567890"
+                    network: null
         "401":
           description: Invalid or missing API key.
           content:
