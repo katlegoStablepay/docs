@@ -575,6 +575,53 @@ paths:
                 code: provider_unavailable
                 message: "circuit open — retrying in ~45s"
 
+  /v1/payments:
+    get:
+      operationId: listPayments
+      summary: List payments
+      description: Paginated list of payments for the authenticated tenant, newest first. Filter by your own reference using the `reference` query parameter.
+      tags: [Payments]
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+          description: Max results to return.
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+          description: Number of results to skip.
+        - name: reference
+          in: query
+          schema:
+            type: string
+          description: Filter by your own reference (exact match).
+          example: "order-abc-001"
+      responses:
+        "200":
+          description: Paginated list of payments.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PaymentResponse'
+                  total:
+                    type: integer
+                    description: Total matching payments.
+                  limit:
+                    type: integer
+                  offset:
+                    type: integer
+                required: [data, total, limit, offset]
+
   /v1/payments/{paymentId}:
     get:
       operationId: getPayment

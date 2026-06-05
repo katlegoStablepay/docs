@@ -7,11 +7,23 @@
     "light": "#FFFFFF",
     "dark": "#111111"
   },
-
+  "font": {
+    "headings": {
+      "family": "Poppins",
+      "weight": 500
+    },
+    "body": {
+      "family": "Poppins",
+      "weight": 300
+    }
+  },
+  "custom": {
+    "stylesheets": ["/custom.css"]
+  },
   "favicon": "/favicon.png",
   "logo": {
-    "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg"
+    "light": "/logo/Spay_Logo_Dark.png",
+    "dark": "/logo/Spay_Logo_Light.png"
   },
   "navbar": {
     "links": [
