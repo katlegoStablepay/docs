@@ -455,21 +455,7 @@ paths:
     post:
       operationId: submitMoneyin
       summary: Submit a money-in payment
-      description: |
-        Initiate an onramp — the customer pays fiat via MOMO, and the wallet issuer receives USDC in their dedicated moneyin custody wallet.
-
-        Processing is async. The provider sends a MOMO prompt to the customer's phone; USDC is deposited to the wallet issuer's moneyin wallet once the customer approves and the provider confirms on-chain settlement.
-
-        **Provider routing by corridor:**
-
-        | Corridor | Provider | Blockchain | Currencies |
-        |---|---|---|---|
-        | Honeycoin | HC | BSC | GHS, KES, NGN, TZS, UGX, ZMW |
-        | KotaniPay | KP | SOLANA | XAF, XOF, CDF |
-
-        The `blockchain` field must match the corridor — `BSC` for HC currencies, `SOLANA` for KP currencies. The API returns a 422 if they don't match.
-
-        **Finality:** listen for `payment.succeeded` on your registered webhook. Both the fiat collection (`depositStatus`) and the on-chain USDC transfer (`onchainStatus`) must confirm before Stablepay marks the payment succeeded.
+      description: Submit a fiat-to-stablecoin payin.
       tags: [Payments]
       parameters:
         - name: idempotency-key
@@ -488,62 +474,48 @@ paths:
               properties:
                 fiatAmount:
                   type: string
-                  description: Fiat amount the end customer will be charged.
+                  description: The payment amount in local currency.
                   example: "1000"
                 sourceCurrency:
                   type: string
                   enum: [GHS, KES, NGN, TZS, UGX, ZMW, XAF, XOF, CDF]
-                  description: |
-                    Fiat currency the customer is paying in.
-                    HC corridors (BSC): `GHS`, `KES`, `NGN`, `TZS`, `UGX`, `ZMW`
-                    KP corridors (SOLANA): `XAF`, `XOF`, `CDF`
+                  description: Fiat currency sent onchain for payment settlement.
                 destinationCurrency:
                   type: string
                   enum: [USDC, USDT]
-                  description: Stablecoin the wallet issuer receives in their moneyin wallet.
+                  description: Stablecoin received by the recipient.
                 blockchain:
                   type: string
                   enum: [BSC, SOLANA]
-                  description: |
-                    Must match the corridor:
-                    `BSC` → HC currencies (GHS, KES, NGN, TZS, UGX, ZMW)
-                    `SOLANA` → KP currencies (XAF, XOF, CDF)
+                  description: Supported blockchains for onchain settlement.
                 paymentMethod:
                   type: string
                   enum: [MOMO, BANK]
-                  description: Collection method. MOMO is supported for all corridors.
-                phoneNumber:
+                  description: The supported payment method used to debit funds from the customer.
+                accountNumber:
                   type: string
-                  description: |
-                    Customer phone number or account number.
-                    **HC corridors:** E.164 format without `+` prefix (e.g. `254712345678`).
-                    **KP corridors:** E.164 format with `+` prefix (e.g. `+237693329470`).
+                  description: Recipient phone number or account number.
                   example: "+254712345678"
                 accountName:
                   type: string
-                  description: Customer's registered account name.
+                  description: Recipient full name associated with the payment method.
                   example: "Jane Wanjiku"
                 paymentCode:
                   type: string
                   description: |
-                    MNO code. Must match the corridor.
-                    HC examples: `MPESA`, `MTN`, `AIRTEL`, `TIGO`, `ZAMTEL`
-                    KP examples: `MTN`, `ORANGE`
+                    Mobile network operator or bank code. Available MNO options: MPESA, MTN, AIRTEL, TIGO, TELEBIRR, CBE, ZAMTEL. Available bank options: OPAY, PALMPAY, MONIEPOINT.
                   example: "MPESA"
                 reference:
                   type: string
-                  description: Wallet issuer's own reference — stored and returned on webhooks.
+                  description: Wallet issuer's unique reference.
                   example: "order_abc123"
                 email:
                   type: string
                   format: email
-                  description: Customer email for transaction receipts (optional, HC only).
+                  description: Customer email for transaction receipts.
                 optionalIssuerFee:
                   type: string
                   enum: [YES, NO]
-                  description: |
-                    `YES` → 1.5% rate markup (base 1% + 0.5% issuer surcharge).
-                    `NO` → 1.0% rate markup (base margin only).
             examples:
               kesMomo:
                 summary: KES via M-Pesa (Honeycoin / BSC)
@@ -673,7 +645,7 @@ paths:
                   example: "254712345678"
                 paymentCode:
                   $ref: '#/components/schemas/PaymentCode'
-                  description: "Mobile network operator or bank code. Available MNO options: MPESA, MTN, AIRTEL, TIGO, TELEBIRR, CBE, ZAMTEL. Available bank options: OPAY, PALMPAY, MONIEPOINT."
+                  description: "Mobile network operator or bank code. Available MNO options: MPESA, MTN, AIRTEL, TIGO, ZAMTEL, ORANGE. Available bank options: OPAY, PALMPAY, MONIEPOINT."
                 
                 reference:
                   type: string
@@ -785,53 +757,6 @@ paths:
                 statusCode: 502
                 code: provider_unavailable
                 message: "circuit open — retrying in ~45s"
-
-  /v1/payments:
-    get:
-      operationId: listPayments
-      summary: List payments
-      description: Paginated list of payments for the authenticated tenant, newest first. Filter by your own reference using the `reference` query parameter.
-      tags: [Payments]
-      parameters:
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            default: 20
-            maximum: 100
-          description: Max results to return.
-        - name: offset
-          in: query
-          schema:
-            type: integer
-            default: 0
-          description: Number of results to skip.
-        - name: reference
-          in: query
-          schema:
-            type: string
-          description: Filter by your own reference (exact match).
-          example: "order-abc-001"
-      responses:
-        "200":
-          description: Paginated list of payments.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/PaymentResponse'
-                  total:
-                    type: integer
-                    description: Total matching payments.
-                  limit:
-                    type: integer
-                  offset:
-                    type: integer
-                required: [data, total, limit, offset]
 
   /v1/payments/{paymentId}:
     get:
