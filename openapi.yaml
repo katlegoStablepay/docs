@@ -43,7 +43,7 @@ components:
 
     CurrencyOut:
       type: string
-      enum: [GHS, KES, NGN, TZS, UGX, XAF, XOF, ZAR, ZMW]
+      enum: [CDF, GHS, KES, NGN, TZS, UGX, XAF, XOF, ZAR, ZMW]
       description: Fiat currency received by the recipient.
 
     CurrencyIn:
@@ -84,22 +84,28 @@ components:
       type: object
       properties:
         convertedAmount:
-          $ref: '#/components/schemas/UsdcAmount'
-          description: Total converted amount in the destination currency (inclusive of network fee, optional issuer fee and payout fee).
+          type: string
+          description: |
+            **Money-out:** Total USDC the caller must send (inclusive of exchange rate markup and payout fee).
+            **Money-in:** USDC amount the wallet issuer will receive after the processor fee is deducted.
+          example: "10.680000"
         exchangeRate:
           type: string
-          description: Market exchange rate sourced from local liquidity partners (inclusive of network fee and optional issuer fee).
+          description: Marked-up exchange rate — fiat units per 1 USDC.
           example: "128.218000"
-        payoutFee:
+        paymentFee:
           type: string
-          description: The payout fee comprises the mobile network operator or bank processing fee. 
+          description: |
+            Fee charged in fiat.
+            **Money-out:** Provider processing fee added on top of the recipient amount.
+            **Money-in:** Processor fee deducted from the customer's fiat before conversion.
           example: "20.250000"
         expiresAt:
           type: string
           format: date-time
           description: Timestamp after which this rate should be considered stale.
           example: "2024-01-15T10:31:30.000Z"
-      required: [convertedAmount, exchangeRate, payoutFee, expiresAt]
+      required: [convertedAmount, exchangeRate, paymentFee, expiresAt]
 
     # -------------------------------------------------------------------------
     # Payment
@@ -333,7 +339,17 @@ paths:
     get:
       operationId: fxConvert
       summary: Get a live FX rate (informational)
-      description: Convert between stablecoins and supported currencies using current exchange rates. 
+      description: |
+        Returns a live indicative exchange rate and fee breakdown. No rate is locked and nothing is written to the database.
+
+        **Direction is inferred from the currency pair — no extra parameter needed:**
+
+        | sourceCurrency | destinationCurrency | Direction |
+        |---|---|---|
+        | `USDC` / `USDT` | Fiat (KES, GHS, …) | **Money-out** — how much USDC to send |
+        | Fiat (KES, GHS, …) | `USDC` / `USDT` | **Money-in** — how much USDC the issuer receives |
+
+        Money-in is supported for: `GHS`, `KES`, `NGN`, `TZS`, `UGX`, `ZMW` (Honeycoin / BSC) and `XAF`, `XOF`, `CDF` (KotaniPay / Solana).
       tags: [FX]
       parameters:
         - name: amount
@@ -341,20 +357,29 @@ paths:
           required: true
           schema:
             type: number
-            example: 1350
-          description: Amount to convert.
+            example: 1000
+          description: |
+            **Money-out:** fiat amount the recipient will receive.
+            **Money-in:** fiat amount the customer will pay.
         - name: sourceCurrency
           in: query
           required: true
           schema:
-            $ref: '#/components/schemas/CurrencyIn'
+            type: string
+            enum: [USDC, USDT, GHS, KES, NGN, TZS, UGX, ZMW, XAF, XOF, CDF]
+          description: |
+            **Money-out:** stablecoin the caller is sending (`USDC` or `USDT`).
+            **Money-in:** fiat currency the customer is paying in.
           example: USDC
         - name: destinationCurrency
           in: query
           required: true
           schema:
-            $ref: '#/components/schemas/CurrencyOut'
-          description: Fiat currency received by the recipient.
+            type: string
+            enum: [GHS, KES, NGN, TZS, UGX, ZMW, XAF, XOF, CDF, ZAR, USDC, USDT]
+          description: |
+            **Money-out:** fiat currency the recipient receives.
+            **Money-in:** stablecoin the issuer receives (`USDC` or `USDT`).
           example: KES
         - name: paymentMethod
           in: query
@@ -367,8 +392,10 @@ paths:
           required: true
           schema:
             type: string
-            description: "Optional wallet issuer fee. "
             enum: [YES, NO]
+            description: |
+              `YES` → 1.5% rate markup (base 1% + 0.5% issuer fee baked in).
+              `NO` → 1.0% rate markup (base margin only).
       responses:
         "200":
           description: Indicative FX rate and fee breakdown for the requested corridor.
@@ -377,19 +404,33 @@ paths:
               schema:
                 $ref: '#/components/schemas/FxConvertResponse'
               examples:
-                kesMomo:
-                  summary: KES via M-Pesa
+                moneyoutKes:
+                  summary: Money-out — KES via M-Pesa
                   value:
                     convertedAmount: "10.680000"
                     exchangeRate: "128.218000"
-                    payoutFee: "20.250000"
+                    paymentFee: "20.250000"
                     expiresAt: "2024-01-15T10:31:30.000Z"
-                xafMomo:
-                  summary: XAF via MTN Mobile Money
+                moneyoutXaf:
+                  summary: Money-out — XAF via MTN (KotaniPay)
                   value:
                     convertedAmount: "8.120000"
                     exchangeRate: "622.500000"
-                    payoutFee: "50.000000"
+                    paymentFee: "50.000000"
+                    expiresAt: "2024-01-15T10:31:00.000Z"
+                moneyinGhs:
+                  summary: Money-in — customer pays GHS, issuer receives USDC
+                  value:
+                    convertedAmount: "6.062057"
+                    exchangeRate: "12.866920"
+                    paymentFee: "2.000000"
+                    expiresAt: "2024-01-15T10:31:30.000Z"
+                moneyinXaf:
+                  summary: Money-in — customer pays XAF, issuer receives USDC (KotaniPay)
+                  value:
+                    convertedAmount: "0.441105"
+                    exchangeRate: "666.600000"
+                    paymentFee: "6.000000"
                     expiresAt: "2024-01-15T10:31:00.000Z"
         "401":
           description: Invalid or missing API key.
@@ -398,21 +439,191 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         "422":
-          description: Validation error — missing or invalid query parameter.
+          description: Validation error — invalid currency pair, unsupported corridor, or missing parameter.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
               example:
                 statusCode: 422
-                message: Unprocessable Entity
-                errors:
-                  fieldErrors:
-                    destinationCurrency: ["Invalid enum value. Expected 'GHS' | 'KES' | 'NGN' | 'TZS' | 'UGX' | 'XAF' | 'XOF' | 'ZAR' | 'ZMW'"]
+                message: Moneyin is only supported for GHS, KES, NGN, TZS, UGX, ZMW, XAF, XOF, CDF.
 
   # ---------------------------------------------------------------------------
   # Payments
   # ---------------------------------------------------------------------------
+  /v1/payments/moneyin:
+    post:
+      operationId: submitMoneyin
+      summary: Submit a money-in payment
+      description: |
+        Initiate an onramp — the customer pays fiat via MOMO, and the wallet issuer receives USDC in their dedicated moneyin custody wallet.
+
+        Processing is async. The provider sends a MOMO prompt to the customer's phone; USDC is deposited to the wallet issuer's moneyin wallet once the customer approves and the provider confirms on-chain settlement.
+
+        **Provider routing by corridor:**
+
+        | Corridor | Provider | Blockchain | Currencies |
+        |---|---|---|---|
+        | Honeycoin | HC | BSC | GHS, KES, NGN, TZS, UGX, ZMW |
+        | KotaniPay | KP | SOLANA | XAF, XOF, CDF |
+
+        The `blockchain` field must match the corridor — `BSC` for HC currencies, `SOLANA` for KP currencies. The API returns a 422 if they don't match.
+
+        **Finality:** listen for `payment.succeeded` on your registered webhook. Both the fiat collection (`depositStatus`) and the on-chain USDC transfer (`onchainStatus`) must confirm before Stablepay marks the payment succeeded.
+      tags: [Payments]
+      parameters:
+        - name: idempotency-key
+          in: header
+          required: true
+          schema:
+            type: string
+          description: Unique key to deduplicate requests. Use a fresh value for each new payment.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [fiatAmount, sourceCurrency, destinationCurrency, blockchain, paymentMethod, phoneNumber, accountName, paymentCode, reference, optionalIssuerFee]
+              properties:
+                fiatAmount:
+                  type: string
+                  description: Fiat amount the end customer will be charged.
+                  example: "1000"
+                sourceCurrency:
+                  type: string
+                  enum: [GHS, KES, NGN, TZS, UGX, ZMW, XAF, XOF, CDF]
+                  description: |
+                    Fiat currency the customer is paying in.
+                    HC corridors (BSC): `GHS`, `KES`, `NGN`, `TZS`, `UGX`, `ZMW`
+                    KP corridors (SOLANA): `XAF`, `XOF`, `CDF`
+                destinationCurrency:
+                  type: string
+                  enum: [USDC, USDT]
+                  description: Stablecoin the wallet issuer receives in their moneyin wallet.
+                blockchain:
+                  type: string
+                  enum: [BSC, SOLANA]
+                  description: |
+                    Must match the corridor:
+                    `BSC` → HC currencies (GHS, KES, NGN, TZS, UGX, ZMW)
+                    `SOLANA` → KP currencies (XAF, XOF, CDF)
+                paymentMethod:
+                  type: string
+                  enum: [MOMO, BANK]
+                  description: Collection method. MOMO is supported for all corridors.
+                phoneNumber:
+                  type: string
+                  description: |
+                    Customer phone number or account number.
+                    **HC corridors:** E.164 format without `+` prefix (e.g. `254712345678`).
+                    **KP corridors:** E.164 format with `+` prefix (e.g. `+237693329470`).
+                  example: "+254712345678"
+                accountName:
+                  type: string
+                  description: Customer's registered account name.
+                  example: "Jane Wanjiku"
+                paymentCode:
+                  type: string
+                  description: |
+                    MNO code. Must match the corridor.
+                    HC examples: `MPESA`, `MTN`, `AIRTEL`, `TIGO`, `ZAMTEL`
+                    KP examples: `MTN`, `ORANGE`
+                  example: "MPESA"
+                reference:
+                  type: string
+                  description: Wallet issuer's own reference — stored and returned on webhooks.
+                  example: "order_abc123"
+                email:
+                  type: string
+                  format: email
+                  description: Customer email for transaction receipts (optional, HC only).
+                optionalIssuerFee:
+                  type: string
+                  enum: [YES, NO]
+                  description: |
+                    `YES` → 1.5% rate markup (base 1% + 0.5% issuer surcharge).
+                    `NO` → 1.0% rate markup (base margin only).
+            examples:
+              kesMomo:
+                summary: KES via M-Pesa (Honeycoin / BSC)
+                value:
+                  fiatAmount: "5000"
+                  sourceCurrency: KES
+                  destinationCurrency: USDC
+                  blockchain: BSC
+                  paymentMethod: MOMO
+                  phoneNumber: "+254712345678"
+                  accountName: Jane Wanjiku
+                  paymentCode: MPESA
+                  reference: order_abc123
+                  optionalIssuerFee: "NO"
+              xafMomo:
+                summary: XAF via Orange MoMo (KotaniPay / Solana)
+                value:
+                  fiatAmount: "300"
+                  sourceCurrency: XAF
+                  destinationCurrency: USDC
+                  blockchain: SOLANA
+                  paymentMethod: MOMO
+                  phoneNumber: "+237693329470"
+                  accountName: tester
+                  paymentCode: ORANGE
+                  reference: order_xyz456
+                  optionalIssuerFee: "NO"
+      responses:
+        "202":
+          description: |
+            Payment accepted. The provider will collect fiat from the customer asynchronously.
+            Listen for the `payment.succeeded` webhook for finality.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  paymentId:
+                    type: string
+                    description: Use this ID to track the payment status.
+                    example: pay_01HV8KZMRJPQR9S7T3XABCDEF
+                  status:
+                    type: string
+                    example: provider_accepted
+                  providerRef:
+                    type: string
+                    nullable: true
+                    description: Provider's internal transaction ID.
+                  convertedAmount:
+                    type: string
+                    description: USDC amount that will be credited to the moneyin wallet after the spread is deducted.
+                    example: "37.395278"
+                  createdAt:
+                    type: string
+                    format: date-time
+                required: [paymentId, status, convertedAmount, createdAt]
+        "400":
+          description: Validation error or missing idempotency-key header.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "401":
+          description: Invalid or missing API key.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "422":
+          description: |
+            Unprocessable — blockchain/currency mismatch, unsupported corridor, or invalid field.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                statusCode: 422
+                code: validation_error
+                message: "XAF requires blockchain=SOLANA (KotaniPay corridor)"
+
   /v1/payments/moneyout:
     post:
       operationId: submitMoneyout

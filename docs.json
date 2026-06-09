@@ -53,7 +53,7 @@
   "navigation": {
   "tabs": [
     {
-      "tab": "Stablepay Money Out API",
+      "tab": "Stablepay Onchain API",
       "groups": [
         {
           "group": "Account",
@@ -65,7 +65,13 @@
           "group": "Payments",
           "pages": [
             "api-reference/payments/submit-moneyout",
-            "api-reference/payments/get-payment",
+            "api-reference/payments/submit-moneyin",
+            "api-reference/payments/get-payment"
+          ]
+        },
+        {
+          "group": "FX",
+          "pages": [
             "api-reference/fx/convert"
           ]
         },
