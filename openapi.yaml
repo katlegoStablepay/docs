@@ -340,16 +340,7 @@ paths:
       operationId: fxConvert
       summary: Get a live FX rate (informational)
       description: |
-        Returns a live indicative exchange rate and fee breakdown. No rate is locked and nothing is written to the database.
-
-        **Direction is inferred from the currency pair — no extra parameter needed:**
-
-        | sourceCurrency | destinationCurrency | Direction |
-        |---|---|---|
-        | `USDC` / `USDT` | Fiat (KES, GHS, …) | **Money-out** — how much USDC to send |
-        | Fiat (KES, GHS, …) | `USDC` / `USDT` | **Money-in** — how much USDC the issuer receives |
-
-        Money-in is supported for: `GHS`, `KES`, `NGN`, `TZS`, `UGX`, `ZMW` (Honeycoin / BSC) and `XAF`, `XOF`, `CDF` (KotaniPay / Solana).
+        Returns a live indicative exchange rate and fee breakdown.
       tags: [FX]
       parameters:
         - name: amount
@@ -358,18 +349,14 @@ paths:
           schema:
             type: number
             example: 1000
-          description: |
-            **Money-out:** fiat amount the recipient will receive.
-            **Money-in:** fiat amount the customer will pay.
+          description: Amount to convert
         - name: sourceCurrency
           in: query
           required: true
           schema:
             type: string
             enum: [USDC, USDT, GHS, KES, NGN, TZS, UGX, ZMW, XAF, XOF, CDF]
-          description: |
-            **Money-out:** stablecoin the caller is sending (`USDC` or `USDT`).
-            **Money-in:** fiat currency the customer is paying in.
+          description: Stablecoin or fiat currency to convert from. For money-out, this is the stablecoin sent onchain. For money-in, this is the fiat currency the customer pays.
           example: USDC
         - name: destinationCurrency
           in: query
@@ -377,9 +364,7 @@ paths:
           schema:
             type: string
             enum: [GHS, KES, NGN, TZS, UGX, ZMW, XAF, XOF, CDF, ZAR, USDC, USDT]
-          description: |
-            **Money-out:** fiat currency the recipient receives.
-            **Money-in:** stablecoin the issuer receives (`USDC` or `USDT`).
+          description: Fiat or stablecoin currency to convert to. For money-out, this is the fiat currency the recipient receives. For money-in, this is the stablecoin received onchain.
           example: KES
         - name: paymentMethod
           in: query
@@ -393,9 +378,6 @@ paths:
           schema:
             type: string
             enum: [YES, NO]
-            description: |
-              `YES` → 1.5% rate markup (base 1% + 0.5% issuer fee baked in).
-              `NO` → 1.0% rate markup (base margin only).
       responses:
         "200":
           description: Indicative FX rate and fee breakdown for the requested corridor.
@@ -412,7 +394,7 @@ paths:
                     paymentFee: "20.250000"
                     expiresAt: "2024-01-15T10:31:30.000Z"
                 moneyoutXaf:
-                  summary: Money-out — XAF via MTN (KotaniPay)
+                  summary: Money-out — XAF via MTN
                   value:
                     convertedAmount: "8.120000"
                     exchangeRate: "622.500000"
@@ -426,7 +408,7 @@ paths:
                     paymentFee: "2.000000"
                     expiresAt: "2024-01-15T10:31:30.000Z"
                 moneyinXaf:
-                  summary: Money-in — customer pays XAF, issuer receives USDC (KotaniPay)
+                  summary: Money-in — customer pays XAF, issuer receives USDC
                   value:
                     convertedAmount: "0.441105"
                     exchangeRate: "666.600000"
@@ -463,7 +445,7 @@ paths:
           required: true
           schema:
             type: string
-          description: Unique key to deduplicate requests. Use a fresh value for each new payment.
+          description: Client-generated UUID. Required to prevent duplicate payments.
       requestBody:
         required: true
         content:
@@ -518,7 +500,7 @@ paths:
                   enum: [YES, NO]
             examples:
               kesMomo:
-                summary: KES via M-Pesa (Honeycoin / BSC)
+                summary: KES via M-Pesa 
                 value:
                   fiatAmount: "5000"
                   sourceCurrency: KES
@@ -531,7 +513,7 @@ paths:
                   reference: order_abc123
                   optionalIssuerFee: "NO"
               xafMomo:
-                summary: XAF via Orange MoMo (KotaniPay / Solana)
+                summary: XAF via Orange MoMo
                 value:
                   fiatAmount: "300"
                   sourceCurrency: XAF
@@ -594,7 +576,7 @@ paths:
               example:
                 statusCode: 422
                 code: validation_error
-                message: "XAF requires blockchain=SOLANA (KotaniPay corridor)"
+                message: "XAF requires blockchain=SOLANA"
 
   /v1/payments/moneyout:
     post:
@@ -693,7 +675,7 @@ paths:
                   refundAddress: "0xAbCd1234AbCd1234AbCd1234AbCd1234AbCd1234"
                   optionalIssuerFee: NO
               xafSolana:
-                summary: XAF via MTN MoMo on Solana (KotaniPay)
+                summary: XAF via MTN MoMo on Solana
                 value:
                   fiatAmount: 5000
                   sourceCurrency: USDC
