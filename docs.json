@@ -64,15 +64,10 @@
         {
           "group": "Payments",
           "pages": [
+            "api-reference/fx/convert",
             "api-reference/payments/submit-moneyout",
             "api-reference/payments/submit-moneyin",
             "api-reference/payments/get-payment"
-          ]
-        },
-        {
-          "group": "FX",
-          "pages": [
-            "api-reference/fx/convert"
           ]
         },
         {
