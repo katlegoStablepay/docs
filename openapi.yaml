@@ -43,7 +43,7 @@ components:
 
     CurrencyOut:
       type: string
-      enum: [CDF, GHS, KES, NGN, TZS, UGX, XAF, XOF, ZAR, ZMW]
+      enum: [CDF, GHS, KES, NGN, TZS, UGX, XAF, XOF, ZMW]
       description: Fiat currency received by the recipient.
 
     CurrencyIn:
@@ -63,7 +63,7 @@ components:
 
     Country:
       type: string
-      enum: [BF, BJ, CI, CM, GH, KE, NG, SN, TZ, UG, ZA, ZM]
+      enum: [BF, BJ, CD, CI, CM, GH, KE, NG, SN, TZ, UG, ZM]
       description: Recipient country code.
 
     PaymentStatus:
@@ -85,9 +85,7 @@ components:
       properties:
         convertedAmount:
           type: string
-          description: |
-            **Money-out:** Total USDC the caller must send (inclusive of exchange rate markup and payout fee).
-            **Money-in:** USDC amount the wallet issuer will receive after the processor fee is deducted.
+          description: Total converted amount in the destination currency (inclusive of network fee, optional issuer fee and payment fee).
           example: "10.680000"
         exchangeRate:
           type: string
@@ -251,45 +249,51 @@ paths:
               properties:
                 accountNumber:
                   type: string
-                  description: The account number or phone number to resolve.
+                  description: The account number of the payment method. Must be in E.164 format with the + prefix (e.g. +254712345678) when paymentMethod is MOMO.
                   example: "0722000001"
-                destinationCurrency:
-                  # $ref: '#/components/schemas/CurrencyOut'
-                  enum: [GHS, KES, NGN, TZS, UGX, ZMW]
-                  description: Fiat currency associated with the account.
+                country:
+                  type: string
+                  enum: [GH, KE, NG, TZ, UG, ZM, CM, CI, SN, BJ, BF, CD, ZA]
+                  description: Recipient country code.
                 paymentMethod:
                   $ref: '#/components/schemas/PaymentMethod'
                 bankCode:
                   type: string
                   description: Bank code — required when paymentMethod is BANK.
                   example: "01"
-              required: [accountNumber, destinationCurrency, paymentMethod]
+              required: [accountNumber, country, paymentMethod]
             examples:
               kesMomo:
                 summary: KES M-Pesa number
                 value:
-                  accountNumber: "0722000001"
-                  destinationCurrency: "KES"
+                  accountNumber: "+254722000001"
+                  country: "KE"
                   paymentMethod: "MOMO"
               kesBank:
                 summary: KES bank account
                 value:
                   accountNumber: "1234567890"
-                  destinationCurrency: "KES"
+                  country: "KE"
                   paymentMethod: "BANK"
                   bankCode: "01"
               ngnBank:
                 summary: NGN bank account
                 value:
                   accountNumber: "0123456789"
-                  destinationCurrency: "NGN"
+                  country: "NG"
                   paymentMethod: "BANK"
                   bankCode: "057"
               ghsMomo:
                 summary: GHS MoMo number (operator auto-detected)
                 value:
-                  accountNumber: "0241234567"
-                  destinationCurrency: "GHS"
+                  accountNumber: "+233241234567"
+                  country: "GH"
+                  paymentMethod: "MOMO"
+              xafMomo:
+                summary: Cameroon MoMo number (operator detected from phone prefix)
+                value:
+                  accountNumber: "+237650123456"
+                  country: "CM"
                   paymentMethod: "MOMO"
       responses:
         "200":
@@ -317,6 +321,12 @@ paths:
                     accountName: "John Kamau"
                     accountNumber: "1234567890"
                     network: null
+                xafMomo:
+                  summary: Cameroon MoMo (operator detected from phone prefix)
+                  value:
+                    accountName: null
+                    accountNumber: "+237650123456"
+                    network: "MTN"
         "401":
           description: Invalid or missing API key.
           content:
@@ -353,14 +363,16 @@ paths:
           required: true
           schema:
             type: string
-          description: "Stablecoin for money-in or fiat for money-out. Available options: `GHS`, `KES`, `NGN`, `TZS`, `UGX`, `ZMW`, `XAF`, `XOF`, `CDF`, `USDT`,`USDC`."
+            enum: [USDC, USDT, CDF, GHS, KES, NGN, TZS, UGX, XAF, XOF, ZAR, ZMW]
+          description: "Stablecoin for money-in or fiat for money-out."
           example: USDC
         - name: destinationCurrency
           in: query
           required: true
           schema:
             type: string
-          description: "Stablecoin for money-in or fiat for money-out. Available options: `GHS`, `KES`, `NGN`, `TZS`, `UGX`, `ZMW`, `XAF`, `XOF`, `CDF`, `USDT`,`USDC`."
+            enum: [CDF, GHS, KES, NGN, TZS, UGX, XAF, XOF, ZAR, ZMW, USDC, USDT]
+          description: "Stablecoin for money-in or fiat for money-out."
           example: KES
         - name: paymentMethod
           in: query
@@ -368,7 +380,6 @@ paths:
           schema:
             type: string
             enum: [MOMO, BANK, PAYBILL, TILL]
-          description: "Payment method for the corridor. Available options: `MOMO`, `BANK`, `PAYBILL`, `TILL`."
           example: MOMO
         - name: optionalIssuerFee
           in: query
@@ -376,7 +387,6 @@ paths:
           schema:
             type: string
             enum: [YES, NO]
-          description: "`Available options: YES`,`NO`"
           example: "NO"
       responses:
         "200":
@@ -476,7 +486,7 @@ paths:
                   description: The supported payment method used to debit funds from the customer.
                 accountNumber:
                   type: string
-                  description: Recipient phone number or account number.
+                  description: The account number of the payment method. Must be in E.164 format with the + prefix (e.g. +254712345678) when paymentMethod is MOMO.
                   example: "+254712345678"
                 accountName:
                   type: string
@@ -490,7 +500,7 @@ paths:
                 reference:
                   type: string
                   description: Wallet issuer's unique reference.
-                  example: "order_abc123"
+                  example: "csh-txn-20260506-001"
                 email:
                   type: string
                   format: email
@@ -623,8 +633,8 @@ paths:
                   example: Jane Doe
                 accountNumber:
                   type: string
-                  description: Recipient phone number or account number.
-                  example: "254712345678"
+                  description: Recipient phone number or account number. Must be in E.164 format with the + prefix (e.g. +254712345678) and match the dialing code for `country` when paymentMethod is MOMO.
+                  example: "+254712345678"
                 paymentCode:
                   $ref: '#/components/schemas/PaymentCode'
                   description: "Mobile network operator or bank code. Available MNO options: `MPESA`, `MTN`, `AIRTEL`, `TIGO`, `ZAMTEL`, `ORANGE`. Available bank options: `OPAY`, `PALMPAY`, `MONIEPOINT`."
@@ -668,7 +678,7 @@ paths:
                   blockchain: BSC
                   paymentMethod: MOMO
                   accountName: Jane Doe
-                  accountNumber: "254712345678"
+                  accountNumber: "+254712345678"
                   paymentCode: MPESA
                   reference: csh-txn-20260506-001
                   refundAddress: "0xAbCd1234AbCd1234AbCd1234AbCd1234AbCd1234"
@@ -683,7 +693,7 @@ paths:
                   blockchain: SOLANA
                   paymentMethod: MOMO
                   accountName: Jean Dupont
-                  accountNumber: "237612345678"
+                  accountNumber: "+237612345678"
                   paymentCode: MTN
                   reference: csh-txn-20260506-002
                   refundAddress: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
