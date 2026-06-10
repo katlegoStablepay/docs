@@ -91,19 +91,17 @@ components:
           example: "10.680000"
         exchangeRate:
           type: string
-          description: Marked-up exchange rate — fiat units per 1 USDC.
+          description: Market exchange rate sourced from local liquidity partners (inclusive of network fee and optional issuer fee)
           example: "128.218000"
         paymentFee:
           type: string
           description: |
-            Fee charged in fiat.
-            **Money-out:** Provider processing fee added on top of the recipient amount.
-            **Money-in:** Processor fee deducted from the customer's fiat before conversion.
+            The fee comprises the mobile network operator or bank processing fee.
           example: "20.250000"
         expiresAt:
           type: string
           format: date-time
-          description: Timestamp after which this rate should be considered stale.
+          description: Timestamp when the conversion amount expires.
           example: "2024-01-15T10:31:30.000Z"
       required: [convertedAmount, exchangeRate, paymentFee, expiresAt]
 
@@ -355,22 +353,22 @@ paths:
           required: true
           schema:
             type: string
-            enum: [USDC, USDT, GHS, KES, NGN, TZS, UGX, ZMW, XAF, XOF, CDF]
-          description: Stablecoin or fiat currency to convert from. For money-out, this is the stablecoin sent onchain. For money-in, this is the fiat currency the customer pays.
+          description: "Stablecoin for money-in or fiat for money-out. Available options: `GHS`, `KES`, `NGN`, `TZS`, `UGX`, `ZMW`, `XAF`, `XOF`, `CDF`, `USDT`,`USDC`."
           example: USDC
         - name: destinationCurrency
           in: query
           required: true
           schema:
             type: string
-            enum: [GHS, KES, NGN, TZS, UGX, ZMW, XAF, XOF, CDF, ZAR, USDC, USDT]
-          description: Fiat or stablecoin currency to convert to. For money-out, this is the fiat currency the recipient receives. For money-in, this is the stablecoin received onchain.
+          description: "Stablecoin for money-in or fiat for money-out. Available options: `GHS`, `KES`, `NGN`, `TZS`, `UGX`, `ZMW`, `XAF`, `XOF`, `CDF`, `USDT`,`USDC`."
           example: KES
         - name: paymentMethod
           in: query
           required: true
           schema:
-            $ref: '#/components/schemas/PaymentMethod'
+            type: string
+            enum: [MOMO, BANK, PAYBILL, TILL]
+          description: "Payment method for the corridor. Available options: `MOMO`, `BANK`, `PAYBILL`, `TILL`."
           example: MOMO
         - name: optionalIssuerFee
           in: query
@@ -378,6 +376,8 @@ paths:
           schema:
             type: string
             enum: [YES, NO]
+          description: "`Available options: YES`,`NO`"
+          example: "NO"
       responses:
         "200":
           description: Indicative FX rate and fee breakdown for the requested corridor.
@@ -627,7 +627,7 @@ paths:
                   example: "254712345678"
                 paymentCode:
                   $ref: '#/components/schemas/PaymentCode'
-                  description: "Mobile network operator or bank code. Available MNO options: MPESA, MTN, AIRTEL, TIGO, ZAMTEL, ORANGE. Available bank options: OPAY, PALMPAY, MONIEPOINT."
+                  description: "Mobile network operator or bank code. Available MNO options: `MPESA`, `MTN`, `AIRTEL`, `TIGO`, `ZAMTEL`, `ORANGE`. Available bank options: `OPAY`, `PALMPAY`, `MONIEPOINT`."
                 
                 reference:
                   type: string
@@ -644,7 +644,6 @@ paths:
                 optionalIssuerFee:
                   type: string
                   enum: [YES, NO]
-                  example: NO
               required:
                 - fiatAmount
                 - sourceCurrency
@@ -777,28 +776,6 @@ paths:
       summary: Register a webhook endpoint
       description: |
         Register a URL to receive outbound event notifications.
-
-        The HMAC signing secret is generated server-side and returned **once** in
-        this response — store it securely. You will use it to verify the
-        `Stablepay-Signature` header on every delivered event.
-
-        **Signature verification (Node.js):**
-        ```js
-        const crypto = require('crypto');
-        function verify(secret, body, sigHeader) {
-          const expected = 'sha256=' + crypto.createHmac('sha256', secret).update(body).digest('hex');
-          return crypto.timingSafeEqual(Buffer.from(sigHeader), Buffer.from(expected));
-        }
-        ```
-
-        **Event types:**
-        | Type | Description |
-        |---|---|
-        | `payment.processing` | USDC broadcast on-chain |
-        | `payment.succeeded` | Payout confirmed by provider |
-        | `payment.failed` | Payout failed (all retries exhausted) |
-        | `payment.refunded` | Payment manually refunded by ops |
-
         Pass an empty `events` array to subscribe to all event types.
       tags: [Webhooks]
       requestBody:

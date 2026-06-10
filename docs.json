@@ -74,7 +74,8 @@
           "group": "Webhooks",
           "pages": [
             "api-reference/webhooks/register",
-            "api-reference/webhooks/replay-event"
+            "api-reference/webhooks/replay-event",
+            "api-reference/webhooks/list-events"
           ]
         }
       ]
