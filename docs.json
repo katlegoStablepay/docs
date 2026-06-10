@@ -58,16 +58,16 @@
         {
           "group": "Account",
           "pages": [
-            "api-reference/account/validate"
+            "api-reference/validate"
           ]
         },
         {
           "group": "Payments",
           "pages": [
-            "api-reference/fx/convert",
-            "api-reference/payments/submit-moneyout",
-            "api-reference/payments/submit-moneyin",
-            "api-reference/payments/get-payment"
+            "api-reference/convert",
+            "api-reference/submit-moneyout",
+            "api-reference/submit-moneyin",
+            "api-reference/get-payment"
           ]
         },
         {
