@@ -35,7 +35,7 @@
     "primary": {
       "type": "button",
       "label": "Console",
-      "href": "https://stablepay-dashboard-production.up.railway.app/"
+      "href": "https://console.stablepay.io/"
     }
   },
   "api": {
