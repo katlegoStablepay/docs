@@ -77,6 +77,12 @@ components:
       description: USDC amount as a decimal string with exactly 6 decimal places. For example, `"10.500000"`.
       example: "10.500000"
 
+    XOFCountries:
+      type: string
+      enum: [BJ, BF, CD, CI, SN]
+      description: |
+        For XOF payments, the recipient country must be specified.
+    
     # -------------------------------------------------------------------------
     # FX convert (informational, no rate lock)
     # -------------------------------------------------------------------------
@@ -388,6 +394,14 @@ paths:
             type: string
             enum: [YES, NO]
           example: "NO"
+        - name: country
+          in: query
+          required: false
+          description: |
+            For XOF payments, the recipient country must be specified.
+          schema:
+            $ref: '#/components/schemas/XOFCountries'
+          example: SN
       responses:
         "200":
           description: Indicative FX rate and fee breakdown for the requested corridor.
