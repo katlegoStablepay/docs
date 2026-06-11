@@ -443,7 +443,7 @@ paths:
   # ---------------------------------------------------------------------------
   # Payments
   # ---------------------------------------------------------------------------
-  /v1/payments/moneyin:
+  /v1/payments/in:
     post:
       operationId: submitMoneyin
       summary: Submit a money-in payment
@@ -588,7 +588,7 @@ paths:
                 code: validation_error
                 message: "XAF requires blockchain=SOLANA"
 
-  /v1/payments/moneyout:
+  /v1/payments/out:
     post:
       operationId: submitMoneyout
       summary: Submit a money-out payment
