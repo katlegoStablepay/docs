@@ -58,24 +58,25 @@
         {
           "group": "Account",
           "pages": [
-            "api-reference/validate"
+            "validate"
           ]
         },
         {
           "group": "Payments",
+          "root": "collect-payin",
           "pages": [
-            "api-reference/convert",
-            "api-reference/submit-moneyout",
-            "api-reference/submit-moneyin",
-            "api-reference/get-payment"
+            "create-payout",
+            "collect-payin",
+            "get-payment",
+            "convert"
           ]
         },
         {
           "group": "Webhooks",
           "pages": [
-            "api-reference/webhooks/register",
-            "api-reference/webhooks/replay-event",
-            "api-reference/webhooks/list-events"
+            "webhooks/register",
+            "webhooks/replay-event",
+            "webhooks/list-events"
           ]
         }
       ]
