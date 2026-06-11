@@ -600,7 +600,7 @@ paths:
               example:
                 statusCode: 422
                 code: validation_error
-                message: "XAF requires blockchain=SOLANA"
+                message: "KES requires blockchain=BSC (Honeycoin corridor)"
 
   /v1/payments/out:
     post:
