@@ -462,7 +462,7 @@ paths:
           application/json:
             schema:
               type: object
-              required: [fiatAmount, sourceCurrency, destinationCurrency, blockchain, paymentMethod, phoneNumber, accountName, paymentCode, reference, optionalIssuerFee]
+              required: [fiatAmount, sourceCurrency, destinationCurrency, blockchain, paymentMethod, accountNumber, accountName, paymentCode, reference, optionalIssuerFee]
               properties:
                 fiatAmount:
                   type: string
@@ -517,7 +517,7 @@ paths:
                   destinationCurrency: USDC
                   blockchain: BSC
                   paymentMethod: MOMO
-                  phoneNumber: "+254712345678"
+                  accountNumber: "+254712345678"
                   accountName: Jane Wanjiku
                   paymentCode: MPESA
                   reference: order_abc123
@@ -530,7 +530,7 @@ paths:
                   destinationCurrency: USDC
                   blockchain: SOLANA
                   paymentMethod: MOMO
-                  phoneNumber: "+237693329470"
+                  accountNumber: "+237693329470"
                   accountName: tester
                   paymentCode: ORANGE
                   reference: order_xyz456
