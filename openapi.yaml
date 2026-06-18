@@ -59,7 +59,7 @@ components:
     PaymentMethod:
       type: string
       enum: [BANK, MOMO, PAYBILL, TILL]
-      description: How the recipient receives funds.
+      description: The supported payment method used to deliver funds to the recipient.
 
     Country:
       type: string
@@ -497,7 +497,7 @@ paths:
                 paymentMethod:
                   type: string
                   enum: [MOMO, BANK]
-                  description: The supported payment method used to debit funds from the customer.
+                  description: The supported payment method used to deliver funds to the recipient.
                 accountNumber:
                   type: string
                   description: The account number of the payment method. Must be in E.164 format with the + prefix when paymentMethod is MOMO.
