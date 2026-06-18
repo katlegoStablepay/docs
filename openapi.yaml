@@ -200,7 +200,7 @@ components:
         accountName:
           type: string
           nullable: true
-          description: Registered account holder name. Null when the corridor only supports network detection.
+          description: Registered account holder name is resolved for Kenya (MPESA, PAYBILL & TILL) and Nigeria (BANK). Null when the corridor only supports network detection.
           example: "Jane Wanjiku"
         accountNumber:
           type: string
@@ -265,8 +265,9 @@ paths:
                   $ref: '#/components/schemas/PaymentMethod'
                 bankCode:
                   type: string
-                  description: Bank code — required when paymentMethod is BANK.
-                  example: "01"
+                  enum: [OPAY, PALMPAY, MONIEPOINT]
+                  description: Required when paymentMethod is BANK.
+                  example: "OPAY"
               required: [accountNumber, country, paymentMethod]
             examples:
               kesMomo:
