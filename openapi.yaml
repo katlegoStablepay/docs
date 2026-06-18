@@ -204,8 +204,8 @@ components:
           example: "Jane Wanjiku"
         accountNumber:
           type: string
-          description: The account number as submitted.
-          example: "0722000001"
+          description: The account number of the payment method. Must be in E.164 format with the + prefix when paymentMethod is MOMO.
+          example: "+254712345678"
         network:
           type: string
           nullable: true
@@ -255,8 +255,8 @@ paths:
               properties:
                 accountNumber:
                   type: string
-                  description: The account number of the payment method. Must be in E.164 format with the + prefix (e.g. +254712345678) when paymentMethod is MOMO.
-                  example: "0722000001"
+                  description: The account number of the payment method. Must be in E.164 format with the + prefix when paymentMethod is MOMO.
+                  example: "+254712345678"
                 country:
                   type: string
                   enum: [GH, KE, NG, TZ, UG, ZM, CM, CI, SN, BJ, BF, CD, ZA]
@@ -272,20 +272,20 @@ paths:
               kesMomo:
                 summary: KES M-Pesa number
                 value:
-                  accountNumber: "+254722000001"
+                  accountNumber: "+254712345678"
                   country: "KE"
                   paymentMethod: "MOMO"
               kesBank:
                 summary: KES bank account
                 value:
-                  accountNumber: "1234567890"
+                  accountNumber: "+254712345678"
                   country: "KE"
                   paymentMethod: "BANK"
                   bankCode: "01"
               ngnBank:
                 summary: NGN bank account
                 value:
-                  accountNumber: "0123456789"
+                  accountNumber: "+254712345678"
                   country: "NG"
                   paymentMethod: "BANK"
                   bankCode: "057"
@@ -313,7 +313,7 @@ paths:
                   summary: KES M-Pesa (full name resolution)
                   value:
                     accountName: "Jane Wanjiku"
-                    accountNumber: "0722000001"
+                    accountNumber: "+254712345678"
                     network: "MPESA"
                 ghsMomo:
                   summary: GHS MoMo (network only)
@@ -325,7 +325,7 @@ paths:
                   summary: KES bank account
                   value:
                     accountName: "John Kamau"
-                    accountNumber: "1234567890"
+                    accountNumber: "+254712345678"
                     network: null
                 xafMomo:
                   summary: Cameroon MoMo (operator detected from phone prefix)
@@ -500,7 +500,7 @@ paths:
                   description: The supported payment method used to debit funds from the customer.
                 accountNumber:
                   type: string
-                  description: The account number of the payment method. Must be in E.164 format with the + prefix (e.g. +254712345678) when paymentMethod is MOMO.
+                  description: The account number of the payment method. Must be in E.164 format with the + prefix when paymentMethod is MOMO.
                   example: "+254712345678"
                 accountName:
                   type: string
@@ -647,7 +647,7 @@ paths:
                   example: Jane Doe
                 accountNumber:
                   type: string
-                  description: Recipient phone number or account number. Must be in E.164 format with the + prefix (e.g. +254712345678) and match the dialing code for `country` when paymentMethod is MOMO.
+                  description: The account number of the payment method. Must be in E.164 format with the + prefix when paymentMethod is MOMO.
                   example: "+254712345678"
                 paymentCode:
                   $ref: '#/components/schemas/PaymentCode'
