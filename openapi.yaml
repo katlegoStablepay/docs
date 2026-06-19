@@ -38,7 +38,7 @@ components:
       type: string
       description: |
         Mobile network operator or bank code. Required for money-out payments.
-        MNO options: MPESA, MTN, AIRTEL, TIGO, ZAMTEL, ORANGE, MOOV, FREE.
+        MNO options: MPESA, MTN, AIRTEL, TIGO, ZAMTEL,HALOTEL, VODACOM, ORANGE, MOOV, FREE.
         Bank options: OPAY, PALMPAY, MONIEPOINT.
 
     CurrencyOut:
@@ -102,12 +102,12 @@ components:
           description: |
             The fee comprises the mobile network operator or bank processing fee.
           example: "20.250000"
-        expiresAt:
-          type: string
-          format: date-time
-          description: Timestamp when the conversion amount expires.
-          example: "2024-01-15T10:31:30.000Z"
-      required: [convertedAmount, exchangeRate, paymentFee, expiresAt]
+        expiryTimestamp:
+          type: integer
+          format: int64
+          description: Unix timestamp (seconds) after which this rate expires.
+          example: 1750334460
+      required: [convertedAmount, exchangeRate, paymentFee, expiryTimestamp]
 
     # -------------------------------------------------------------------------
     # Payment
@@ -370,17 +370,15 @@ paths:
           required: true
           schema:
             type: string
-            enum: [USDC, USDT, CDF, GHS, KES, NGN, TZS, UGX, XAF, XOF, ZAR, ZMW]
-          description: "Stablecoin for money-in or fiat for money-out."
-          example: USDC
+            enum: [CDF, GHS, KES, NGN, TZS, UGX, XAF, XOF, ZAR, ZMW]
+          example: KES
         - name: destinationCurrency
           in: query
           required: true
           schema:
             type: string
-            enum: [CDF, GHS, KES, NGN, TZS, UGX, XAF, XOF, ZAR, ZMW, USDC, USDT]
-          description: "Stablecoin for money-in or fiat for money-out."
-          example: KES
+            enum: [USDC, USDT]
+          example: USDC
         - name: paymentMethod
           in: query
           required: true
@@ -388,6 +386,16 @@ paths:
             type: string
             enum: [MOMO, BANK, PAYBILL, TILL]
           example: MOMO
+        - name: direction
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [payout, payin]
+          description: |
+            payout: issuer sends stablecoin → recipient receives fiat.
+            payin: customer pays fiat → issuer receives stablecoin.
+          example: payout
         - name: optionalIssuerFee
           in: query
           required: true
