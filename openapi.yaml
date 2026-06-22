@@ -10,7 +10,7 @@ info:
     email: hello@stablepay.io
 
 servers:
-  - url: https://stablepay-money-api-production.up.railway.app
+  - url: https://api.stablepay.ai
     description: Production
 
 security:
