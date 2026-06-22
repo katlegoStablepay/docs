@@ -44,7 +44,7 @@
       "display": "interactive"
     },
     "mdx": {
-      "server": "https://stablepay-money-api-production.up.railway.app",
+      "server": "https://api.stablepay.ai",
       "auth": {
         "method": "bearer"
       }
