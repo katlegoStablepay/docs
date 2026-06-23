@@ -524,10 +524,9 @@ paths:
                   type: string
                   description: Wallet issuer's unique reference.
                   example: "csh-txn-20260506-001"
-                email:
+                paymentIdentifier:
                   type: string
-                  format: email
-                  description: Customer email for transaction receipts.
+                  description: A method-specific identifier required for processing the payment. Examples include BVN (BANK) Paybill business number (PAYBILL), or other market specific references.
             examples:
               kesMomo:
                 summary: KES via M-Pesa
@@ -661,9 +660,9 @@ paths:
                   type: string
                   description: Wallet issuer's unique reference.
                   example: csh-txn-20260506-001
-                businessNumber:
+                paymentIdentifier:
                   type: string
-                  description: "Only required for PAYBILL: M-Pesa Paybill business number (6 digits)."
+                  description: "A method-specific identifier required for processing the payment. Examples include BVN (BANK) Paybill business number (PAYBILL), or other market specific references."
                   example: "123456"
               required:
                 - fiatAmount
