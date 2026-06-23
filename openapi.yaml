@@ -526,7 +526,7 @@ paths:
                   example: "csh-txn-20260506-001"
                 paymentIdentifier:
                   type: string
-                  description: A method-specific identifier required for processing the payment. Examples include BVN (BANK) Paybill business number (PAYBILL), or other market specific references.
+                  description: A method-specific identifier required for processing the payment. Examples include BVN (BANK) or other market specific references.
             examples:
               kesMomo:
                 summary: KES via M-Pesa
