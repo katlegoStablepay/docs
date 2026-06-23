@@ -75,7 +75,7 @@ components:
     UsdcAmount:
       type: string
       description: USDC amount as a decimal string with exactly 6 decimal places. For example, `"10.500000"`.
-      example: "10.500000"
+      example: "10.500"
 
     XOFCountries:
       type: string
@@ -92,7 +92,7 @@ components:
         convertedAmount:
           type: string
           description: Total converted amount in the destination currency (inclusive of network fee, optional issuer fee and payment fee).
-          example: "10.680000"
+          example: "10.680"
         exchangeRate:
           type: string
           description: Market exchange rate sourced from local liquidity partners (inclusive of network fee and optional issuer fee)
@@ -101,7 +101,7 @@ components:
           type: string
           description: |
             The fee comprises the mobile network operator or bank processing fee.
-          example: "20.250000"
+          example: "20"
         expiryTimestamp:
           type: integer
           format: int64
@@ -128,11 +128,11 @@ components:
         amountStablecoin:
           type: string
           description: Total stablecoin amount charged.
-          example: "10.500000"
+          example: "10.500"
         fiatAmount:
           type: string
           description: Fiat amount the recipient receives.
-          example: "1350.000000"
+          example: "1350"
         destinationCurrency:
           $ref: '#/components/schemas/CurrencyOut'
         providerRef:
@@ -422,30 +422,30 @@ paths:
                 moneyoutKes:
                   summary: Money-out — KES via M-Pesa
                   value:
-                    convertedAmount: "10.680000"
+                    convertedAmount: "10.680"
                     exchangeRate: "128.218000"
-                    paymentFee: "20.250000"
+                    paymentFee: "20"
                     expiresAt: "2024-01-15T10:31:30.000Z"
                 moneyoutXaf:
                   summary: Money-out — XAF via MTN
                   value:
-                    convertedAmount: "8.120000"
+                    convertedAmount: "8.120"
                     exchangeRate: "622.500000"
-                    paymentFee: "50.000000"
+                    paymentFee: "50"
                     expiresAt: "2024-01-15T10:31:00.000Z"
                 moneyinGhs:
                   summary: Money-in — customer pays GHS, issuer receives USDC
                   value:
-                    convertedAmount: "6.062057"
+                    convertedAmount: "6.062"
                     exchangeRate: "12.866920"
-                    paymentFee: "2.000000"
+                    paymentFee: "2"
                     expiresAt: "2024-01-15T10:31:30.000Z"
                 moneyinXaf:
                   summary: Money-in — customer pays XAF, issuer receives USDC
                   value:
-                    convertedAmount: "0.441105"
+                    convertedAmount: "0.441"
                     exchangeRate: "666.600000"
-                    paymentFee: "6.000000"
+                    paymentFee: "6"
                     expiresAt: "2024-01-15T10:31:00.000Z"
         "401":
           description: Invalid or missing API key.
@@ -485,7 +485,7 @@ paths:
           application/json:
             schema:
               type: object
-              required: [fiatAmount, sourceCurrency, destinationCurrency, blockchain, paymentMethod, accountNumber, accountName, paymentCode, reference, optionalIssuerFee]
+              required: [fiatAmount, sourceCurrency, destinationCurrency, blockchain, paymentMethod, accountNumber, accountName, paymentCode, reference]
               properties:
                 fiatAmount:
                   type: string
@@ -528,12 +528,9 @@ paths:
                   type: string
                   format: email
                   description: Customer email for transaction receipts.
-                optionalIssuerFee:
-                  type: string
-                  enum: [YES, NO]
             examples:
               kesMomo:
-                summary: KES via M-Pesa 
+                summary: KES via M-Pesa
                 value:
                   fiatAmount: "5000"
                   sourceCurrency: KES
@@ -544,7 +541,6 @@ paths:
                   accountName: Jane Wanjiku
                   paymentCode: MPESA
                   reference: order_abc123
-                  optionalIssuerFee: "NO"
               xafMomo:
                 summary: XAF via Orange MoMo
                 value:
@@ -557,7 +553,6 @@ paths:
                   accountName: tester
                   paymentCode: ORANGE
                   reference: order_xyz456
-                  optionalIssuerFee: "NO"
       responses:
         "202":
           description: |
@@ -582,7 +577,7 @@ paths:
                   convertedAmount:
                     type: string
                     description: USDC amount that will be credited to the moneyin wallet after the spread is deducted.
-                    example: "37.395278"
+                    example: "37.395"
                   createdAt:
                     type: string
                     format: date-time
@@ -666,17 +661,10 @@ paths:
                   type: string
                   description: Wallet issuer's unique reference.
                   example: csh-txn-20260506-001
-                refundAddress:
-                  type: string
-                  description: Onchain address to return funds to if the payout fails.
-                  example: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
                 businessNumber:
                   type: string
                   description: "Only required for PAYBILL: M-Pesa Paybill business number (6 digits)."
                   example: "123456"
-                optionalIssuerFee:
-                  type: string
-                  enum: [YES, NO]
               required:
                 - fiatAmount
                 - sourceCurrency
@@ -688,8 +676,6 @@ paths:
                 - accountNumber
                 - paymentCode
                 - reference
-                - refundAddress
-                - optionalIssuerFee
             examples:
               kesBscMomo:
                 summary: KES via M-Pesa on BSC
@@ -704,8 +690,6 @@ paths:
                   accountNumber: "+254712345678"
                   paymentCode: MPESA
                   reference: csh-txn-20260506-001
-                  refundAddress: "0xAbCd1234AbCd1234AbCd1234AbCd1234AbCd1234"
-                  optionalIssuerFee: NO
               xafSolana:
                 summary: XAF via MTN MoMo on Solana
                 value:
@@ -719,8 +703,6 @@ paths:
                   accountNumber: "+237612345678"
                   paymentCode: MTN
                   reference: csh-txn-20260506-002
-                  refundAddress: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
-                  optionalIssuerFee: YES
       responses:
         "202":
           description: Payment accepted. Processing is async — poll or await webhook.
