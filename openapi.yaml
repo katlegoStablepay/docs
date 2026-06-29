@@ -38,7 +38,7 @@ components:
       type: string
       description: |
         Mobile network operator or bank code. Required for money-out payments.
-        MNO options: MPESA, MTN, AIRTEL, TIGO, ZAMTEL,HALOTEL, VODACOM, ORANGE, MOOV, FREE.
+        MNO options: MPESA, MTN, AIRTEL, TIGO, ZAMTEL, HALOTEL, VODAFONE, VODACOM, ORANGE, MOOV, FREE.
         Bank options: OPAY, PALMPAY, MONIEPOINT.
 
     CurrencyOut:
@@ -199,19 +199,30 @@ components:
       properties:
         accountName:
           type: string
-          nullable: true
-          description: Registered account holder name is resolved for Kenya (MPESA, PAYBILL & TILL) and Nigeria (BANK). Null when the corridor only supports network detection.
+          description: Registered account holder name is resolved for Kenya (MPESA, PAYBILL & TILL) and Nigeria (BANK). Returns the phone number for corridors that only support operator detection.
           example: "Jane Wanjiku"
         accountNumber:
           type: string
           description: The account number of the payment method. Must be in E.164 format with the + prefix when paymentMethod is MOMO.
           example: "+254712345678"
-        network:
+        paymentCode:
           type: string
           nullable: true
           description: Detected MNO for MOMO requests. Null for BANK, PAYBILL, TILL.
           example: "MPESA"
-      required: [accountName, accountNumber, network]
+        country:
+          type: string
+          description: Recipient country code as supplied in the request.
+          example: "KE"
+        currency:
+          type: string
+          description: Fiat currency derived from the country code. Use as sourceCurrency (payin) or destinationCurrency (payout) in subsequent calls.
+          example: "KES"
+        paymentMethod:
+          type: string
+          description: Payment method as supplied in the request.
+          example: "MOMO"
+      required: [accountName, accountNumber, paymentCode, country, currency, paymentMethod]
 
     # -------------------------------------------------------------------------
     # Errors
@@ -315,25 +326,37 @@ paths:
                   value:
                     accountName: "Jane Wanjiku"
                     accountNumber: "+254712345678"
-                    network: "MPESA"
+                    paymentCode: "MPESA"
+                    country: "KE"
+                    currency: "KES"
+                    paymentMethod: "MOMO"
                 ghsMomo:
-                  summary: GHS MoMo (network only)
+                  summary: GHS MoMo (operator detected, phone used as name)
                   value:
-                    accountName: null
+                    accountName: "+233243747787"
                     accountNumber: "+233243747787"
-                    network: "MTN"
+                    paymentCode: "MTN"
+                    country: "GH"
+                    currency: "GHS"
+                    paymentMethod: "MOMO"
                 kesBank:
                   summary: KES bank account
                   value:
                     accountName: "John Kamau"
                     accountNumber: "+254712345678"
-                    network: null
+                    paymentCode: null
+                    country: "KE"
+                    currency: "KES"
+                    paymentMethod: "BANK"
                 xafMomo:
                   summary: Cameroon MoMo (operator detected from phone prefix)
                   value:
-                    accountName: null
+                    accountName: "+237650123456"
                     accountNumber: "+237650123456"
-                    network: "MTN"
+                    paymentCode: "MTN"
+                    country: "CM"
+                    currency: "XAF"
+                    paymentMethod: "MOMO"
         "401":
           description: Invalid or missing API key.
           content:
@@ -518,7 +541,7 @@ paths:
                 paymentCode:
                   type: string
                   description: |
-                    Mobile network operator or bank code. Available MNO options: MPESA, MTN, AIRTEL, TIGO, TELEBIRR, CBE, ZAMTEL. Available bank options: OPAY, PALMPAY, MONIEPOINT.
+                    Mobile network operator or bank code. Available MNO options: MPESA, MTN, AIRTEL, TIGO, ZAMTEL, HALOTEL, VODAFONE, VODACOM, ORANGE, MOOV, FREE. Available bank options: OPAY, PALMPAY, MONIEPOINT.
                   example: "MPESA"
                 reference:
                   type: string
@@ -654,7 +677,7 @@ paths:
                   example: "+254712345678"
                 paymentCode:
                   $ref: '#/components/schemas/PaymentCode'
-                  description: "Mobile network operator or bank code. Available MNO options: `MPESA`, `MTN`, `AIRTEL`, `TIGO`, `ZAMTEL`, `ORANGE`. Available bank options: `OPAY`, `PALMPAY`, `MONIEPOINT`."
+                  description: "Mobile network operator or bank code. Available MNO options: `MPESA`, `MTN`, `AIRTEL`, `TIGO`, `ZAMTEL`, `HALOTEL`, `VODAFONE`, `VODACOM`, `ORANGE`, `MOOV`, `FREE`. Available bank options: `OPAY`, `PALMPAY`, `MONIEPOINT`."
                 
                 reference:
                   type: string
