@@ -200,7 +200,7 @@ components:
         accountName:
           type: string
           description: Registered account holder name is resolved for Kenya (MPESA, PAYBILL & TILL) and Nigeria (BANK). Returns the phone number for corridors that only support operator detection.
-          example: "Jane Wanjiku"
+          example: "Jane Doe"
         accountNumber:
           type: string
           description: The account number of the payment method. Must be in E.164 format with the + prefix when paymentMethod is MOMO.
@@ -208,7 +208,9 @@ components:
         paymentCode:
           type: string
           nullable: true
-          description: Detected MNO for MOMO requests. Null for BANK, PAYBILL, TILL.
+          description: |
+            Carry this value forward directly as `paymentCode` on the payment endpoints.
+            PAYBILL / TILL: null — no code applies for these methods.
           example: "MPESA"
         country:
           type: string
@@ -274,10 +276,12 @@ paths:
                   description: Recipient country code.
                 paymentMethod:
                   $ref: '#/components/schemas/PaymentMethod'
-                bankCode:
+                paymentCode:
                   type: string
-                  enum: [OPAY, PALMPAY, MONIEPOINT]
-                  description: Required when paymentMethod is BANK.
+                  description: |
+                    Required when paymentMethod is BANK.
+                    NGN bank providers: OPAY | PALMPAY | MONIEPOINT
+                    KES bank code: e.g. "01" for Kenya Commercial Bank.
                   example: "OPAY"
               required: [accountNumber, country, paymentMethod]
             examples:
@@ -293,14 +297,14 @@ paths:
                   accountNumber: "+254712345678"
                   country: "KE"
                   paymentMethod: "BANK"
-                  bankCode: "01"
+                  paymentCode: "01"
               ngnBank:
                 summary: NGN bank account
                 value:
                   accountNumber: "+254712345678"
                   country: "NG"
                   paymentMethod: "BANK"
-                  bankCode: "057"
+                  paymentCode: "OPAY"
               ghsMomo:
                 summary: GHS MoMo number (operator auto-detected)
                 value:
@@ -324,7 +328,7 @@ paths:
                 kesMomo:
                   summary: KES M-Pesa (full name resolution)
                   value:
-                    accountName: "Jane Wanjiku"
+                    accountName: "Jane Doe"
                     accountNumber: "+254712345678"
                     paymentCode: "MPESA"
                     country: "KE"
@@ -344,7 +348,7 @@ paths:
                   value:
                     accountName: "John Kamau"
                     accountNumber: "+254712345678"
-                    paymentCode: null
+                    paymentCode: "01"
                     country: "KE"
                     currency: "KES"
                     paymentMethod: "BANK"
@@ -537,12 +541,10 @@ paths:
                 accountName:
                   type: string
                   description: Recipient full name associated with the payment method.
-                  example: "Jane Wanjiku"
+                  example: "Jane Doe"
                 paymentCode:
-                  type: string
-                  description: |
-                    Mobile network operator or bank code. Available MNO options: MPESA, MTN, AIRTEL, TIGO, ZAMTEL, HALOTEL, VODAFONE, VODACOM, ORANGE, MOOV, FREE. Available bank options: OPAY, PALMPAY, MONIEPOINT.
-                  example: "MPESA"
+                  $ref: '#/components/schemas/PaymentCode'
+                  description: "Mobile network operator or bank code. Available MNO options: `MPESA`, `MTN`, `AIRTEL`, `TIGO`, `ZAMTEL`, `HALOTEL`, `VODAFONE`, `VODACOM`, `ORANGE`, `MOOV`, `FREE`. Available bank options: `OPAY`, `PALMPAY`, `MONIEPOINT`."
                 reference:
                   type: string
                   description: Wallet issuer's unique reference.
@@ -560,7 +562,7 @@ paths:
                   blockchain: BSC
                   paymentMethod: MOMO
                   accountNumber: "+254712345678"
-                  accountName: Jane Wanjiku
+                  accountName: Jane Doe
                   paymentCode: MPESA
                   reference: order_abc123
               xafMomo:
