@@ -72,6 +72,13 @@ components:
         Current state of the payment in the state machine.
         `initiated` → `provider_accepted` → `succeeded` | `failed` | `refunded`
 
+    Direction:
+      type: string
+      enum: [payin, payout]
+      description: |
+        payout: issuer sends stablecoin → recipient receives fiat.
+        payin: customer pays fiat → issuer receives stablecoin.
+
     UsdcAmount:
       type: string
       description: USDC amount as a decimal string with exactly 6 decimal places. For example, `"10.500000"`.
@@ -121,6 +128,8 @@ components:
           example: pay_01HV8KZMRJPQR9S7T3XABCDEF
         status:
           $ref: '#/components/schemas/PaymentStatus'
+        direction:
+          $ref: '#/components/schemas/Direction'
         paymentMethod:
           $ref: '#/components/schemas/PaymentMethod'
         sourceCurrency:
@@ -145,13 +154,23 @@ components:
           nullable: true
           description: Caller's own reference code (e.g. "csh-txn-20260506-001"). Stored as supplied in the payment request.
           example: csh-txn-20260506-001
+        errorCode:
+          type: string
+          nullable: true
+          description: Machine-readable failure code (e.g. `insufficient_funds` or `invalid_account`). Null unless `status` is `failed`.
+          example: null
+        failureReason:
+          type: string
+          nullable: true
+          description: Human-readable description of why the payment failed. Null unless `status` is `failed`.
+          example: null
         createdAt:
           type: string
           format: date-time
         updatedAt:
           type: string
           format: date-time
-      required: [id, status, paymentMethod, sourceCurrency, amountStablecoin, fiatAmount, destinationCurrency, providerRef, reference, createdAt, updatedAt]
+      required: [id, status, direction, paymentMethod, sourceCurrency, amountStablecoin, fiatAmount, destinationCurrency, providerRef, reference, errorCode, failureReason, createdAt, updatedAt]
 
     # -------------------------------------------------------------------------
     # Webhooks outbound
@@ -733,7 +752,27 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaymentResponse'
+                type: object
+                properties:
+                  paymentId:
+                    type: string
+                    description: Use this ID to track the payment status.
+                    example: pay_01HV8KZMRJPQR9S7T3XABCDEF
+                  status:
+                    type: string
+                    example: provider_accepted
+                  providerRef:
+                    type: string
+                    nullable: true
+                    description: Provider's internal transaction ID.
+                  convertedAmount:
+                    type: string
+                    description: Fiat amount that will be paid to the recipient after fees are deducted.
+                    example: "1350"
+                  createdAt:
+                    type: string
+                    format: date-time
+                required: [paymentId, status, convertedAmount, createdAt]
         "400":
           description: Validation error (missing field or bad format).
           content:
@@ -799,6 +838,41 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PaymentResponse'
+              examples:
+                succeeded:
+                  summary: Succeeded money-out payment
+                  value:
+                    id: pay_01JXXXX
+                    status: succeeded
+                    direction: payout
+                    paymentMethod: MOMO
+                    sourceCurrency: USDC
+                    amountStablecoin: "37.395"
+                    fiatAmount: "24500"
+                    destinationCurrency: XOF
+                    providerRef: hc_abc123
+                    reference: csh-abc123
+                    errorCode: null
+                    failureReason: null
+                    createdAt: "2026-05-06T10:31:00.000Z"
+                    updatedAt: "2026-05-06T10:31:45.000Z"
+                failed:
+                  summary: Failed payment
+                  value:
+                    id: pay_01JYYYY
+                    status: failed
+                    direction: payout
+                    paymentMethod: MOMO
+                    sourceCurrency: USDC
+                    amountStablecoin: "10.000"
+                    fiatAmount: "6500"
+                    destinationCurrency: XOF
+                    providerRef: hc_def456
+                    reference: csh-def456
+                    errorCode: insufficient_funds
+                    failureReason: "Recipient account has insufficient funds to complete the transaction."
+                    createdAt: "2026-05-06T10:31:00.000Z"
+                    updatedAt: "2026-05-06T10:32:10.000Z"
         "404":
           description: Payment not found or belongs to another tenant.
           content:
