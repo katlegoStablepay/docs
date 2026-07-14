@@ -1,0 +1,52 @@
+---
+title: Send a payout
+description: "Pay out local fiat to a mobile wallet or bank account"
+---
+
+A payout spends stablecoin and delivers local currency to a recipient. You send one request; Stablepay handles the on-chain transfer and the fiat payout.
+
+## The request
+
+```bash
+POST /v1/payments/out
+```
+
+Send an `Idempotency-Key` header with a unique value per payment. Retrying with the same key returns the original result instead of paying twice.
+
+## Fields
+
+| Field | What it is |
+|---|---|
+| `fiatAmount` | The local amount the recipient receives, e.g. `1000`. |
+| `sourceCurrency` | The stablecoin you spend — `USDC` or `USDT`. |
+| `destinationCurrency` | The local currency — `KES`, `GHS`, `NGN`, `TZS`, `UGX`, `ZMW`, `XAF`, `XOF`, `CDF`. |
+| `country` | ISO country code of the recipient, e.g. `KE`. |
+| `blockchain` | Where the stablecoin moves — `BSC` or `SOLANA`. |
+| `paymentMethod` | `MOMO`, `BANK`, `PAYBILL`, or `TILL`. |
+| `accountName` | The recipient's name. |
+| `accountNumber` | Phone number for mobile money, account number for banks. |
+| `paymentCode` | The operator or bank code, e.g. `MPESA`. |
+| `reference` | Your own reference for this payment. |
+
+<Tip>Not sure the number is valid? [Validate the account](/validate) first — it confirms the recipient and returns the resolved name.</Tip>
+
+## What happens next
+
+The payment moves through these states:
+
+```
+initiated → provider_accepted → onchain_broadcast → succeeded
+```
+
+If it can't complete, it ends at `failed`. Track it with [`GET /v1/payments/:id`](/get-payment) or a [webhook](/guides/webhooks).
+
+## If something's wrong
+
+| You'll see | What it means |
+|---|---|
+| `422 wallet_not_enabled` | This corridor isn't switched on for your account yet — contact us. |
+| `422 invalid_route` | We don't support that currency on that chain. |
+| `422 payment_limit_violation` | The amount is below the minimum or above the maximum for that corridor. |
+| `502` | The payout provider is briefly unavailable. No payment was created — retry shortly. |
+
+See [Errors](/errors) for the full list.

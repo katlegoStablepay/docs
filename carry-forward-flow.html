@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stablepay — The Carry-Forward Flow</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: #f9fafb;
+      color: #111827;
+      line-height: 1.6;
+      font-size: 15px;
+    }
+
+    /* ---------- Layout ---------- */
+    .page {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 48px 40px 80px;
+      background: #ffffff;
+      min-height: 100vh;
+    }
+
+    @media (max-width: 640px) {
+      .page { padding: 32px 20px 60px; }
+    }
+
+    /* ---------- Header ---------- */
+    .doc-header {
+      border-bottom: 3px solid #1da1df;
+      padding-bottom: 24px;
+      margin-bottom: 40px;
+    }
+
+    .brand {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #1da1df;
+      margin-bottom: 10px;
+    }
+
+    .doc-title {
+      font-size: 32px;
+      font-weight: 700;
+      color: #111827;
+      letter-spacing: -0.5px;
+      line-height: 1.2;
+      margin-bottom: 8px;
+    }
+
+    .doc-meta {
+      font-size: 13px;
+      color: #9ca3af;
+    }
+
+    /* ---------- Section headings ---------- */
+    h2 {
+      font-size: 20px;
+      font-weight: 700;
+      color: #111827;
+      margin: 48px 0 8px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    h2 .badge {
+      font-size: 11px;
+      font-weight: 600;
+      background: #f3f4f6;
+      color: #6b7280;
+      border-radius: 4px;
+      padding: 2px 8px;
+      margin-left: 10px;
+      vertical-align: middle;
+      letter-spacing: 0.03em;
+    }
+
+    .section-desc {
+      font-size: 14px;
+      color: #6b7280;
+      margin-bottom: 24px;
+    }
+
+    /* ---------- Info box ---------- */
+    .info-box {
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+      border-left: 4px solid #d97706;
+      border-radius: 6px;
+      padding: 14px 18px;
+      margin: 24px 0 36px;
+      font-size: 14px;
+      color: #111827;
+    }
+
+    .info-box strong {
+      display: block;
+      color: #d97706;
+      margin-bottom: 6px;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* ---------- Step chain ---------- */
+    .steps {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .step-card {
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .step-card.blue { border-top: 3px solid #1da1df; }
+    .step-card.green { border-top: 3px solid #24c06f; }
+
+    .step-header {
+      padding: 16px 20px 12px;
+      background: #fff;
+    }
+
+    .step-number {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .step-card.blue .step-number { color: #1da1df; }
+    .step-card.green .step-number { color: #24c06f; }
+
+    .step-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #111827;
+      margin-bottom: 4px;
+    }
+
+    .step-desc {
+      font-size: 13.5px;
+      color: #6b7280;
+    }
+
+    /* ---------- Code block ---------- */
+    .code-wrap {
+      background: #1f2937;
+      padding: 16px 20px;
+      overflow-x: auto;
+    }
+
+    pre {
+      font-family: "SF Mono", "Fira Code", "Fira Mono", Menlo, Consolas, "Courier New", monospace;
+      font-size: 12.5px;
+      line-height: 1.7;
+      color: #f9fafb;
+      white-space: pre;
+    }
+
+    pre .comment { color: #6b7280; }
+    pre .key { color: #93c5fd; }
+    pre .val { color: #86efac; }
+    pre .url { color: #fde68a; }
+
+    /* ---------- Carry-forward strip ---------- */
+    .carry {
+      padding: 12px 20px;
+      font-size: 13px;
+      border-top: 1px solid #e5e7eb;
+      background: #f9fafb;
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .carry-label {
+      font-weight: 700;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-right: 4px;
+      white-space: nowrap;
+    }
+
+    .step-card.blue .carry-label { color: #1da1df; }
+    .step-card.green .carry-label { color: #24c06f; }
+
+    .field-badge {
+      font-family: "SF Mono", "Fira Code", Menlo, Consolas, monospace;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+
+    .step-card.blue .field-badge { background: #dbeafe; color: #1d4ed8; }
+    .step-card.green .field-badge { background: #dcfce7; color: #15803d; }
+
+    /* ---------- Arrow ---------- */
+    .arrow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 36px;
+      color: #d1d5db;
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+
+    /* ---------- Field mapping table ---------- */
+    .table-wrap {
+      overflow-x: auto;
+      margin: 20px 0;
+      border-radius: 8px;
+      border: 1px solid #e5e7eb;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13.5px;
+    }
+
+    thead tr {
+      background: #1f2937;
+    }
+
+    thead th {
+      padding: 10px 14px;
+      text-align: left;
+      font-size: 12px;
+      font-weight: 600;
+      color: #f9fafb;
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+    }
+
+    tbody tr:nth-child(odd) { background: #f9fafb; }
+    tbody tr:nth-child(even) { background: #ffffff; }
+
+    tbody td {
+      padding: 10px 14px;
+      color: #374151;
+      border-top: 1px solid #f3f4f6;
+    }
+
+    tbody td:first-child,
+    tbody td:nth-child(3),
+    tbody td:nth-child(4) {
+      font-family: "SF Mono", "Fira Code", Menlo, Consolas, monospace;
+      font-size: 12.5px;
+    }
+
+    tbody td.muted { color: #9ca3af; }
+
+    .star-note {
+      font-size: 13px;
+      color: #6b7280;
+      margin-top: 10px;
+    }
+
+    .star-note code {
+      font-family: "SF Mono", "Fira Code", Menlo, Consolas, monospace;
+      font-size: 12.5px;
+      background: #f3f4f6;
+      padding: 1px 5px;
+      border-radius: 3px;
+      color: #111827;
+    }
+
+    /* ---------- Tips ---------- */
+    .tips-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .tips-list li {
+      display: flex;
+      gap: 12px;
+      font-size: 14px;
+      color: #6b7280;
+    }
+
+    .tip-dot {
+      width: 6px;
+      height: 6px;
+      background: #1da1df;
+      border-radius: 50%;
+      flex-shrink: 0;
+      margin-top: 8px;
+    }
+
+    .tips-list strong { color: #111827; }
+
+    /* ---------- Doc footer ---------- */
+    .doc-footer {
+      border-top: 1px solid #e5e7eb;
+      margin-top: 56px;
+      padding-top: 20px;
+      font-size: 13px;
+      color: #9ca3af;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .doc-footer a { color: #1da1df; text-decoration: none; }
+    .doc-footer a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Header -->
+  <div class="doc-header">
+    <div class="brand">Stablepay</div>
+    <h1 class="doc-title">The Carry-Forward Flow</h1>
+    <div class="doc-meta">Integration Guide &nbsp;·&nbsp; v1 &nbsp;·&nbsp; 2026</div>
+  </div>
+
+  <!-- Overview -->
+  <h2>Overview</h2>
+  <p class="section-desc">
+    Every Stablepay payment follows a consistent 3-step flow: <strong>validate the account</strong>, <strong>get the rate</strong>, then <strong>submit the payment</strong>.
+    Fields returned at each step must be passed forward exactly as-is into the next call — this ensures the name, operator code, and amounts are consistent end-to-end.
+  </p>
+
+  <div class="info-box">
+    <strong>Why carry-forward matters</strong>
+    The <code style="font-family:monospace;font-size:13px;background:#fef3c7;padding:1px 4px;border-radius:3px;">paymentCode</code> from <code style="font-family:monospace;font-size:13px;background:#fef3c7;padding:1px 4px;border-radius:3px;">/validate</code> is the authoritative operator or bank identifier as resolved by Stablepay. Always use this value — not what the user typed — when submitting a payment. Similarly, <code style="font-family:monospace;font-size:13px;background:#fef3c7;padding:1px 4px;border-radius:3px;">accountName</code> must be echoed back exactly; providers use it for name-match verification.
+  </div>
+
+  <!-- ==================== PAYOUT ==================== -->
+  <h2>Payout (Money Out) <span class="badge">USDC → Fiat</span></h2>
+  <p class="section-desc">Merchant sends USDC on-chain; recipient receives fiat via MOMO or bank transfer.</p>
+
+  <div class="steps">
+
+    <!-- Step 1 -->
+    <div class="step-card blue">
+      <div class="step-header">
+        <div class="step-number">Step 1</div>
+        <div class="step-title">Validate the recipient account</div>
+        <div class="step-desc">Resolve the account number to a registered name and detect the MNO operator (MOMO) or confirm the bank code (BANK). Call once per payment — not on each retry.</div>
+      </div>
+      <div class="code-wrap"><pre>curl -X POST https://api.stablepay.app/v1/account/validate \
+  -H <span class="val">"Authorization: Bearer &lt;your-api-key&gt;"</span> \
+  -H <span class="val">"Content-Type: application/json"</span> \
+  -d '{
+    <span class="key">"accountNumber"</span>: <span class="val">"+254712345678"</span>,
+    <span class="key">"country"</span>:       <span class="val">"KE"</span>,
+    <span class="key">"paymentMethod"</span>: <span class="val">"MOMO"</span>
+  }'
+
+<span class="comment"># Response:</span>
+<span class="comment"># {</span>
+<span class="comment">#   "accountName":   "Jane Doe",</span>
+<span class="comment">#   "accountNumber": "+254712345678",</span>
+<span class="comment">#   "paymentCode":   "MPESA",</span>
+<span class="comment">#   "country":       "KE",</span>
+<span class="comment">#   "currency":      "KES",</span>
+<span class="comment">#   "paymentMethod": "MOMO"</span>
+<span class="comment"># }</span></pre></div>
+      <div class="carry">
+        <span class="carry-label">Carry forward →</span>
+        <span class="field-badge">accountName</span>
+        <span class="field-badge">accountNumber</span>
+        <span class="field-badge">paymentCode</span>
+        <span class="field-badge">country</span>
+        <span class="field-badge">currency</span>
+        <span class="field-badge">paymentMethod</span>
+      </div>
+    </div>
+
+    <div class="arrow">↓</div>
+
+    <!-- Step 2 -->
+    <div class="step-card blue">
+      <div class="step-header">
+        <div class="step-number">Step 2</div>
+        <div class="step-title">Fetch the FX rate</div>
+        <div class="step-desc">Lock an exchange rate before submitting. Rates expire after 60 seconds — show the rate for user confirmation and submit immediately. Never cache rates across sessions.</div>
+      </div>
+      <div class="code-wrap"><pre>curl -X GET <span class="url">"https://api.stablepay.app/v1/fx/rate?from=USDC&amp;to=KES&amp;blockchain=BSC"</span> \
+  -H <span class="val">"Authorization: Bearer &lt;your-api-key&gt;"</span>
+
+<span class="comment"># Response:</span>
+<span class="comment"># {</span>
+<span class="comment">#   "rate":      "129.500000",</span>
+<span class="comment">#   "fee":       "0.200000",</span>
+<span class="comment">#   "expiresAt": "2026-07-01T12:01:00Z"</span>
+<span class="comment"># }</span></pre></div>
+      <div class="carry">
+        <span class="carry-label">Carry forward →</span>
+        <span class="field-badge">rate</span>
+        <span class="field-badge">fee</span>
+      </div>
+    </div>
+
+    <div class="arrow">↓</div>
+
+    <!-- Step 3 -->
+    <div class="step-card blue">
+      <div class="step-header">
+        <div class="step-number">Step 3</div>
+        <div class="step-title">Submit the payout</div>
+        <div class="step-desc">Pass all fields from steps 1 and 2 directly. Use a stable <code style="font-family:monospace;background:#f3f4f6;padding:1px 4px;border-radius:3px;">Idempotency-Key</code> to safely retry on network failures — the same key on a retry returns the original result without double-paying.</div>
+      </div>
+      <div class="code-wrap"><pre>curl -X POST https://api.stablepay.app/v1/payments/moneyout \
+  -H <span class="val">"Authorization: Bearer &lt;your-api-key&gt;"</span> \
+  -H <span class="val">"Idempotency-Key: &lt;unique-uuid&gt;"</span> \
+  -H <span class="val">"Content-Type: application/json"</span> \
+  -d '{
+    <span class="key">"fiatAmount"</span>:    <span class="val">"1000"</span>,
+    <span class="key">"currencyIn"</span>:    <span class="val">"USDC"</span>,
+    <span class="key">"currencyOut"</span>:   <span class="val">"KES"</span>,
+    <span class="key">"country"</span>:       <span class="val">"KE"</span>,
+    <span class="key">"blockchain"</span>:    <span class="val">"BSC"</span>,
+    <span class="key">"paymentMethod"</span>: <span class="val">"MOMO"</span>,
+    <span class="key">"accountName"</span>:   <span class="val">"Jane Doe"</span>,
+    <span class="key">"accountNumber"</span>: <span class="val">"+254712345678"</span>,
+    <span class="key">"paymentCode"</span>:   <span class="val">"MPESA"</span>,
+    <span class="key">"reference"</span>:     <span class="val">"order-001"</span>
+  }'</pre></div>
+    </div>
+
+  </div><!-- /steps -->
+
+  <!-- ==================== COLLECTION ==================== -->
+  <h2>Collection (Money In) <span class="badge">Fiat → USDC</span></h2>
+  <p class="section-desc">Customer pays fiat via MOMO; merchant receives USDC in their treasury wallet. The full fiat amount is charged to the customer — the processor fee is deducted from the USDC received.</p>
+
+  <div class="steps">
+
+    <!-- Step 1 -->
+    <div class="step-card green">
+      <div class="step-header">
+        <div class="step-number">Step 1</div>
+        <div class="step-title">Validate the customer account</div>
+        <div class="step-desc">Same as payout — resolve the phone number to a name and auto-detect the MNO. The <code style="font-family:monospace;background:#f3f4f6;padding:1px 4px;border-radius:3px;">paymentCode</code> returned (e.g. MPESA) is passed to the collection endpoint.</div>
+      </div>
+      <div class="code-wrap"><pre>curl -X POST https://api.stablepay.app/v1/account/validate \
+  -H <span class="val">"Authorization: Bearer &lt;your-api-key&gt;"</span> \
+  -H <span class="val">"Content-Type: application/json"</span> \
+  -d '{
+    <span class="key">"accountNumber"</span>: <span class="val">"+254712345678"</span>,
+    <span class="key">"country"</span>:       <span class="val">"KE"</span>,
+    <span class="key">"paymentMethod"</span>: <span class="val">"MOMO"</span>
+  }'
+
+<span class="comment"># Response:</span>
+<span class="comment"># {</span>
+<span class="comment">#   "accountName":   "Jane Doe",</span>
+<span class="comment">#   "accountNumber": "+254712345678",</span>
+<span class="comment">#   "paymentCode":   "MPESA",</span>
+<span class="comment">#   "paymentMethod": "MOMO"</span>
+<span class="comment"># }</span></pre></div>
+      <div class="carry">
+        <span class="carry-label">Carry forward →</span>
+        <span class="field-badge">accountName</span>
+        <span class="field-badge">accountNumber → phoneNumber ★</span>
+        <span class="field-badge">paymentCode</span>
+      </div>
+    </div>
+
+    <div class="arrow">↓</div>
+
+    <!-- Step 2 -->
+    <div class="step-card green">
+      <div class="step-header">
+        <div class="step-number">Step 2</div>
+        <div class="step-title">Convert the fiat amount</div>
+        <div class="step-desc">Get the USDC equivalent for the amount the customer will pay. <code style="font-family:monospace;background:#f3f4f6;padding:1px 4px;border-radius:3px;">convertedAmount</code> is what the merchant actually receives after the processor fee is deducted.</div>
+      </div>
+      <div class="code-wrap"><pre>curl -X POST https://api.stablepay.app/v1/payments/moneyin/convert \
+  -H <span class="val">"Authorization: Bearer &lt;your-api-key&gt;"</span> \
+  -H <span class="val">"Content-Type: application/json"</span> \
+  -d '{
+    <span class="key">"fiatAmount"</span>:          <span class="val">"500"</span>,
+    <span class="key">"sourceCurrency"</span>:      <span class="val">"KES"</span>,
+    <span class="key">"destinationCurrency"</span>: <span class="val">"USDC"</span>,
+    <span class="key">"blockchain"</span>:          <span class="val">"BSC"</span>
+  }'
+
+<span class="comment"># Response:</span>
+<span class="comment"># {</span>
+<span class="comment">#   "convertedAmount":          "3.841",  ← merchant receives this</span>
+<span class="comment">#   "exchangeRate":             "130.18",</span>
+<span class="comment">#   "processorFee":             "2",      ← deducted from USDC, not from customer</span>
+<span class="comment">#   "senderFiatAmount":         "500",</span>
+<span class="comment">#   "expectedUsdcFromProvider": "3.841"</span>
+<span class="comment"># }</span></pre></div>
+      <div class="carry">
+        <span class="carry-label">Carry forward →</span>
+        <span class="field-badge">fiatAmount</span>
+        <span class="field-badge">sourceCurrency</span>
+        <span class="field-badge">destinationCurrency</span>
+      </div>
+    </div>
+
+    <div class="arrow">↓</div>
+
+    <!-- Step 3 -->
+    <div class="step-card green">
+      <div class="step-header">
+        <div class="step-number">Step 3</div>
+        <div class="step-title">Submit the collection</div>
+        <div class="step-desc">Initiates a MOMO prompt to the customer's phone. Note: <code style="font-family:monospace;background:#f3f4f6;padding:1px 4px;border-radius:3px;">accountNumber</code> from /validate becomes <code style="font-family:monospace;background:#f3f4f6;padding:1px 4px;border-radius:3px;">phoneNumber</code> here. All other fields keep the same name.</div>
+      </div>
+      <div class="code-wrap"><pre>curl -X POST https://api.stablepay.app/v1/payments/moneyin \
+  -H <span class="val">"Authorization: Bearer &lt;your-api-key&gt;"</span> \
+  -H <span class="val">"Idempotency-Key: &lt;unique-uuid&gt;"</span> \
+  -H <span class="val">"Content-Type: application/json"</span> \
+  -d '{
+    <span class="key">"fiatAmount"</span>:          <span class="val">"500"</span>,
+    <span class="key">"sourceCurrency"</span>:      <span class="val">"KES"</span>,
+    <span class="key">"destinationCurrency"</span>: <span class="val">"USDC"</span>,
+    <span class="key">"blockchain"</span>:          <span class="val">"BSC"</span>,
+    <span class="key">"paymentMethod"</span>:       <span class="val">"MOMO"</span>,
+    <span class="key">"phoneNumber"</span>:         <span class="val">"+254712345678"</span>,
+    <span class="key">"accountName"</span>:         <span class="val">"Jane Doe"</span>,
+    <span class="key">"paymentCode"</span>:         <span class="val">"MPESA"</span>,
+    <span class="key">"reference"</span>:           <span class="val">"collection-001"</span>
+  }'</pre></div>
+    </div>
+
+  </div><!-- /steps -->
+
+  <!-- ==================== FIELD MAPPING ==================== -->
+  <h2>Field Mapping Reference</h2>
+  <p class="section-desc">Quick reference for field names across the 3-step flow.</p>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Field</th>
+          <th>Source</th>
+          <th>Payout endpoint</th>
+          <th>Collection endpoint</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>accountName</td><td>/validate</td><td>accountName</td><td>accountName</td></tr>
+        <tr><td>accountNumber</td><td>/validate</td><td>accountNumber</td><td>phoneNumber ★</td></tr>
+        <tr><td>paymentCode</td><td>/validate</td><td>paymentCode</td><td>paymentCode</td></tr>
+        <tr><td>country</td><td>/validate</td><td>country</td><td class="muted">—</td></tr>
+        <tr><td>paymentMethod</td><td>/validate</td><td>paymentMethod</td><td>paymentMethod</td></tr>
+        <tr><td>rate</td><td>/fx/rate</td><td>Show to user</td><td class="muted">—</td></tr>
+        <tr><td>fiatAmount</td><td>Request input</td><td>fiatAmount</td><td>fiatAmount</td></tr>
+        <tr><td>sourceCurrency</td><td>/convert</td><td class="muted">—</td><td>sourceCurrency</td></tr>
+        <tr><td>destinationCurrency</td><td>/convert</td><td class="muted">—</td><td>destinationCurrency</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p class="star-note">★ &nbsp;<code>accountNumber</code> from /validate maps to <code>phoneNumber</code> on the /moneyin endpoint. This is the only field name difference between the two flows.</p>
+
+  <!-- ==================== TIPS ==================== -->
+  <h2>Tips &amp; Common Mistakes</h2>
+
+  <ul class="tips-list">
+    <li>
+      <div class="tip-dot"></div>
+      <div><strong>Always use paymentCode from /validate.</strong> Never substitute raw user input. The resolved code (e.g. MPESA) is what the provider expects and may differ from what the user typed.</div>
+    </li>
+    <li>
+      <div class="tip-dot"></div>
+      <div><strong>Rates expire in 60 seconds.</strong> Fetch the rate, show it for confirmation, and submit immediately. Do not cache rates across sessions or reuse them on separate payment attempts.</div>
+    </li>
+    <li>
+      <div class="tip-dot"></div>
+      <div><strong>Use stable Idempotency-Keys.</strong> Generate a UUID per payment attempt and reuse the same key on retries. This guarantees at-most-once execution even if the request times out.</div>
+    </li>
+    <li>
+      <div class="tip-dot"></div>
+      <div><strong>Do not re-validate on retries.</strong> /validate should be called once per payment initiation. On network retries, reuse the values from the original validate response.</div>
+    </li>
+    <li>
+      <div class="tip-dot"></div>
+      <div><strong>BANK payments require paymentCode at validate time.</strong> For BANK method, the bank code must be supplied in the validate request body and will be echoed back for carry-forward.</div>
+    </li>
+  </ul>
+
+  <!-- Footer -->
+  <div class="doc-footer">
+    <span>Stablepay Integration Guide &nbsp;·&nbsp; v1 &nbsp;·&nbsp; 2026</span>
+    <a href="https://developers.stablepay.ai" target="_blank">developers.stablepay.ai →</a>
+  </div>
+
+</div>
+</body>
+</html>

@@ -173,6 +173,82 @@ components:
       required: [id, status, direction, paymentMethod, sourceCurrency, amountStablecoin, fiatAmount, destinationCurrency, providerRef, reference, errorCode, failureReason, createdAt, updatedAt]
 
     # -------------------------------------------------------------------------
+    # Customers
+    # -------------------------------------------------------------------------
+    Customer:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Prefixed ULID for this customer.
+          example: cus_01KXG3R0X8DXTKB849FFFEPT7Y
+        externalId:
+          type: string
+          example: user001
+        type:
+          type: string
+          enum: [individual, business]
+        countryCode:
+          type: string
+          nullable: true
+          example: KE
+        kycStatus:
+          type: string
+          description: One of none, pending, in_progress, review, approved, declined, expired, abandoned.
+          example: approved
+        kycAttempts:
+          type: integer
+          example: 1
+        riskLevel:
+          type: string
+          nullable: true
+        metadata:
+          type: object
+          nullable: true
+        verifiedAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        verificationUrl:
+          type: string
+          nullable: true
+          description: Hosted verification URL. Returned when a verification is started.
+          example: https://verify.didit.me/session/XXXX
+        sessionId:
+          type: string
+          nullable: true
+        identity:
+          type: object
+          nullable: true
+          description: The verified identity. Returned only with refresh=true.
+      required: [id, externalId, type, kycStatus, kycAttempts, createdAt, updatedAt]
+
+    CustomerWallet:
+      type: object
+      properties:
+        id:
+          type: string
+          example: cus_wal_01KXG3R0X8DXTKB849FFFEPT7Y
+        customerId:
+          type: string
+          example: cus_01KXG3R0X8DXTKB849FFFEPT7Y
+        address:
+          type: string
+          example: "0xabc123..."
+        chain:
+          $ref: '#/components/schemas/Blockchain'
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, customerId, address, chain, createdAt]
+
+    # -------------------------------------------------------------------------
     # Webhooks outbound
     # -------------------------------------------------------------------------
     WebhookEventResponse:
@@ -571,6 +647,10 @@ paths:
                 paymentIdentifier:
                   type: string
                   description: A method-specific identifier required for processing the payment. Examples include BVN (BANK) or other market specific references.
+                customerId:
+                  type: string
+                  description: The customer this payment is for. Required when KYC is enabled for your account.
+                  example: cus_01KXG3R0X8DXTKB849FFFEPT7Y
             examples:
               kesMomo:
                 summary: KES via M-Pesa
@@ -708,6 +788,10 @@ paths:
                   type: string
                   description: "A method-specific identifier required for processing the payment. Examples include BVN (BANK) Paybill business number (PAYBILL), or other market specific references."
                   example: "123456"
+                customerId:
+                  type: string
+                  description: The customer this payment is for. Required when KYC is enabled for your account.
+                  example: cus_01KXG3R0X8DXTKB849FFFEPT7Y
               required:
                 - fiatAmount
                 - sourceCurrency
@@ -875,6 +959,315 @@ paths:
                     updatedAt: "2026-05-06T10:32:10.000Z"
         "404":
           description: Payment not found or belongs to another tenant.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # ---------------------------------------------------------------------------
+  # Customers
+  # ---------------------------------------------------------------------------
+  /v1/customers:
+    post:
+      operationId: createCustomer
+      summary: Create a customer
+      description: Create a customer and start KYC. Returns a hosted verification URL.
+      tags: [Customers]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                externalId:
+                  type: string
+                  description: Your own unique identifier for the customer.
+                  example: user001
+                type:
+                  type: string
+                  enum: [individual, business]
+                email:
+                  type: string
+                  example: user@example.com
+                phone:
+                  type: string
+                  example: "+254712345678"
+                countryCode:
+                  type: string
+                  description: ISO 3166-1 alpha-2.
+                  example: KE
+                metadata:
+                  type: object
+                  description: Optional key-value data. Do not include personal information.
+              required:
+                - externalId
+                - type
+      responses:
+        "201":
+          description: Customer created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+        "401":
+          description: Invalid or missing API key.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "409":
+          description: A customer with this externalId already exists.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    get:
+      operationId: listCustomers
+      summary: List customers
+      description: List your customers, newest first.
+      tags: [Customers]
+      parameters:
+        - name: kycStatus
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter by KYC status.
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+          example: 20
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+          example: 0
+      responses:
+        "200":
+          description: A paginated list of customers.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Customer'
+                  total:
+                    type: integer
+                  limit:
+                    type: integer
+                  offset:
+                    type: integer
+
+  /v1/customers/{customerId}:
+    get:
+      operationId: getCustomer
+      summary: Get a customer
+      description: Retrieve a customer by ID.
+      tags: [Customers]
+      parameters:
+        - name: customerId
+          in: path
+          required: true
+          schema:
+            type: string
+          example: cus_01KXG3R0X8DXTKB849FFFEPT7Y
+        - name: refresh
+          in: query
+          required: false
+          schema:
+            type: boolean
+          description: When true, fetches the live status and verified identity.
+      responses:
+        "200":
+          description: Customer found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+        "404":
+          description: Customer not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    patch:
+      operationId: updateCustomer
+      summary: Update a customer
+      description: Update a customer's metadata.
+      tags: [Customers]
+      parameters:
+        - name: customerId
+          in: path
+          required: true
+          schema:
+            type: string
+          example: cus_01KXG3R0X8DXTKB849FFFEPT7Y
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                metadata:
+                  type: object
+              required:
+                - metadata
+      responses:
+        "200":
+          description: Customer updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+        "404":
+          description: Customer not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /v1/customers/{customerId}/verification:
+    post:
+      operationId: reverifyCustomer
+      summary: Re-verify a customer
+      description: Start a new verification for a customer. Limited to 3 retries.
+      tags: [Customers]
+      parameters:
+        - name: customerId
+          in: path
+          required: true
+          schema:
+            type: string
+          example: cus_01KXG3R0X8DXTKB849FFFEPT7Y
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                phone:
+                  type: string
+                metadata:
+                  type: object
+      responses:
+        "201":
+          description: Verification started.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+        "429":
+          description: Retry limit reached.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /v1/customers/{customerId}/wallets:
+    post:
+      operationId: linkCustomerWallet
+      summary: Link a wallet
+      description: Link an on-chain wallet address to a customer.
+      tags: [Customers]
+      parameters:
+        - name: customerId
+          in: path
+          required: true
+          schema:
+            type: string
+          example: cus_01KXG3R0X8DXTKB849FFFEPT7Y
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                address:
+                  type: string
+                  example: "0xAbC123..."
+                chain:
+                  $ref: '#/components/schemas/Blockchain'
+              required:
+                - address
+                - chain
+      responses:
+        "201":
+          description: Wallet linked.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerWallet'
+        "409":
+          description: This address is already linked to a customer.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    get:
+      operationId: listCustomerWallets
+      summary: List wallets
+      description: List a customer's linked wallets.
+      tags: [Customers]
+      parameters:
+        - name: customerId
+          in: path
+          required: true
+          schema:
+            type: string
+          example: cus_01KXG3R0X8DXTKB849FFFEPT7Y
+      responses:
+        "200":
+          description: The customer's linked wallets.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CustomerWallet'
+
+  /v1/customers/{customerId}/wallets/{walletId}:
+    delete:
+      operationId: unlinkCustomerWallet
+      summary: Unlink a wallet
+      description: Remove a wallet from a customer.
+      tags: [Customers]
+      parameters:
+        - name: customerId
+          in: path
+          required: true
+          schema:
+            type: string
+          example: cus_01KXG3R0X8DXTKB849FFFEPT7Y
+        - name: walletId
+          in: path
+          required: true
+          schema:
+            type: string
+          example: cus_wal_01KXG3R0X8DXTKB849FFFEPT7Y
+      responses:
+        "200":
+          description: Wallet unlinked.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  deleted:
+                    type: string
+        "404":
+          description: Wallet not found.
           content:
             application/json:
               schema:

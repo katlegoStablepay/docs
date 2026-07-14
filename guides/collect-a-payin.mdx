@@ -1,0 +1,42 @@
+---
+title: Collect a pay-in
+description: "Take local fiat from a customer and receive stablecoin"
+---
+
+A pay-in is the reverse of a payout. A customer pays local currency — usually with a mobile-money prompt on their phone — and you receive stablecoin.
+
+## The request
+
+```bash
+POST /v1/payments/in
+```
+
+As with payouts, send a unique `Idempotency-Key` header.
+
+```bash
+curl https://api.stablepay.ai/v1/payments/in \
+  -H "Authorization: Bearer spay_live_xxxx" \
+  -H "Idempotency-Key: topup-001" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "fiatAmount": "1000",
+    "sourceCurrency": "KES",
+    "destinationCurrency": "USDC",
+    "blockchain": "BSC",
+    "paymentMethod": "MOMO",
+    "accountName": "Alice Wanjiku",
+    "accountNumber": "+254712345678",
+    "paymentCode": "MPESA",
+    "reference": "topup-001"
+  }'
+```
+
+Here `sourceCurrency` is the local currency the customer pays, and `destinationCurrency` is the stablecoin you receive.
+
+## How it settles
+
+1. The customer gets a prompt to approve the payment on their phone.
+2. Once they pay, the stablecoin is credited to you.
+3. The payment reaches `succeeded`.
+
+Track it the same way as a payout — poll [`GET /v1/payments/:id`](/get-payment) or listen for a [webhook](/guides/webhooks).
