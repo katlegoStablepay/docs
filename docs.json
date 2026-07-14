@@ -71,6 +71,19 @@
           ]
         },
         {
+          "group": "Customers",
+          "pages": [
+            "customers/create-customer",
+            "customers/list-customers",
+            "customers/get-customer",
+            "customers/update-customer",
+            "customers/reverify-customer",
+            "customers/link-wallet",
+            "customers/list-wallets",
+            "customers/unlink-wallet"
+          ]
+        },
+        {
           "group": "Webhooks",
           "pages": [
             "webhooks/register",

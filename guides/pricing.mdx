@@ -1,0 +1,45 @@
+---
+title: Rates & fees
+description: "See the price before you send"
+---
+
+Before you send, you can get a live rate and fee for any corridor. It's a quote for display — no money moves, nothing is saved.
+
+## Get a rate
+
+```bash
+GET /v1/fx/convert
+```
+
+Pass the amount, the currencies, and the direction:
+
+```bash
+curl "https://api.stablepay.ai/v1/fx/convert?amount=1000&sourceCurrency=KES&destinationCurrency=USDC&direction=payout&paymentMethod=MOMO&optionalIssuerFee=NO" \
+  -H "Authorization: Bearer spay_live_xxxx"
+```
+
+```json
+{
+  "convertedAmount": "7.6",
+  "exchangeRate": "128.700000",
+  "paymentFee": "10",
+  "expiryTimestamp": 1783330000
+}
+```
+
+- `amount` is always the local fiat amount.
+- `convertedAmount` is the stablecoin you spend (payout) or receive (pay-in).
+- `paymentFee` is the fee, in the local currency.
+
+## How the rate is built
+
+We take the live provider rate and apply your margin:
+
+| Direction | Standard (`NO`) | With issuer fee (`YES`) |
+|---|---|---|
+| Payout | rate × 0.99 | rate × 0.985 |
+| Pay-in | rate × 1.01 | rate × 1.015 |
+
+Set `optionalIssuerFee=YES` to add the extra 0.5% (1.5% total) or `NO` for the standard 1%.
+
+<Note>The rate is indicative. The final rate is taken when the payment is created, so a quote and a payment made moments apart can differ slightly.</Note>

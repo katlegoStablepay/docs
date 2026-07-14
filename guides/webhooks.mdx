@@ -1,0 +1,37 @@
+---
+title: Handle webhooks
+description: "Get notified when a payment changes, instead of polling"
+---
+
+Webhooks let Stablepay call you when a payment changes state — so you don't have to keep asking.
+
+## Register an endpoint
+
+Tell us where to send events:
+
+```bash
+POST /v1/webhooks
+```
+
+You give us a URL and the events you care about. We return a signing secret **once** — save it. You'll use it to check every event is really from us.
+
+## The events
+
+| Event | Fires when |
+|---|---|
+| `payment.processing` | The payment has been accepted and is on its way. |
+| `payment.succeeded` | The payment is complete. |
+| `payment.failed` | The payment failed and won't complete. |
+| `payment.refunded` | A completed payment was refunded. |
+
+## Check every event is real
+
+Each delivery is signed with your secret. Before you trust an event, compute the signature over the raw request body and compare it to the one in the header. If they don't match, ignore the event.
+
+<Warning>Always verify the signature. Never act on a webhook you haven't checked.</Warning>
+
+## Good habits
+
+- Respond quickly (a `2xx`) and do slow work afterwards.
+- Treat events as "at least once" — the same event can arrive twice, so make your handler safe to run again.
+- Missed one? You can list past events and replay them.

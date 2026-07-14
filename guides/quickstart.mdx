@@ -1,0 +1,71 @@
+---
+title: Quickstart
+description: "Send your first payout in a few minutes"
+---
+
+Stablepay turns USDC into local fiat, delivered to a mobile wallet or bank account. This guide takes you from an API key to your first successful payout.
+
+## Before you start
+
+You need an API key. It starts with `spay_live_`. If you don't have one yet, email [hello@stablepay.io](mailto:hello@stablepay.io).
+
+Pass it on every request:
+
+```http
+Authorization: Bearer spay_live_xxxxxxxxxxxx
+```
+
+## 1. Send a payout
+
+Tell us the amount, where it's going, and who's receiving it. Add an `Idempotency-Key` so a retry never sends twice.
+
+```bash
+curl https://api.stablepay.ai/v1/payments/out \
+  -H "Authorization: Bearer spay_live_xxxx" \
+  -H "Idempotency-Key: order-001" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "fiatAmount": 1000,
+    "sourceCurrency": "USDC",
+    "destinationCurrency": "KES",
+    "country": "KE",
+    "blockchain": "BSC",
+    "paymentMethod": "MOMO",
+    "accountName": "Alice Wanjiku",
+    "accountNumber": "+254712345678",
+    "paymentCode": "MPESA",
+    "reference": "order-001"
+  }'
+```
+
+You get back a payment you can track:
+
+```json
+{ "paymentId": "pay_...", "status": "initiated", "createdAt": "..." }
+```
+
+## 2. Track it
+
+A payment moves through a few states before it's done:
+
+```
+initiated → provider_accepted → onchain_broadcast → succeeded
+```
+
+Check it any time, or let a [webhook](/guides/webhooks) tell you:
+
+```bash
+curl https://api.stablepay.ai/v1/payments/pay_... \
+  -H "Authorization: Bearer spay_live_xxxx"
+```
+
+That's it — money out, delivered, and tracked.
+
+## Next
+
+<CardGroup cols={2}>
+  <Card title="Send a payout" href="/guides/send-a-payout">Every field, explained.</Card>
+  <Card title="Collect a pay-in" href="/guides/collect-a-payin">Take money in.</Card>
+  <Card title="Rates & fees" href="/guides/pricing">See the price before you send.</Card>
+  <Card title="Handle webhooks" href="/guides/webhooks">Get notified instead of polling.</Card>
+</CardGroup>

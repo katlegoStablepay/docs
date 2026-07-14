@@ -1,0 +1,34 @@
+---
+title: Going live
+description: "A short checklist before you take real payments"
+---
+
+Before you switch on real traffic, run through this.
+
+## Checklist
+
+<Steps>
+  <Step title="Use a live key">
+    Your production key starts with `spay_live_`. Keep it on your server — never in a browser or mobile app.
+  </Step>
+  <Step title="Send an idempotency key">
+    Add a unique `Idempotency-Key` to every payment. It's what makes a retry safe.
+  </Step>
+  <Step title="Handle the failure states">
+    Payments can end at `failed`, and creation can return `502` when a provider is briefly down. Make sure your code handles both, not just the happy path.
+  </Step>
+  <Step title="Verify your webhooks">
+    Check the signature on every event before acting on it, and make your handler safe to run twice.
+  </Step>
+  <Step title="Retry sensibly">
+    On `5xx`, retry with backoff. On `4xx`, fix the request — retrying won't help.
+  </Step>
+</Steps>
+
+## Confirm your corridors
+
+Each corridor is switched on for your account before you can use it. If a payment returns `422 wallet_not_enabled`, that corridor isn't live for you yet — [contact us](mailto:hello@stablepay.io) and we'll enable it.
+
+## We're here to help
+
+Questions before launch? Email [hello@stablepay.io](mailto:hello@stablepay.io).
