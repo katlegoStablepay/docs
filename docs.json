@@ -74,7 +74,8 @@
           "group": "Customers",
           "pages": [
             "customers/create-customer",
-            "customers/link-wallet"
+            "customers/link-wallet",
+            "customers/get-customer"
           ]
         },
         {
