@@ -271,6 +271,33 @@ components:
           type: object
           nullable: true
           description: The verified identity. Returned only with refresh=true.
+        reviewWarnings:
+          type: array
+          nullable: true
+          description: |
+            Reasons why the customer isn't approved. This is surfaced to show your
+            end-user why verification is stuck, declined, or needs action. Omitted when the customer is approved or in_progress. Returned only with refresh=true.
+          items:
+            type: object
+            properties:
+              code:
+                type: string
+                example: COULD_NOT_PERFORM_AML_SCREENING
+              severity:
+                type: string
+                example: error
+              feature:
+                type: string
+                example: aml_screenings
+              message:
+                type: string
+                example: Could not retrieve data from KYC for performing AML Screening.
+            required: [code, severity, feature, message]
+          example:
+            - code: COULD_NOT_PERFORM_AML_SCREENING
+              severity: error
+              feature: aml_screenings
+              message: Could not retrieve data from KYC for performing AML Screening.
       required: [id, externalId, type, kycStatus, kycAttempts, createdAt, updatedAt]
 
     CustomerWallet:
@@ -1142,6 +1169,26 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Customer'
+              example:
+                id: cus_01...
+                externalId: user001
+                type: individual
+                countryCode: KE
+                kycStatus: review
+                kycAttempts: 1
+                riskLevel: null
+                metadata: {}
+                verifiedAt: null
+                createdAt: "2023-11-07T05:31:56Z"
+                updatedAt: "2023-11-07T05:31:56Z"
+                verificationUrl: null
+                sessionId: null
+                identity: null
+                reviewWarnings:
+                  - code: COULD_NOT_PERFORM_AML_SCREENING
+                    severity: error
+                    feature: aml_screenings
+                    message: Could not retrieve data from KYC for performing AML Screening.
         "404":
           description: Customer not found.
           content:
