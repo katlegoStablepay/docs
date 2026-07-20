@@ -40,3 +40,25 @@ Here `sourceCurrency` is the local currency the customer pays, and `destinationC
 3. The payment reaches `succeeded`.
 
 Track it the same way as a payout — poll [`GET /v1/payments/:id`](/get-payment) or listen for a [webhook](/guides/webhooks).
+
+## Bank pay-ins: deposit instructions
+
+Some corridors collect fiat by **bank transfer** rather than a mobile-money prompt. For those, the pay-in response includes a `depositInstruction` object with the bank account the customer must transfer into:
+
+```json
+{
+  "paymentId": "pay_01HV8KZMRJPQR9S7T3XABCDEF",
+  "status": "provider_accepted",
+  "convertedAmount": "3.00",
+  "depositInstruction": {
+    "type": "fiat",
+    "bankName": "Paystack-Titan",
+    "bankCode": "629",
+    "accountName": "BDL CHECKOUT",
+    "accountNumber": "9706072196",
+    "expiresAt": "2026-07-15T15:14:01Z"
+  }
+}
+```
+
+Surface these details to your customer so they can complete the transfer. The account is **time-limited** — if `expiresAt` passes before they pay, start a new pay-in. `depositInstruction` is also returned on [`GET /v1/payments/:id`](/get-payment) while the deposit is pending, and is absent for mobile-money (MOMO) pay-ins, which push a prompt to the customer instead.

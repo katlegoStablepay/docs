@@ -164,6 +164,13 @@ components:
           nullable: true
           description: Human-readable description of why the payment failed. Null unless `status` is `failed`.
           example: null
+        depositInstruction:
+          allOf:
+            - $ref: '#/components/schemas/DepositInstruction'
+          nullable: true
+          description: |
+            Money-in only. Bank account the customer must transfer fiat into to
+            complete a bank payin.
         createdAt:
           type: string
           format: date-time
@@ -171,6 +178,43 @@ components:
           type: string
           format: date-time
       required: [id, status, direction, paymentMethod, sourceCurrency, amountStablecoin, fiatAmount, destinationCurrency, providerRef, reference, errorCode, failureReason, createdAt, updatedAt]
+
+    # -------------------------------------------------------------------------
+    # Deposit instruction (bank payin)
+    # -------------------------------------------------------------------------
+    DepositInstruction:
+      type: object
+      description: |
+        Bank details the customer must transfer fiat into to complete a bank
+        money-in.
+      properties:
+        type:
+          type: string
+          enum: [fiat]
+          example: fiat
+        bankName:
+          type: string
+          example: Access Bank
+        bankCode:
+          type: string
+          nullable: true
+          example: "000014"
+        accountName:
+          type: string
+          example: Stablepay Defi
+        accountNumber:
+          type: string
+          example: "0123456789"
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: After this time the deposit account expires and the payment must be re-initiated.
+        reference:
+          type: string
+          nullable: true
+          example: csh-txn-20260506-001
+      required: [type, bankName, accountName, accountNumber]
 
     # -------------------------------------------------------------------------
     # Customers
@@ -701,6 +745,13 @@ paths:
                     type: string
                     description: USDC amount that will be credited to the moneyin wallet after the spread is deducted.
                     example: "37.395"
+                  depositInstruction:
+                    allOf:
+                      - $ref: '#/components/schemas/DepositInstruction'
+                    nullable: true
+                    description: |
+                      For bank payins that require the customer to transfer fiat into a
+                      provided account.
                   createdAt:
                     type: string
                     format: date-time
