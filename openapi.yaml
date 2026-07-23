@@ -728,7 +728,7 @@ paths:
           application/json:
             schema:
               type: object
-              required: [fiatAmount, sourceCurrency, destinationCurrency, blockchain, paymentMethod, accountNumber, accountName, paymentCode, reference]
+              required: [fiatAmount, sourceCurrency, destinationCurrency, blockchain, paymentMethod, reference]
               properties:
                 fiatAmount:
                   type: string
@@ -752,15 +752,15 @@ paths:
                   description: The supported payment method used to deliver funds to the recipient.
                 accountNumber:
                   type: string
-                  description: The account number of the payment method. Must be in E.164 format with the + prefix when paymentMethod is MOMO.
+                  description: The account number of the payment method. Must be in E.164 format with the + prefix when paymentMethod is MOMO. Required when paymentMethod is MOMO; optional otherwise.
                   example: "+254712345678"
                 accountName:
                   type: string
-                  description: Recipient full name associated with the payment method.
+                  description: Recipient full name associated with the payment method. Required when paymentMethod is MOMO; optional otherwise.
                   example: "Jane Doe"
                 paymentCode:
                   $ref: '#/components/schemas/PaymentCode'
-                  description: "Mobile network operator or bank code. Available MNO options: `MPESA`, `MTN`, `AIRTEL`, `TIGO`, `ZAMTEL`, `HALOTEL`, `VODAFONE`, `VODACOM`, `ORANGE`, `MOOV`, `FREE`. Available bank options: `OPAY`, `PALMPAY`, `MONIEPOINT`."
+                  description: "Mobile network operator or bank code. Available MNO options: `MPESA`, `MTN`, `AIRTEL`, `TIGO`, `ZAMTEL`, `HALOTEL`, `VODAFONE`, `VODACOM`, `ORANGE`, `MOOV`, `FREE`. Available bank options: `OPAY`, `PALMPAY`, `MONIEPOINT`. Required when paymentMethod is MOMO; optional otherwise."
                 reference:
                   type: string
                   description: Wallet issuer's unique reference.
