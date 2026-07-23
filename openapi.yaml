@@ -765,6 +765,11 @@ paths:
                   type: string
                   description: Wallet issuer's unique reference.
                   example: "csh-txn-20260506-001"
+                email:
+                  type: string
+                  format: email
+                  description: Customer's email address. Required when paymentMethod is BANK; optional otherwise.
+                  example: jane@example.com
                 paymentIdentifier:
                   type: string
                   description: A method-specific identifier required for processing the payment. Examples include BVN (BANK) or other market specific references.
