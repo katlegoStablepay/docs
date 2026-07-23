@@ -58,7 +58,8 @@
         {
           "group": "Account",
           "pages": [
-            "validate"
+            "validate",
+            "banks"
           ]
         },
         {

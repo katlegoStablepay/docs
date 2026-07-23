@@ -513,6 +513,52 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
+  /v1/account/banks:
+    get:
+      operationId: listBanks
+      summary: List supported banks
+      description: |
+        Returns a list of supported banks for the specified country.
+      tags: [Account]
+      parameters:
+        - name: country
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [NG]
+          description: Recipient country code.
+      responses:
+        "200":
+          description: List of supported banks for the specified country.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    bankCode:
+                      type: string
+                      description: Bank code used for payments.
+                      example: "01"
+                    bankName:
+                      type: string
+                      description: Full bank name.
+                      example: "Kenya Commercial Bank"
+                  required: [bankCode, bankName]
+        "401":
+          description: Invalid or missing API key.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "422":
+          description: Validation error — unsupported country code.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   # ---------------------------------------------------------------------------
   # FX convert
   # ---------------------------------------------------------------------------
@@ -536,14 +582,18 @@ paths:
           required: true
           schema:
             type: string
-            enum: [CDF, GHS, KES, NGN, TZS, UGX, XAF, XOF, ZAR, ZMW]
+            description: |
+             Currency the amount is denominated in — a fiat currency OR a stablecoin.
+            enum: [CDF, GHS, KES, NGN, TZS, UGX, XAF, XOF, ZAR, ZMW, USDC, USDT]
           example: KES
         - name: destinationCurrency
           in: query
           required: true
           schema:
             type: string
-            enum: [USDC, USDT]
+            description: |
+              Currency the amount will be converted to — a fiat currency OR a stablecoin.
+            enum: [USDC, USDT, CDF, GHS, KES, NGN, TZS, UGX, XAF, XOF, ZAR, ZMW]
           example: USDC
         - name: paymentMethod
           in: query
