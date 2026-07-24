@@ -40,6 +40,7 @@ components:
         Mobile network operator or bank code. Required for money-out payments.
         MNO options: MPESA, MTN, AIRTEL, TIGO, ZAMTEL, HALOTEL, VODAFONE, VODACOM, ORANGE, MOOV, FREE.
         Bank options: OPAY, PALMPAY, MONIEPOINT.
+        Use the List Supported Banks endpoint to look up the bankCode for recipient's bank.
 
     CurrencyOut:
       type: string
@@ -447,6 +448,7 @@ paths:
                   description: |
                     Required when paymentMethod is BANK.
                     NGN bank providers: OPAY | PALMPAY | MONIEPOINT
+                    Use the List Supported Banks endpoint to look up the bankCode for recipient's bank.
                     KES bank code: e.g. "01" for Kenya Commercial Bank.
                   example: "OPAY"
               required: [accountNumber, country, paymentMethod]
@@ -760,7 +762,7 @@ paths:
                   example: "Jane Doe"
                 paymentCode:
                   $ref: '#/components/schemas/PaymentCode'
-                  description: "Mobile network operator or bank code. Available MNO options: `MPESA`, `MTN`, `AIRTEL`, `TIGO`, `ZAMTEL`, `HALOTEL`, `VODAFONE`, `VODACOM`, `ORANGE`, `MOOV`, `FREE`. Available bank options: `OPAY`, `PALMPAY`, `MONIEPOINT`. Required when paymentMethod is MOMO; optional otherwise."
+                  description: "Mobile network operator or bank code. Available MNO options: `MPESA`, `MTN`, `AIRTEL`, `TIGO`, `ZAMTEL`, `HALOTEL`, `VODAFONE`, `VODACOM`, `ORANGE`, `MOOV`, `FREE`. Available bank options: `OPAY`, `PALMPAY`, `MONIEPOINT`. Use the List Supported Banks endpoint to look up the bankCode for recipient's bank. Required when paymentMethod is MOMO; optional otherwise."
                 reference:
                   type: string
                   description: Wallet issuer's unique reference.
@@ -911,7 +913,7 @@ paths:
                   example: "+254712345678"
                 paymentCode:
                   $ref: '#/components/schemas/PaymentCode'
-                  description: "Mobile network operator or bank code. Available MNO options: `MPESA`, `MTN`, `AIRTEL`, `TIGO`, `ZAMTEL`, `HALOTEL`, `VODAFONE`, `VODACOM`, `ORANGE`, `MOOV`, `FREE`. Available bank options: `OPAY`, `PALMPAY`, `MONIEPOINT`."
+                  description: "Mobile network operator or bank code. Available MNO options: `MPESA`, `MTN`, `AIRTEL`, `TIGO`, `ZAMTEL`, `HALOTEL`, `VODAFONE`, `VODACOM`, `ORANGE`, `MOOV`, `FREE`. Available bank options: `OPAY`, `PALMPAY`, `MONIEPOINT`. Use the List Supported Banks endpoint to look up the bankCode for recipient's bank."
                 
                 reference:
                   type: string
