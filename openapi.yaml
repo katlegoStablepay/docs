@@ -612,7 +612,7 @@ paths:
           schema:
             type: string
             description: |
-             Currency the amount is denominated in — a fiat currency OR a stablecoin.
+             Currency the amount is converted from. This can be fiat or stablecoin.
             enum: [CDF, GHS, KES, NGN, TZS, UGX, XAF, XOF, ZAR, ZMW, USDC, USDT]
           example: KES
         - name: destinationCurrency
@@ -621,7 +621,7 @@ paths:
           schema:
             type: string
             description: |
-              Currency the amount will be converted to — a fiat currency OR a stablecoin.
+              Currency the amount will be converted to.
             enum: [USDC, USDT, CDF, GHS, KES, NGN, TZS, UGX, XAF, XOF, ZAR, ZMW]
           example: USDC
         - name: paymentMethod
@@ -836,10 +836,10 @@ paths:
                     type: string
                     nullable: true
                     description: Provider's internal transaction ID.
-                  convertedAmount:
-                    type: string
-                    description: USDC amount that will be credited to the moneyin wallet after the spread is deducted.
-                    example: "37.395"
+                  # convertedAmount:
+                  #   type: string
+                  #   description: USDC amount that will be credited to the moneyin wallet after the spread is deducted.
+                  #   example: "37.395"
                   depositInstruction:
                     allOf:
                       - $ref: '#/components/schemas/DepositInstruction'
@@ -850,7 +850,7 @@ paths:
                   createdAt:
                     type: string
                     format: date-time
-                required: [paymentId, status, convertedAmount, createdAt]
+                required: [paymentId, status, createdAt]
         "400":
           description: Validation error or missing idempotency-key header.
           content:
@@ -978,7 +978,7 @@ paths:
                   reference: csh-txn-20260506-002
       responses:
         "202":
-          description: Payment accepted. Processing is async — poll or await webhook.
+          description: Payment accepted. Processing is async. Poll or await webhook.
           content:
             application/json:
               schema:
@@ -995,14 +995,14 @@ paths:
                     type: string
                     nullable: true
                     description: Provider's internal transaction ID.
-                  convertedAmount:
-                    type: string
-                    description: Fiat amount that will be paid to the recipient after fees are deducted.
-                    example: "1350"
+                  # convertedAmount:
+                  #   type: string
+                  #   description: Fiat amount that will be paid to the recipient after fees are deducted.
+                  #   example: "1350"
                   createdAt:
                     type: string
                     format: date-time
-                required: [paymentId, status, convertedAmount, createdAt]
+                required: [paymentId, status, createdAt]
         "400":
           description: Validation error (missing field or bad format).
           content:
@@ -1118,7 +1118,7 @@ paths:
       operationId: createCustomer
       summary: Create a customer
       description: |
-        The Customers API is a KYC API for DeFi wallets. Onboard and verify your
+        The customers API is a KYC API for DeFi wallets. Onboard and verify your
         end-users, then link their wallet addresses so verified identity travels
         with their on-chain activity.
 
@@ -1479,7 +1479,7 @@ paths:
               events: ["payment.succeeded", "payment.failed", "payment.processing"]
       responses:
         "201":
-          description: Webhook registered. Save the `secret` — it is not retrievable after this response.
+          description: Webhook registered. Save the `secret`. It is not retrievable after this response.
           content:
             application/json:
               schema:
@@ -1499,7 +1499,7 @@ paths:
                   secret:
                     type: string
                     description: |
-                      HMAC signing secret — returned **once only**. Store in your secrets manager.
+                      HMAC signing secret that is returned **once only**. Store in your secrets manager.
                       Used to verify `Stablepay-Signature` on inbound events.
                     example: "a3f7c2e1d4b8a0..."
                 required: [webhookId, url, events, secret]
