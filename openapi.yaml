@@ -762,7 +762,7 @@ paths:
                   example: "Jane Doe"
                 paymentCode:
                   $ref: '#/components/schemas/PaymentCode'
-                  description: "Mobile network operator or bank code. Available MNO options: `MPESA`, `MTN`, `AIRTEL`, `TIGO`, `ZAMTEL`, `HALOTEL`, `VODAFONE`, `VODACOM`, `ORANGE`, `MOOV`, `FREE`. Available bank options: `OPAY`, `PALMPAY`, `MONIEPOINT`. Use the List Supported Banks endpoint to look up the bankCode for recipient's bank. Required when paymentMethod is MOMO; optional otherwise."
+                  description: "Mobile network operator or bank code. Available MNO options: `MPESA`, `MTN`, `AIRTEL`, `TIGO`, `ZAMTEL`, `HALOTEL`, `VODAFONE`, `VODACOM`, `ORANGE`, `MOOV`, `FREE`. Available bank options: `OPAY`, `PALMPAY`, `MONIEPOINT`. For NGN bank payins, set this to `OPAY` to trigger an OPAY deeplink for the customer. Use the List Supported Banks endpoint to look up the bankCode for recipient's bank. Required when paymentMethod is MOMO; optional otherwise."
                 reference:
                   type: string
                   description: Wallet issuer's unique reference.
@@ -804,6 +804,17 @@ paths:
                   accountName: tester
                   paymentCode: ORANGE
                   reference: order_xyz456
+              ngnBankOpay:
+                summary: NGN via OPAY deeplink
+                value:
+                  fiatAmount: "10000"
+                  sourceCurrency: NGN
+                  destinationCurrency: USDC
+                  blockchain: BSC
+                  paymentMethod: BANK
+                  paymentCode: OPAY
+                  email: jane@example.com
+                  reference: order_ngn001
       responses:
         "202":
           description: |
