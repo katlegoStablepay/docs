@@ -44,7 +44,7 @@ components:
 
     CurrencyOut:
       type: string
-      enum: [CDF, GHS, KES, NGN, TZS, UGX, XAF, XOF, ZMW]
+      enum: [CDF, GHS, KES, NGN, TZS, UGX, XAF, XOF, ZAR, ZMW]
       description: Fiat currency received by the recipient.
 
     CurrencyIn:
@@ -64,7 +64,7 @@ components:
 
     Country:
       type: string
-      enum: [BF, BJ, CD, CI, CM, GH, KE, NG, SN, TZ, UG, ZM]
+      enum: [BF, BJ, CD, CI, CM, GH, KE, NG, SN, TZ, UG, ZA, ZM]
       description: Recipient country code.
 
     PaymentStatus:
