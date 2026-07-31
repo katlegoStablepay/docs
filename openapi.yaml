@@ -738,7 +738,7 @@ paths:
                   example: "1000"
                 sourceCurrency:
                   type: string
-                  enum: [GHS, KES, NGN, TZS, UGX, ZMW, XAF, XOF, CDF]
+                  enum: [GHS, KES, NGN, TZS, UGX, ZMW, ZAR, XAF, XOF, CDF]
                   description: Fiat currency sent onchain for payment settlement.
                 destinationCurrency:
                   type: string
