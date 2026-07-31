@@ -555,7 +555,7 @@ paths:
           required: true
           schema:
             type: string
-            enum: [NG]
+            enum: [NG, ZA]
           description: Recipient country code.
       responses:
         "200":
