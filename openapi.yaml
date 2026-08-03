@@ -929,9 +929,8 @@ paths:
                   $ref: '#/components/schemas/PaymentCode'
                   description: |
                     Mobile network operator or bank code.
-                    Available MNO options: MPESA, MTN, AIRTEL, TIGO, ZAMTEL, HALOTEL, VODAFONE, VODACOM, ORANGE, MOOV, FREE.
-                    Available bank options: OPAY or BANKCODE.
-                
+                    Available MNO options: MPESA, TIPS, MTN, AIRTEL, TIGO, ZAMTEL, HALOTEL, VODAFONE, VODACOM, ORANGE, MOOV, FREE.
+                    Available BANK options: OPAY or BANKCODE.
                 reference:
                   type: string
                   description: Wallet issuer's unique reference.
