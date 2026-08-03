@@ -612,7 +612,7 @@ paths:
           schema:
             type: string
             description: |
-             Currency the amount is converted from. This can be fiat or stablecoin.
+             The currency the amount is denominated in (fiat or stablecoin).
             enum: [CDF, GHS, KES, NGN, TZS, UGX, XAF, XOF, ZAR, ZMW, USDC, USDT]
           example: KES
         - name: destinationCurrency
@@ -762,7 +762,10 @@ paths:
                   example: "Jane Doe"
                 paymentCode:
                   $ref: '#/components/schemas/PaymentCode'
-                  description: "Mobile network operator or bank code. Available MNO options: `MPESA`, `MTN`, `AIRTEL`, `TIGO`, `ZAMTEL`, `HALOTEL`, `VODAFONE`, `VODACOM`, `ORANGE`, `MOOV`, `FREE`. Available bank options: `OPAY`, `PALMPAY`, `MONIEPOINT`. For NGN bank payins, set this to `OPAY` to trigger an OPAY deeplink for the customer. Use the List Supported Banks endpoint to look up the bankCode for recipient's bank. Required when paymentMethod is MOMO; optional otherwise."
+                  description: |
+                    Mobile network operator or bank code.
+                    Available MNO options: MPESA, MTN, AIRTEL, TIGO, ZAMTEL, HALOTEL, VODAFONE, VODACOM, ORANGE, MOOV, FREE.
+                    Available bank options: OPAY or BANKCODE.
                 reference:
                   type: string
                   description: Wallet issuer's unique reference.
@@ -924,7 +927,10 @@ paths:
                   example: "+254712345678"
                 paymentCode:
                   $ref: '#/components/schemas/PaymentCode'
-                  description: "Mobile network operator or bank code. Available MNO options: `MPESA`, `MTN`, `AIRTEL`, `TIGO`, `ZAMTEL`, `HALOTEL`, `VODAFONE`, `VODACOM`, `ORANGE`, `MOOV`, `FREE`. Available bank options: `OPAY`, `PALMPAY`, `MONIEPOINT`. Use the List Supported Banks endpoint to look up the bankCode for recipient's bank."
+                  description: |
+                    Mobile network operator or bank code.
+                    Available MNO options: MPESA, MTN, AIRTEL, TIGO, ZAMTEL, HALOTEL, VODAFONE, VODACOM, ORANGE, MOOV, FREE.
+                    Available bank options: OPAY or BANKCODE.
                 
                 reference:
                   type: string
