@@ -370,7 +370,9 @@ components:
           example: "Jane Doe"
         accountNumber:
           type: string
-          description: The account number of the payment method. Must be in E.164 format with the + prefix when paymentMethod is MOMO.
+          description: |
+            The account number of the payment method.
+            Must be in E.164 format with the + prefix when paymentMethod is MOMO.
           example: "+254712345678"
         paymentCode:
           type: string
@@ -435,7 +437,9 @@ paths:
               properties:
                 accountNumber:
                   type: string
-                  description: The account number of the payment method. Must be in E.164 format with the + prefix when paymentMethod is MOMO.
+                  description: |
+                    The account number of the payment method.
+                    Must be in E.164 format with the + prefix when paymentMethod is MOMO.
                   example: "+254712345678"
                 country:
                   type: string
@@ -612,7 +616,7 @@ paths:
           schema:
             type: string
             description: |
-             The currency the amount is denominated in (fiat or stablecoin).
+             The currency to convert from (fiat or stablecoin).
             enum: [CDF, GHS, KES, NGN, TZS, UGX, XAF, XOF, ZAR, ZMW, USDC, USDT]
           example: KES
         - name: destinationCurrency
@@ -621,7 +625,7 @@ paths:
           schema:
             type: string
             description: |
-              Currency the amount will be converted to.
+              The currency to convert to.
             enum: [USDC, USDT, CDF, GHS, KES, NGN, TZS, UGX, XAF, XOF, ZAR, ZMW]
           example: USDC
         - name: paymentMethod
@@ -754,7 +758,9 @@ paths:
                   description: The supported payment method used to deliver funds to the recipient.
                 accountNumber:
                   type: string
-                  description: The account number of the payment method. Must be in E.164 format with the + prefix when paymentMethod is MOMO. Required when paymentMethod is MOMO; optional otherwise.
+                  description: |
+                    The account number of the payment method.
+                    Must be in E.164 format with the + prefix when paymentMethod is MOMO.
                   example: "+254712345678"
                 accountName:
                   type: string
@@ -923,7 +929,9 @@ paths:
                   example: Jane Doe
                 accountNumber:
                   type: string
-                  description: The account number of the payment method. Must be in E.164 format with the + prefix when paymentMethod is MOMO.
+                  description: |
+                    The account number of the payment method.
+                    Must be in E.164 format with the + prefix when paymentMethod is MOMO.
                   example: "+254712345678"
                 paymentCode:
                   $ref: '#/components/schemas/PaymentCode'
