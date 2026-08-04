@@ -55,7 +55,7 @@ components:
     Blockchain:
       type: string
       enum: [BSC, SOLANA]
-      description: Blockchain the stablecoin is sent on. Both BSC and Solana are supported.
+      description: Supported blockchains for onchain settlement.
 
     PaymentMethod:
       type: string
@@ -304,21 +304,21 @@ components:
     CustomerWallet:
       type: object
       properties:
-        id:
+        walletId:
           type: string
           example: cus_wal_01KXG3R0X8DXTKB849FFFEPT7Y
         customerId:
           type: string
           example: cus_01KXG3R0X8DXTKB849FFFEPT7Y
-        address:
+        walletAddress:
           type: string
           example: "0xabc123..."
-        chain:
+        blockchain:
           $ref: '#/components/schemas/Blockchain'
         createdAt:
           type: string
           format: date-time
-      required: [id, customerId, address, chain, createdAt]
+      required: [walletId, customerId, walletAddress, blockchain, createdAt]
 
     # -------------------------------------------------------------------------
     # Webhooks outbound
@@ -1378,14 +1378,15 @@ paths:
             schema:
               type: object
               properties:
-                address:
+                walletAddress:
                   type: string
                   example: "0xAbC123..."
-                chain:
+                  description: "The blockchain wallet address to link"
+                blockchain:
                   $ref: '#/components/schemas/Blockchain'
               required:
-                - address
-                - chain
+                - walletAddress
+                - blockchain
       responses:
         "201":
           description: Wallet linked.
