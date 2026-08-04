@@ -767,9 +767,9 @@ paths:
                 paymentCode:
                   $ref: '#/components/schemas/PaymentCode'
                   description: |
-                    Mobile network operator or bank code.
-                    Available MNO options: MPESA, MTN, AIRTEL, TIGO, ZAMTEL, HALOTEL, VODAFONE, VODACOM, ORANGE, MOOV, FREE.
-                    Available BANK options: OPAY, BANKCODE.
+                    Required when paymentMethod is MOMO, OPAY.
+                    Available MOMO options: MPESA, MTN, AIRTEL, TIGO, ZAMTEL, HALOTEL, VODAFONE, VODACOM, ORANGE, MOOV, FREE.
+                    Available BANK options: OPAY.
                 reference:
                   type: string
                   description: Wallet issuer's unique reference.
@@ -934,9 +934,8 @@ paths:
                 paymentCode:
                   $ref: '#/components/schemas/PaymentCode'
                   description: |
-                    Mobile network operator or bank code.
-                    Available MNO options: MPESA, TIPS, MTN, AIRTEL, TIGO, ZAMTEL, HALOTEL, VODAFONE, VODACOM, ORANGE, MOOV, FREE.
-                    Available BANK options: OPAY or BANKCODE.
+                    Available MNO options: MPESA, MTN, AIRTEL, TIGO, ZAMTEL, HALOTEL, VODAFONE, VODACOM, ORANGE, MOOV, FREE, TIPS.
+                    Available BANK options: OPAY, BANKCODE.
                 reference:
                   type: string
                   description: Wallet issuer's unique reference.
