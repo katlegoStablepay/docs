@@ -379,7 +379,7 @@ components:
           nullable: true
           description: |
             Carry this value forward directly as `paymentCode` on the payment endpoints.
-            PAYBILL / TILL: null — no code applies for these methods.
+            PAYBILL / TILL: No code applies for these methods.
           example: "MPESA"
         country:
           type: string
@@ -450,10 +450,8 @@ paths:
                 paymentCode:
                   type: string
                   description: |
-                    Required when paymentMethod is BANK.
-                    NGN bank providers: OPAY | PALMPAY | MONIEPOINT
-                    Use the List Supported Banks endpoint to look up the bankCode for recipient's bank.
-                    KES bank code: e.g. "01" for Kenya Commercial Bank.
+                    Required when paymentMethod is BANK. Use the List Supported Banks endpoint to look up the paymentCode for recipient's bank. 
+                    Available BANK options: OPAY, BANKCODE.
                   example: "OPAY"
               required: [accountNumber, country, paymentMethod]
             examples:
@@ -771,7 +769,7 @@ paths:
                   description: |
                     Mobile network operator or bank code.
                     Available MNO options: MPESA, MTN, AIRTEL, TIGO, ZAMTEL, HALOTEL, VODAFONE, VODACOM, ORANGE, MOOV, FREE.
-                    Available bank options: OPAY or BANKCODE.
+                    Available BANK options: OPAY, BANKCODE.
                 reference:
                   type: string
                   description: Wallet issuer's unique reference.
