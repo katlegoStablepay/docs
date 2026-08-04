@@ -40,10 +40,11 @@ components:
         Mobile network operator or bank code. Required for money-out payments.
         MNO options: MPESA, MTN, AIRTEL, TIGO, ZAMTEL, HALOTEL, VODAFONE, VODACOM, ORANGE, MOOV, FREE.
         Bank options: OPAY, PALMPAY, MONIEPOINT.
+        Use the List Supported Banks endpoint to look up the bankCode for recipient's bank.
 
     CurrencyOut:
       type: string
-      enum: [CDF, GHS, KES, NGN, TZS, UGX, XAF, XOF, ZMW]
+      enum: [CDF, GHS, KES, NGN, TZS, UGX, XAF, XOF, ZAR, ZMW]
       description: Fiat currency received by the recipient.
 
     CurrencyIn:
@@ -63,7 +64,7 @@ components:
 
     Country:
       type: string
-      enum: [BF, BJ, CD, CI, CM, GH, KE, NG, SN, TZ, UG, ZM]
+      enum: [BF, BJ, CD, CI, CM, GH, KE, NG, SN, TZ, UG, ZA, ZM]
       description: Recipient country code.
 
     PaymentStatus:
@@ -447,6 +448,7 @@ paths:
                   description: |
                     Required when paymentMethod is BANK.
                     NGN bank providers: OPAY | PALMPAY | MONIEPOINT
+                    Use the List Supported Banks endpoint to look up the bankCode for recipient's bank.
                     KES bank code: e.g. "01" for Kenya Commercial Bank.
                   example: "OPAY"
               required: [accountNumber, country, paymentMethod]
@@ -553,7 +555,7 @@ paths:
           required: true
           schema:
             type: string
-            enum: [NG]
+            enum: [NG, ZA]
           description: Recipient country code.
       responses:
         "200":
@@ -610,7 +612,7 @@ paths:
           schema:
             type: string
             description: |
-             Currency the amount is denominated in — a fiat currency OR a stablecoin.
+             The currency the amount is denominated in (fiat or stablecoin).
             enum: [CDF, GHS, KES, NGN, TZS, UGX, XAF, XOF, ZAR, ZMW, USDC, USDT]
           example: KES
         - name: destinationCurrency
@@ -619,7 +621,7 @@ paths:
           schema:
             type: string
             description: |
-              Currency the amount will be converted to — a fiat currency OR a stablecoin.
+              Currency the amount will be converted to.
             enum: [USDC, USDT, CDF, GHS, KES, NGN, TZS, UGX, XAF, XOF, ZAR, ZMW]
           example: USDC
         - name: paymentMethod
@@ -728,7 +730,7 @@ paths:
           application/json:
             schema:
               type: object
-              required: [fiatAmount, sourceCurrency, destinationCurrency, blockchain, paymentMethod, accountNumber, accountName, paymentCode, reference]
+              required: [fiatAmount, sourceCurrency, destinationCurrency, blockchain, paymentMethod, reference]
               properties:
                 fiatAmount:
                   type: string
@@ -736,7 +738,7 @@ paths:
                   example: "1000"
                 sourceCurrency:
                   type: string
-                  enum: [GHS, KES, NGN, TZS, UGX, ZMW, XAF, XOF, CDF]
+                  enum: [GHS, KES, NGN, TZS, UGX, ZMW, ZAR, XAF, XOF, CDF]
                   description: Fiat currency sent onchain for payment settlement.
                 destinationCurrency:
                   type: string
@@ -752,19 +754,27 @@ paths:
                   description: The supported payment method used to deliver funds to the recipient.
                 accountNumber:
                   type: string
-                  description: The account number of the payment method. Must be in E.164 format with the + prefix when paymentMethod is MOMO.
+                  description: The account number of the payment method. Must be in E.164 format with the + prefix when paymentMethod is MOMO. Required when paymentMethod is MOMO; optional otherwise.
                   example: "+254712345678"
                 accountName:
                   type: string
-                  description: Recipient full name associated with the payment method.
+                  description: Recipient full name associated with the payment method. Required when paymentMethod is MOMO; optional otherwise.
                   example: "Jane Doe"
                 paymentCode:
                   $ref: '#/components/schemas/PaymentCode'
-                  description: "Mobile network operator or bank code. Available MNO options: `MPESA`, `MTN`, `AIRTEL`, `TIGO`, `ZAMTEL`, `HALOTEL`, `VODAFONE`, `VODACOM`, `ORANGE`, `MOOV`, `FREE`. Available bank options: `OPAY`, `PALMPAY`, `MONIEPOINT`."
+                  description: |
+                    Mobile network operator or bank code.
+                    Available MNO options: MPESA, MTN, AIRTEL, TIGO, ZAMTEL, HALOTEL, VODAFONE, VODACOM, ORANGE, MOOV, FREE.
+                    Available bank options: OPAY or BANKCODE.
                 reference:
                   type: string
                   description: Wallet issuer's unique reference.
                   example: "csh-txn-20260506-001"
+                email:
+                  type: string
+                  format: email
+                  description: Customer's email address. Required when paymentMethod is BANK; optional otherwise.
+                  example: jane@example.com
                 paymentIdentifier:
                   type: string
                   description: A method-specific identifier required for processing the payment. Examples include BVN (BANK) or other market specific references.
@@ -797,6 +807,17 @@ paths:
                   accountName: tester
                   paymentCode: ORANGE
                   reference: order_xyz456
+              ngnBankOpay:
+                summary: NGN via OPAY deeplink
+                value:
+                  fiatAmount: "10000"
+                  sourceCurrency: NGN
+                  destinationCurrency: USDC
+                  blockchain: BSC
+                  paymentMethod: BANK
+                  paymentCode: OPAY
+                  email: jane@example.com
+                  reference: order_ngn001
       responses:
         "202":
           description: |
@@ -818,10 +839,10 @@ paths:
                     type: string
                     nullable: true
                     description: Provider's internal transaction ID.
-                  convertedAmount:
-                    type: string
-                    description: USDC amount that will be credited to the moneyin wallet after the spread is deducted.
-                    example: "37.395"
+                  # convertedAmount:
+                  #   type: string
+                  #   description: USDC amount that will be credited to the moneyin wallet after the spread is deducted.
+                  #   example: "37.395"
                   depositInstruction:
                     allOf:
                       - $ref: '#/components/schemas/DepositInstruction'
@@ -832,7 +853,7 @@ paths:
                   createdAt:
                     type: string
                     format: date-time
-                required: [paymentId, status, convertedAmount, createdAt]
+                required: [paymentId, status, createdAt]
         "400":
           description: Validation error or missing idempotency-key header.
           content:
@@ -906,8 +927,10 @@ paths:
                   example: "+254712345678"
                 paymentCode:
                   $ref: '#/components/schemas/PaymentCode'
-                  description: "Mobile network operator or bank code. Available MNO options: `MPESA`, `MTN`, `AIRTEL`, `TIGO`, `ZAMTEL`, `HALOTEL`, `VODAFONE`, `VODACOM`, `ORANGE`, `MOOV`, `FREE`. Available bank options: `OPAY`, `PALMPAY`, `MONIEPOINT`."
-                
+                  description: |
+                    Mobile network operator or bank code.
+                    Available MNO options: MPESA, TIPS, MTN, AIRTEL, TIGO, ZAMTEL, HALOTEL, VODAFONE, VODACOM, ORANGE, MOOV, FREE.
+                    Available BANK options: OPAY or BANKCODE.
                 reference:
                   type: string
                   description: Wallet issuer's unique reference.
@@ -960,7 +983,7 @@ paths:
                   reference: csh-txn-20260506-002
       responses:
         "202":
-          description: Payment accepted. Processing is async — poll or await webhook.
+          description: Payment accepted. Processing is async. Poll or await webhook.
           content:
             application/json:
               schema:
@@ -977,14 +1000,14 @@ paths:
                     type: string
                     nullable: true
                     description: Provider's internal transaction ID.
-                  convertedAmount:
-                    type: string
-                    description: Fiat amount that will be paid to the recipient after fees are deducted.
-                    example: "1350"
+                  # convertedAmount:
+                  #   type: string
+                  #   description: Fiat amount that will be paid to the recipient after fees are deducted.
+                  #   example: "1350"
                   createdAt:
                     type: string
                     format: date-time
-                required: [paymentId, status, convertedAmount, createdAt]
+                required: [paymentId, status, createdAt]
         "400":
           description: Validation error (missing field or bad format).
           content:
@@ -1099,7 +1122,12 @@ paths:
     post:
       operationId: createCustomer
       summary: Create a customer
-      description: Create a customer and start KYC. Returns a hosted verification URL.
+      description: |
+        The customers API is a KYC API for DeFi wallets. Onboard and verify your
+        end-users, then link their wallet addresses so verified identity travels
+        with their on-chain activity.
+
+        Create a customer and start KYC. Returns a hosted verification URL.
       tags: [Customers]
       requestBody:
         required: true
@@ -1326,7 +1354,7 @@ paths:
     post:
       operationId: linkCustomerWallet
       summary: Link a wallet
-      description: Link an on-chain wallet address to a customer.
+      description: Link an on-chain wallet address to a KYC-verified customer, so their verified identity travels with that wallet's on-chain activity.
       tags: [Customers]
       parameters:
         - name: customerId
@@ -1457,7 +1485,7 @@ paths:
               events: ["payment.succeeded", "payment.failed", "payment.processing"]
       responses:
         "201":
-          description: Webhook registered. Save the `secret` — it is not retrievable after this response.
+          description: Webhook registered. Save the `secret`. It is not retrievable after this response.
           content:
             application/json:
               schema:
@@ -1477,7 +1505,7 @@ paths:
                   secret:
                     type: string
                     description: |
-                      HMAC signing secret — returned **once only**. Store in your secrets manager.
+                      HMAC signing secret that is returned **once only**. Store in your secrets manager.
                       Used to verify `Stablepay-Signature` on inbound events.
                     example: "a3f7c2e1d4b8a0..."
                 required: [webhookId, url, events, secret]
@@ -1559,6 +1587,11 @@ tags:
     description: Live on-chain USDC and native token balances for the tenant's custody wallets.
   - name: Analytics
     description: Pre-aggregated payment analytics — volume, success rates, corridor breakdowns, and daily time series.
+  - name: Customers
+    description: |
+      KYC API for DeFi wallets. Onboard and verify your end-users, then link
+      their wallet addresses so verified identity travels with their on-chain
+      activity.
   - name: Webhooks
     description: Register endpoints and manage outbound event delivery.
   - name: Admin
