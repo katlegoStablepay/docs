@@ -1483,11 +1483,11 @@ paths:
                   items:
                     type: string
                   description: Event types to subscribe to. Empty array = all events.
-                  example: ["payment.succeeded", "payment.failed"]
+                  example: ["payment.succeeded", "payment.failed", "customer.kyc.updated"]
               required: [url]
             example:
               url: https://app.walletIssuer.io/webhooks/stablepay
-              events: ["payment.succeeded", "payment.failed", "payment.processing"]
+              events: ["payment.succeeded", "payment.failed", "payment.processing", "customer.kyc.updated"]
       responses:
         "201":
           description: Webhook registered. Save the `secret`. It is not retrievable after this response.
