@@ -75,6 +75,7 @@
           "group": "Customers",
           "pages": [
             "customers/create-customer",
+            "customers/reverify-customer",
             "customers/link-wallet",
             "customers/get-customer"
           ]
