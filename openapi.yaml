@@ -631,7 +631,7 @@ paths:
           required: true
           schema:
             type: string
-            enum: [MOMO, BANK, PAYBILL, TILL]
+            enum: [MOMO, BANK, OPAY, PAYBILL, TILL]
           example: MOMO
         - name: direction
           in: query
@@ -767,7 +767,7 @@ paths:
                 paymentCode:
                   $ref: '#/components/schemas/PaymentCode'
                   description: |
-                    Required when paymentMethod is MOMO, OPAY.
+                    Required when paymentMethod is MOMO or OPAY.
                     Available MOMO options: MPESA, MTN, AIRTEL, TIGO, ZAMTEL, HALOTEL, VODAFONE, VODACOM, ORANGE, MOOV, FREE.
                     Available BANK options: OPAY.
                 reference:
