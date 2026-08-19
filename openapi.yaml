@@ -1175,24 +1175,24 @@ paths:
                 ngnOpayPayout:
                   summary: NGN OPAY payout
                   value:
-                    id: pay_01KXZ87Z35QQJ9E30NRC39GQPR
+                    id: pay_01KY7JCNWDSDFVRQABCW0K1233G
                     status: succeeded
                     direction: money_out
                     paymentMethod: BANK
                     sourceCurrency: USDC
-                    amountStablecoin: "3.601"
-                    fiatAmount: "5000"
+                    amountStablecoin: "3.719"
+                    fiatAmount: "5050"
                     destinationCurrency: NGN
-                    providerRef: ofr_01KXZ8863ZX8MP0DFK5SFJ962F
-                    reference: tx-001-200726
+                    providerRef: EH1234DDH5jWj3sq9zvv
+                    reference: KAS_SWDN3OD
                     errorCode: null
                     failureReason: null
                     customerMessage: null
                     depositInstruction: null
                     redirectUrl: null
                     paymentCode: OPAY
-                    createdAt: "2026-07-20T07:53:26.956Z"
-                    updatedAt: "2026-07-20T07:55:27.017Z"
+                    createdAt: "2026-07-23T13:24:42.581Z"
+                    updatedAt: "2026-07-23T13:25:19.327Z"
         "404":
           description: Payment not found or belongs to another tenant.
           content:
