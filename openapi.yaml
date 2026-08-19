@@ -75,10 +75,10 @@ components:
 
     Direction:
       type: string
-      enum: [payin, payout]
+      enum: [money_in, money_out]
       description: |
-        payout: issuer sends stablecoin → recipient receives fiat.
-        payin: customer pays fiat → issuer receives stablecoin.
+        money_out: issuer sends stablecoin → recipient receives fiat.
+        money_in: customer pays fiat → issuer receives stablecoin.
 
     UsdcAmount:
       type: string
@@ -165,6 +165,11 @@ components:
           nullable: true
           description: Human-readable description of why the payment failed. Null unless `status` is `failed`.
           example: null
+        customerMessage:
+          type: string
+          nullable: true
+          description: Human-readable status message safe to surface to the end customer.
+          example: null
         depositInstruction:
           allOf:
             - $ref: '#/components/schemas/DepositInstruction'
@@ -172,13 +177,25 @@ components:
           description: |
             Money-in only. Bank account the customer must transfer fiat into to
             complete a bank payin.
+        redirectUrl:
+          type: string
+          nullable: true
+          description: |
+            Hosted checkout URL the customer must be redirected to complete the payment.
+            Present for payment methods that require a redirect (e.g. OPAY deeplink payins); null otherwise.
+          example: null
+        paymentCode:
+          type: string
+          nullable: true
+          description: The paymentCode supplied on the request, echoed back.
+          example: null
         createdAt:
           type: string
           format: date-time
         updatedAt:
           type: string
           format: date-time
-      required: [id, status, direction, paymentMethod, sourceCurrency, amountStablecoin, fiatAmount, destinationCurrency, providerRef, reference, errorCode, failureReason, createdAt, updatedAt]
+      required: [id, status, direction, paymentMethod, sourceCurrency, amountStablecoin, fiatAmount, destinationCurrency, providerRef, reference, errorCode, failureReason, customerMessage, redirectUrl, paymentCode, createdAt, updatedAt]
 
     # -------------------------------------------------------------------------
     # Deposit instruction (bank payin)
@@ -854,10 +871,23 @@ paths:
                     description: |
                       For bank payins that require the customer to transfer fiat into a
                       provided account.
+                  redirectUrl:
+                    type: string
+                    nullable: true
+                    description: |
+                      Hosted checkout URL the customer must be redirected to complete the
+                      payment (e.g. OPAY deeplink). Null when not applicable.
+                    example: "https://express.opaycheckout.com/apiCashier/redirect/payment/checkoutHome?orderToken=TOKEN.abc233f3nfonc8a0a076dd7"
                   createdAt:
                     type: string
                     format: date-time
                 required: [paymentId, status, createdAt]
+              example:
+                paymentId: pay_01123KZMRJPQR9S7T3XABCDEF
+                status: provider_accepted
+                createdAt: "2023-11-07T05:31:56Z"
+                providerRef: "<string>"
+                redirectUrl: "https://express.opaycheckout.com/apiCashier/redirect/payment/checkoutHome?orderToken=TOKEN.abc233f3nfonc8a0a076dd7"
         "400":
           description: Validation error or missing idempotency-key header.
           content:
@@ -1084,7 +1114,7 @@ paths:
                   value:
                     id: pay_01JXXXX
                     status: succeeded
-                    direction: payout
+                    direction: money_out
                     paymentMethod: MOMO
                     sourceCurrency: USDC
                     amountStablecoin: "37.395"
@@ -1094,6 +1124,10 @@ paths:
                     reference: csh-abc123
                     errorCode: null
                     failureReason: null
+                    customerMessage: null
+                    depositInstruction: null
+                    redirectUrl: null
+                    paymentCode: MTN
                     createdAt: "2026-05-06T10:31:00.000Z"
                     updatedAt: "2026-05-06T10:31:45.000Z"
                 failed:
@@ -1101,7 +1135,7 @@ paths:
                   value:
                     id: pay_01JYYYY
                     status: failed
-                    direction: payout
+                    direction: money_out
                     paymentMethod: MOMO
                     sourceCurrency: USDC
                     amountStablecoin: "10.000"
@@ -1111,8 +1145,54 @@ paths:
                     reference: csh-def456
                     errorCode: insufficient_funds
                     failureReason: "Recipient account has insufficient funds to complete the transaction."
+                    customerMessage: null
+                    depositInstruction: null
+                    redirectUrl: null
+                    paymentCode: MTN
                     createdAt: "2026-05-06T10:31:00.000Z"
                     updatedAt: "2026-05-06T10:32:10.000Z"
+                ngnOpayPayin:
+                  summary: NGN OPAY deeplink payin
+                  value:
+                    id: pay_01M0D70VRW6PE1DVD77MSM4SQG
+                    status: provider_accepted
+                    direction: money_in
+                    paymentMethod: BANK
+                    sourceCurrency: USDC
+                    amountStablecoin: "3.631"
+                    fiatAmount: "5000"
+                    destinationCurrency: NGN
+                    providerRef: wHi1Pswg070cWQPfC67I
+                    reference: 2i4ofn
+                    errorCode: null
+                    failureReason: null
+                    customerMessage: null
+                    depositInstruction: null
+                    redirectUrl: "https://express.opaycheckout.com/apiCashier/redirect/payment/checkoutHome?orderToken=TOKEN.abc233f3nfonc8a0a076dd7"
+                    paymentCode: OPAY
+                    createdAt: "2026-08-19T14:32:55.118Z"
+                    updatedAt: "2026-08-19T14:32:55.118Z"
+                ngnOpayPayout:
+                  summary: NGN OPAY payout
+                  value:
+                    id: pay_01KXZ87Z35QQJ9E30NRC39GQPR
+                    status: succeeded
+                    direction: money_out
+                    paymentMethod: BANK
+                    sourceCurrency: USDC
+                    amountStablecoin: "3.601"
+                    fiatAmount: "5000"
+                    destinationCurrency: NGN
+                    providerRef: ofr_01KXZ8863ZX8MP0DFK5SFJ962F
+                    reference: tx-001-200726
+                    errorCode: null
+                    failureReason: null
+                    customerMessage: null
+                    depositInstruction: null
+                    redirectUrl: null
+                    paymentCode: OPAY
+                    createdAt: "2026-07-20T07:53:26.956Z"
+                    updatedAt: "2026-07-20T07:55:27.017Z"
         "404":
           description: Payment not found or belongs to another tenant.
           content:
