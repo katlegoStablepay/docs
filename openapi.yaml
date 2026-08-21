@@ -318,6 +318,82 @@ components:
               message: Could not retrieve data from KYC for performing AML Screening.
       required: [id, externalId, type, kycStatus, kycAttempts, createdAt, updatedAt]
 
+    # -------------------------------------------------------------------------
+    # Customer (GET single customer — no verificationUrl / sessionId)
+    # -------------------------------------------------------------------------
+    CustomerGetResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Prefixed ULID for this customer.
+          example: cus_01KXG3R0X8DXTKB849FFFEPT7Y
+        externalId:
+          type: string
+          example: user001
+        type:
+          type: string
+          enum: [individual, business]
+        countryCode:
+          type: string
+          nullable: true
+          example: KE
+        kycStatus:
+          type: string
+          description: One of none, pending, in_progress, review, approved, declined, expired, abandoned.
+          example: approved
+        kycAttempts:
+          type: integer
+          example: 1
+        riskLevel:
+          type: string
+          nullable: true
+        metadata:
+          type: object
+          nullable: true
+        verifiedAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        identity:
+          type: object
+          nullable: true
+          description: The verified identity. Returned only with refresh=true.
+        reviewWarnings:
+          type: array
+          nullable: true
+          description: |
+            Reasons why the customer isn't approved. This is surfaced to show your
+            end-user why verification is stuck, declined, or needs action. Omitted when the customer is approved or in_progress. Returned only with refresh=true.
+          items:
+            type: object
+            properties:
+              code:
+                type: string
+                example: COULD_NOT_PERFORM_AML_SCREENING
+              severity:
+                type: string
+                example: error
+              feature:
+                type: string
+                example: aml_screenings
+              message:
+                type: string
+                example: Could not retrieve data from KYC for performing AML Screening.
+            required: [code, severity, feature, message]
+          example:
+            - code: COULD_NOT_PERFORM_AML_SCREENING
+              severity: error
+              feature: aml_screenings
+              message: Could not retrieve data from KYC for performing AML Screening.
+      required: [id, externalId, type, kycStatus, kycAttempts, createdAt, updatedAt]
+
     CustomerWallet:
       type: object
       properties:
@@ -1394,7 +1470,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Customer'
+                $ref: '#/components/schemas/CustomerGetResponse'
               example:
                 id: cus_01...
                 externalId: user001
@@ -1407,8 +1483,6 @@ paths:
                 verifiedAt: null
                 createdAt: "2023-11-07T05:31:56Z"
                 updatedAt: "2023-11-07T05:31:56Z"
-                verificationUrl: null
-                sessionId: null
                 identity: null
                 reviewWarnings:
                   - code: COULD_NOT_PERFORM_AML_SCREENING
