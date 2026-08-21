@@ -467,8 +467,9 @@ paths:
                 paymentCode:
                   type: string
                   description: |
-                    Required when paymentMethod is BANK. Use the List Supported Banks endpoint to look up the paymentCode for recipient's bank. 
+                    Required when paymentMethod is BANK or PAYBILL (TZ).
                     Available BANK options: OPAY, BANKCODE.
+                    Available PAYBILL (TZ) options: PAYBILLCODE.
                   example: "OPAY"
               required: [accountNumber, country, paymentMethod]
             examples:
@@ -607,6 +608,67 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+
+  /v1/account/merchants:
+    get:
+      operationId: listPaybillMerchants
+      summary: List Supported Paybill
+      description: |
+        Returns a list of supported PAYBILL merchants for the specified country.
+      tags: [Account]
+      parameters:
+        - name: country
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [TZ]
+          description: Merchant country code.
+      responses:
+        "200":
+          description: List of supported PAYBILL merchants for the specified country.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  country:
+                    type: string
+                    description: Merchant country code, as supplied in the request.
+                    example: "TZ"
+                  currency:
+                    type: string
+                    description: Fiat currency for the specified country.
+                    example: "TZS"
+                  merchants:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                          description: Merchant biller code. Carry this value forward as the `paymentCode` on the payment endpoints for PAYBILL payments.
+                          example: "12345"
+                      required: [code]
+                required: [country, currency, merchants]
+              example:
+                country: "TZ"
+                currency: "TZS"
+                merchants:
+                  - code: "12345"
+        "400":
+          description: Validation error — unsupported country code.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "401":
+          description: Invalid or missing API key.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
   # ---------------------------------------------------------------------------
   # FX convert
   # ---------------------------------------------------------------------------
@@ -966,6 +1028,7 @@ paths:
                   description: |
                     Available MNO options: MPESA, MTN, AIRTEL, TIGO, ZAMTEL, HALOTEL, VODAFONE, VODACOM, ORANGE, MOOV, FREE, TIPS.
                     Available BANK options: OPAY, BANKCODE.
+                    Available PAYBILL (TZ) options: PAYBILLCODE.
                 reference:
                   type: string
                   description: Wallet issuer's unique reference.

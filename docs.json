@@ -59,7 +59,8 @@
           "group": "Account",
           "pages": [
             "validate",
-            "banks"
+            "banks",
+            "merchants"
           ]
         },
         {
