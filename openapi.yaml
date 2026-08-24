@@ -44,27 +44,27 @@ components:
 
     CurrencyOut:
       type: string
-      enum: [CDF, GHS, KES, NGN, TZS, UGX, XAF, XOF, ZAR, ZMW]
+      enum: [KES, NGN, TZS, VND]
       description: Fiat currency received by the recipient.
 
     CurrencyIn:
       type: string
-      enum: [USDC, USDT]
+      enum: [USDC]
       description: Stablecoin sent onchain for payment settlement.
 
     Blockchain:
       type: string
-      enum: [BSC, SOLANA]
+      enum: [ARC, SOLANA]
       description: Supported blockchains for onchain settlement.
 
     PaymentMethod:
       type: string
-      enum: [BANK, MOMO, PAYBILL, TILL]
+      enum: [PAYBILL, TILL]
       description: The supported payment method used to deliver funds to the recipient.
 
     Country:
       type: string
-      enum: [BF, BJ, CD, CI, CM, GH, KE, NG, SN, TZ, UG, ZA, ZM]
+      enum: [KE, NG, TZ, VN]
       description: Recipient country code.
 
     PaymentStatus:
@@ -75,10 +75,9 @@ components:
 
     Direction:
       type: string
-      enum: [money_in, money_out]
+      enum: [money_out]
       description: |
         money_out: issuer sends stablecoin → recipient receives fiat.
-        money_in: customer pays fiat → issuer receives stablecoin.
 
     UsdcAmount:
       type: string
@@ -428,38 +427,32 @@ paths:
                   example: "OPAY"
               required: [accountNumber, country, paymentMethod]
             examples:
-              kesMomo:
-                summary: KES M-Pesa number
+              keTill:
+                summary: KE TILL merchant number
                 value:
                   accountNumber: "+254712345678"
                   country: "KE"
-                  paymentMethod: "MOMO"
-              kesBank:
-                summary: KES bank account
+                  paymentMethod: "TILL"
+              ngPaybill:
+                summary: NG PAYBILL merchant number
                 value:
-                  accountNumber: "+254712345678"
-                  country: "KE"
-                  paymentMethod: "BANK"
-                  paymentCode: "01"
-              ngnBank:
-                summary: NGN bank account
-                value:
-                  accountNumber: "+254712345678"
+                  accountNumber: "123456"
                   country: "NG"
-                  paymentMethod: "BANK"
-                  paymentCode: "OPAY"
-              ghsMomo:
-                summary: GHS MoMo number (operator auto-detected)
+                  paymentMethod: "PAYBILL"
+              tzPaybill:
+                summary: TZ PAYBILL merchant number
                 value:
-                  accountNumber: "+233241234567"
-                  country: "GH"
-                  paymentMethod: "MOMO"
-              xafMomo:
-                summary: Cameroon MoMo number (operator detected from phone prefix)
+                  accountNumber: "123456"
+                  country: "TZ"
+                  paymentMethod: "PAYBILL"
+                  paymentCode: "PAYBILLCODE"
+              vnPaybill:
+                summary: VN PAYBILL merchant number
                 value:
-                  accountNumber: "+237650123456"
-                  country: "CM"
-                  paymentMethod: "MOMO"
+                  accountNumber: "123456"
+                  country: "VN"
+                  paymentMethod: "PAYBILL"
+                  paymentCode: "BANKCODE"
       responses:
         "200":
           description: Account resolved successfully.
@@ -468,42 +461,40 @@ paths:
               schema:
                 $ref: '#/components/schemas/ValidateAccountResponse'
               examples:
-                kesMomo:
-                  summary: KES M-Pesa (full name resolution)
+                keTill:
+                  summary: KE TILL (merchant name resolution)
                   value:
                     accountName: "Jane Doe"
                     accountNumber: "+254712345678"
-                    paymentCode: "MPESA"
                     country: "KE"
                     currency: "KES"
-                    paymentMethod: "MOMO"
-                ghsMomo:
-                  summary: GHS MoMo (operator detected, phone used as name)
+                    paymentMethod: "TILL"
+                ngPaybill:
+                  summary: NG PAYBILL merchant
                   value:
-                    accountName: "+233243747787"
-                    accountNumber: "+233243747787"
-                    paymentCode: "MTN"
-                    country: "GH"
-                    currency: "GHS"
-                    paymentMethod: "MOMO"
-                kesBank:
-                  summary: KES bank account
+                    accountName: "Acme Traders"
+                    accountNumber: "123456"
+                    country: "NG"
+                    currency: "NGN"
+                    paymentMethod: "PAYBILL"
+                tzPaybill:
+                  summary: TZ PAYBILL merchant
                   value:
-                    accountName: "John Kamau"
-                    accountNumber: "+254712345678"
-                    paymentCode: "01"
-                    country: "KE"
-                    currency: "KES"
-                    paymentMethod: "BANK"
-                xafMomo:
-                  summary: Cameroon MoMo (operator detected from phone prefix)
+                    accountName: "Kilimanjaro Traders"
+                    accountNumber: "123456"
+                    paymentCode: "PAYBILLCODE"
+                    country: "TZ"
+                    currency: "TZS"
+                    paymentMethod: "PAYBILL"
+                vnPaybill:
+                  summary: VN PAYBILL merchant
                   value:
-                    accountName: "+237650123456"
-                    accountNumber: "+237650123456"
-                    paymentCode: "MTN"
-                    country: "CM"
-                    currency: "XAF"
-                    paymentMethod: "MOMO"
+                    accountName: "Nguyen Traders"
+                    accountNumber: "123456"
+                    paymentCode: "BANKCODE"
+                    country: "VN"
+                    currency: "VND"
+                    paymentMethod: "PAYBILL"
         "401":
           description: Invalid or missing API key.
           content:
@@ -735,7 +726,7 @@ paths:
             type: string
             description: |
              The currency to convert from (fiat or stablecoin).
-            enum: [CDF, GHS, KES, NGN, TZS, UGX, XAF, XOF, ZAR, ZMW, USDC, USDT]
+            enum: [KES, TZS, NGN]
           example: KES
         - name: destinationCurrency
           in: query
@@ -744,24 +735,23 @@ paths:
             type: string
             description: |
               The currency to convert to.
-            enum: [USDC, USDT, CDF, GHS, KES, NGN, TZS, UGX, XAF, XOF, ZAR, ZMW]
+            enum: [USDC]
           example: USDC
         - name: paymentMethod
           in: query
           required: true
           schema:
             type: string
-            enum: [MOMO, BANK, OPAY, PAYBILL, TILL]
-          example: MOMO
+            enum: [PAYBILL, TILL]
+          example: PAYBILL
         - name: direction
           in: query
           required: true
           schema:
             type: string
-            enum: [payout, payin]
+            enum: [payout]
           description: |
             payout: issuer sends stablecoin → recipient receives fiat.
-            payin: customer pays fiat → issuer receives stablecoin.
           example: payout
         - name: optionalIssuerFee
           in: query
@@ -770,14 +760,6 @@ paths:
             type: string
             enum: [YES, NO]
           example: "NO"
-        - name: country
-          in: query
-          required: false
-          description: |
-            For XOF payments, the recipient country must be specified.
-          schema:
-            $ref: '#/components/schemas/XOFCountries'
-          example: SN
       responses:
         "200":
           description: Indicative FX rate and fee breakdown for the requested corridor.
@@ -882,16 +864,16 @@ paths:
                     The account number of the payment method.
                     Must be in E.164 format with the + prefix when paymentMethod is MOMO.
                   example: "+254712345678"
+                reference:
+                  type: string
+                  description: Wallet issuer's unique reference.
+                  example: csh-txn-20260506-001
                 paymentCode:
                   $ref: '#/components/schemas/PaymentCode'
                   description: |
                     Available MNO options: MPESA, MTN, AIRTEL, TIGO, ZAMTEL, HALOTEL, VODAFONE, VODACOM, ORANGE, MOOV, FREE, TIPS.
                     Available BANK options: OPAY, BANKCODE.
                     Available PAYBILL (TZ) options: PAYBILLCODE.
-                reference:
-                  type: string
-                  description: Wallet issuer's unique reference.
-                  example: csh-txn-20260506-001
                 paymentIdentifier:
                   type: string
                   description: "A method-specific identifier required for processing the payment. Examples include BVN (BANK) Paybill business number (PAYBILL), or other market specific references."
@@ -912,32 +894,32 @@ paths:
                 - paymentCode
                 - reference
             examples:
-              kesBscMomo:
-                summary: KES via M-Pesa on BSC
+              kesPaybillArc:
+                summary: KES via PAYBILL on ARC
                 value:
                   fiatAmount: 1350
                   sourceCurrency: USDC
                   destinationCurrency: KES
                   country: KE
-                  blockchain: BSC
-                  paymentMethod: MOMO
+                  blockchain: ARC
+                  paymentMethod: PAYBILL
                   accountName: Jane Doe
                   accountNumber: "+254712345678"
-                  paymentCode: MPESA
                   reference: csh-txn-20260506-001
-              xafSolana:
-                summary: XAF via MTN MoMo on Solana
+                  paymentCode: "12345"
+              tzsTillSolana:
+                summary: TZS via TILL on Solana
                 value:
                   fiatAmount: 5000
                   sourceCurrency: USDC
-                  destinationCurrency: XAF
-                  country: CM
+                  destinationCurrency: TZS
+                  country: TZ
                   blockchain: SOLANA
-                  paymentMethod: MOMO
-                  accountName: Jean Dupont
-                  accountNumber: "+237612345678"
-                  paymentCode: MTN
+                  paymentMethod: TILL
+                  accountName: Amani Mwita
+                  accountNumber: "+255712345678"
                   reference: csh-txn-20260506-002
+                  paymentCode: TIPS
       responses:
         "202":
           description: Payment accepted. Processing is async. Poll or await webhook.
@@ -1037,11 +1019,11 @@ paths:
                     id: pay_01JXXXX
                     status: succeeded
                     direction: money_out
-                    paymentMethod: MOMO
+                    paymentMethod: PAYBILL
                     sourceCurrency: USDC
                     amountStablecoin: "37.395"
-                    fiatAmount: "24500"
-                    destinationCurrency: XOF
+                    fiatAmount: "4795"
+                    destinationCurrency: KES
                     providerRef: hc_abc123
                     reference: csh-abc123
                     errorCode: null
@@ -1049,7 +1031,7 @@ paths:
                     customerMessage: null
                     depositInstruction: null
                     redirectUrl: null
-                    paymentCode: MTN
+                    paymentCode: "123456"
                     createdAt: "2026-05-06T10:31:00.000Z"
                     updatedAt: "2026-05-06T10:31:45.000Z"
                 failed:
@@ -1058,11 +1040,11 @@ paths:
                     id: pay_01JYYYY
                     status: failed
                     direction: money_out
-                    paymentMethod: MOMO
+                    paymentMethod: TILL
                     sourceCurrency: USDC
                     amountStablecoin: "10.000"
-                    fiatAmount: "6500"
-                    destinationCurrency: XOF
+                    fiatAmount: "1282"
+                    destinationCurrency: KES
                     providerRef: hc_def456
                     reference: csh-def456
                     errorCode: insufficient_funds
@@ -1070,51 +1052,9 @@ paths:
                     customerMessage: null
                     depositInstruction: null
                     redirectUrl: null
-                    paymentCode: MTN
+                    paymentCode: TIPS
                     createdAt: "2026-05-06T10:31:00.000Z"
                     updatedAt: "2026-05-06T10:32:10.000Z"
-                ngnOpayPayin:
-                  summary: NGN OPAY deeplink payin
-                  value:
-                    id: pay_01M0D70VRW6PE1DVD77MSM4SQG
-                    status: provider_accepted
-                    direction: money_in
-                    paymentMethod: BANK
-                    sourceCurrency: USDC
-                    amountStablecoin: "3.631"
-                    fiatAmount: "5000"
-                    destinationCurrency: NGN
-                    providerRef: wHi11234g070cWQPfC67I
-                    reference: 2i4ofn
-                    errorCode: null
-                    failureReason: null
-                    customerMessage: null
-                    depositInstruction: null
-                    redirectUrl: "https://express.opaycheckout.com/apiCashier/redirect/payment/checkoutHome?orderToken=TOKEN.abc233f3nfonc8a0a076dd7"
-                    paymentCode: OPAY
-                    createdAt: "2026-08-19T14:32:55.118Z"
-                    updatedAt: "2026-08-19T14:32:55.118Z"
-                ngnOpayPayout:
-                  summary: NGN OPAY payout
-                  value:
-                    id: pay_01KY7JCNWDSDFVRQABCW0K1233G
-                    status: succeeded
-                    direction: money_out
-                    paymentMethod: BANK
-                    sourceCurrency: USDC
-                    amountStablecoin: "3.719"
-                    fiatAmount: "5050"
-                    destinationCurrency: NGN
-                    providerRef: EH1234DDH5jWj3sq9zvv
-                    reference: KAS_SWDN3OD
-                    errorCode: null
-                    failureReason: null
-                    customerMessage: null
-                    depositInstruction: null
-                    redirectUrl: null
-                    paymentCode: OPAY
-                    createdAt: "2026-07-23T13:24:42.581Z"
-                    updatedAt: "2026-07-23T13:25:19.327Z"
         "404":
           description: Payment not found or belongs to another tenant.
           content:
