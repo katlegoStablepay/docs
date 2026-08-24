@@ -493,6 +493,65 @@ components:
           example: "MOMO"
       required: [accountName, accountNumber, paymentCode, country, currency, paymentMethod]
 
+    ValidateQrResponse:
+      type: object
+      properties:
+        country:
+          type: string
+          description: Recipient country code as supplied in the request.
+          example: "VN"
+        currency:
+          type: string
+          description: Fiat currency derived from the country code. Use as destinationCurrency in subsequent calls.
+          example: "VND"
+        isValid:
+          type: boolean
+          description: Whether the QR resolved to a payable destination.
+          example: true
+        destination:
+          type: object
+          description: The resolved payee.
+          properties:
+            kind:
+              type: string
+              enum: [bank, till]
+              description: The destination type resolved from the QR.
+            beneficiaryName:
+              type: string
+              description: Registered name of the payee.
+              example: "NGUYEN VAN A"
+            bankBin:
+              type: string
+              description: Bank identifier encoded on a bank QR.
+              example: "970454"
+            accountNumber:
+              type: string
+              description: Account number encoded on a bank QR.
+              example: "99MTGDMYVND"
+            payNumber:
+              type: string
+              description: Till number encoded on a Lipa Namba QR.
+              example: "123456"
+          required: [kind]
+        amount:
+          type: number
+          nullable: true
+          description: Amount encoded on a dynamic QR. Null for a static QR.
+          example: 100000
+        dynamic:
+          type: boolean
+          description: Whether the QR carries a fixed amount.
+          example: true
+        resolveToken:
+          type: string
+          description: Carry this value forward on the payment endpoints. Returned only when isValid is true.
+          example: "qr_01HV8KZMRJPQR9S7T3XABCDEF"
+        tokenExpiresAt:
+          type: string
+          format: date-time
+          description: Expiry of the resolveToken.
+      required: [country, isValid, destination]
+
     # -------------------------------------------------------------------------
     # Errors
     # -------------------------------------------------------------------------
@@ -638,6 +697,92 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
         "422":
           description: Validation error, unsupported currency/method combination, or account not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /v1/qr/parse:
+    post:
+      operationId: validatePaymentQr
+      summary: Validate a payment QR
+      description: |
+        Resolve an merchant QR to its registered name.
+      tags: [Account]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                qrString:
+                  type: string
+                  description: The QR payload to decode.
+                  example: "00020101021238570010A00000072701270006970454011399MTGDMYVND0208QRIBFTTA5303704540410005802VN62200816Thanh toan don hang6304ABCD"
+                country:
+                  type: string
+                  enum: [TZ, VN]
+                  description: Recipient country code.
+              required: [qrString, country]
+            examples:
+              vndBankQr:
+                summary: VND bank QR
+                value:
+                  qrString: "00020101021238570010A00000072701270006970454011399MTGDMYVND0208QRIBFTTA5303704540410005802VN62200816Thanh toan don hang6304ABCD"
+                  country: "VN"
+              tzsTillQr:
+                summary: TZS Lipa Namba QR
+                value:
+                  qrString: "00020101021126380011tz.go.bot.01021051234560208NEDAPAY5204581253038345802TZ5913JANE STORE6009DAR ES SALAAM6304A1B2"
+                  country: "TZ"
+      responses:
+        "200":
+          description: QR decoded successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidateQrResponse'
+              examples:
+                vndBankQr:
+                  summary: VND bank QR
+                  value:
+                    country: "VN"
+                    currency: "VND"
+                    isValid: true
+                    destination:
+                      kind: "bank"
+                      beneficiaryName: "NGUYEN VAN A"
+                      bankBin: "970454"
+                      accountNumber: "99MTGDMYVND"
+                    amount: 100000
+                    dynamic: true
+                    resolveToken: "qr_01HV8KZMRJPQR9S7T3XABCDEF"
+                    tokenExpiresAt: "2026-08-25T12:05:00Z"
+                tzsTillQr:
+                  summary: TZS Lipa Namba QR
+                  value:
+                    country: "TZ"
+                    currency: "TZS"
+                    isValid: true
+                    destination:
+                      kind: "till"
+                      beneficiaryName: "JANE STORE"
+                      payNumber: "123456"
+                    amount: null
+                    dynamic: false
+                    resolveToken: "qr_01HV8KZMRJPQR9S7T3XABCDEF"
+                    tokenExpiresAt: "2026-08-25T12:05:00Z"
+        "401":
+          description: Invalid or missing API key.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "422":
+          description: Validation error, unsupported country code, or QR could not be decoded.
           content:
             application/json:
               schema:
