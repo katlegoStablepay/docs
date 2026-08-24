@@ -53,7 +53,7 @@
   "navigation": {
   "tabs": [
     {
-      "tab": "Stablepay Onchain API",
+      "tab": "Stablepay Merchant Payments API",
       "groups": [
         {
           "group": "Account",
@@ -66,19 +66,9 @@
         {
           "group": "Payments",
           "pages": [
-            "create-payout",
-            "collect-payin",
+            "create-payment",
             "get-payment",
             "convert"
-          ]
-        },
-        {
-          "group": "Customers",
-          "pages": [
-            "customers/create-customer",
-            "customers/reverify-customer",
-            "customers/link-wallet",
-            "customers/get-customer"
           ]
         },
         {
