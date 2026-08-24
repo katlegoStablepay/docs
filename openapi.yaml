@@ -693,7 +693,7 @@ paths:
   /v1/account/merchants:
     get:
       operationId: listPaybillMerchants
-      summary: List Supported Paybill
+      summary: List Supported Merchants
       description: |
         Returns a list of supported PAYBILL merchants for the specified country.
       tags: [Account]
