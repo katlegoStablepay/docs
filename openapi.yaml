@@ -256,7 +256,7 @@ components:
           example: KE
         kycStatus:
           type: string
-          description: One of none, pending, in_progress, review, approved, declined, expired, abandoned.
+          description: One of none, pending, in_progress, review, approved, declined, soft_declined, expired, abandoned.
           example: approved
         kycAttempts:
           type: integer
@@ -294,7 +294,7 @@ components:
           nullable: true
           description: |
             Reasons why the customer isn't approved. This is surfaced to show your
-            end-user why verification is stuck, declined, or needs action. Omitted when the customer is approved or in_progress. Returned only with refresh=true.
+            end-user why verification is stuck, declined, or needs action. Omitted when the customer is approved or in_progress. Returned with refresh=true, and also on the customer.kyc.updated webhook.
           items:
             type: object
             properties:
@@ -319,7 +319,7 @@ components:
       required: [id, externalId, type, kycStatus, kycAttempts, createdAt, updatedAt]
 
     # -------------------------------------------------------------------------
-    # Customer (GET single customer — no verificationUrl / sessionId)
+    # Customer (GET single customer — verificationUrl only on refresh=true; no sessionId)
     # -------------------------------------------------------------------------
     CustomerGetResponse:
       type: object
@@ -340,7 +340,7 @@ components:
           example: KE
         kycStatus:
           type: string
-          description: One of none, pending, in_progress, review, approved, declined, expired, abandoned.
+          description: One of none, pending, in_progress, review, approved, declined, soft_declined, expired, abandoned.
           example: approved
         kycAttempts:
           type: integer
@@ -361,6 +361,11 @@ components:
         updatedAt:
           type: string
           format: date-time
+        verificationUrl:
+          type: string
+          nullable: true
+          description: Current hosted verification URL. Returned with refresh=true for resubmittable statuses (pending, in_progress, soft_declined); null for approved/review and terminal states.
+          example: https://verify.didit.me/session/XXXX
         identity:
           type: object
           nullable: true
@@ -370,7 +375,7 @@ components:
           nullable: true
           description: |
             Reasons why the customer isn't approved. This is surfaced to show your
-            end-user why verification is stuck, declined, or needs action. Omitted when the customer is approved or in_progress. Returned only with refresh=true.
+            end-user why verification is stuck, declined, or needs action. Omitted when the customer is approved or in_progress. Returned with refresh=true, and also on the customer.kyc.updated webhook.
           items:
             type: object
             properties:
