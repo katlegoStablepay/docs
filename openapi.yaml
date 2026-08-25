@@ -409,45 +409,32 @@ paths:
                   example: "123456"
                 country:
                   type: string
-                  enum: [KE, NG, TZ, VN]
+                  enum: [AR, BR, KE, PH, TZ, VN]
                   description: Merchant country code.
                 paymentMethod:
                   $ref: '#/components/schemas/PaymentMethod'
+                  description: The supported payment method used to deliver funds to the merchant.
                 paymentCode:
                   type: string
                   description: |
-                    Required when paymentMethod is BANK or PAYBILL (TZ).
-                    Available BANK options: OPAY, BANKCODE.
+                    Required when paymentMethod is PAYBILL (TZ).
                     Available PAYBILL (TZ) options: PAYBILLCODE.
-                  example: "OPAY"
+                  example: "LUKU"
               required: [accountNumber, country, paymentMethod]
             examples:
               keTill:
                 summary: KE TILL merchant number
                 value:
-                  accountNumber: "+254712345678"
+                  accountNumber: "12345678901"
                   country: "KE"
                   paymentMethod: "TILL"
-              ngPaybill:
-                summary: NG PAYBILL merchant number
-                value:
-                  accountNumber: "123456"
-                  country: "NG"
-                  paymentMethod: "PAYBILL"
               tzPaybill:
                 summary: TZ PAYBILL merchant number
                 value:
-                  accountNumber: "123456"
+                  accountNumber: "10987654321"
                   country: "TZ"
                   paymentMethod: "PAYBILL"
-                  paymentCode: "PAYBILLCODE"
-              vnPaybill:
-                summary: VN PAYBILL merchant number
-                value:
-                  accountNumber: "123456"
-                  country: "VN"
-                  paymentMethod: "PAYBILL"
-                  paymentCode: "BANKCODE"
+                  paymentCode: "LUKU"
       responses:
         "200":
           description: Account resolved successfully.
@@ -460,35 +447,18 @@ paths:
                   summary: KE TILL (merchant name resolution)
                   value:
                     accountName: "Jane Doe"
-                    accountNumber: "+254712345678"
+                    accountNumber: "12345678901"
                     country: "KE"
                     currency: "KES"
                     paymentMethod: "TILL"
-                ngPaybill:
-                  summary: NG PAYBILL merchant
-                  value:
-                    accountName: "Acme Traders"
-                    accountNumber: "123456"
-                    country: "NG"
-                    currency: "NGN"
-                    paymentMethod: "PAYBILL"
                 tzPaybill:
                   summary: TZ PAYBILL merchant
                   value:
                     accountName: "Kilimanjaro Traders"
-                    accountNumber: "123456"
-                    paymentCode: "PAYBILLCODE"
+                    accountNumber: "10987654321"
+                    paymentCode: "LUKU"
                     country: "TZ"
                     currency: "TZS"
-                    paymentMethod: "PAYBILL"
-                vnPaybill:
-                  summary: VN PAYBILL merchant
-                  value:
-                    accountName: "Nguyen Traders"
-                    accountNumber: "123456"
-                    paymentCode: "BANKCODE"
-                    country: "VN"
-                    currency: "VND"
                     paymentMethod: "PAYBILL"
         "401":
           description: Invalid or missing API key.
