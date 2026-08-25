@@ -40,7 +40,6 @@ components:
         Mobile network operator or bank code. Required for money-out payments.
         MNO options: MPESA, MTN, AIRTEL, TIGO, ZAMTEL, HALOTEL, VODAFONE, VODACOM, ORANGE, MOOV, FREE.
         Bank options: OPAY, PALMPAY, MONIEPOINT.
-        Use the List Supported Banks endpoint to look up the bankCode for recipient's bank.
 
     CurrencyOut:
       type: string
@@ -585,53 +584,6 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
         "422":
           description: Validation error, unsupported country code, or QR could not be decoded.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
-  /v1/account/banks:
-    get:
-      operationId: listBanks
-      summary: List supported banks
-      description: |
-        Returns a list of supported banks for the specified country.
-      tags: [Account]
-      parameters:
-        - name: country
-          in: query
-          required: true
-          schema:
-            type: string
-            enum: [NG, ZA]
-          description: Recipient country code.
-      responses:
-        "200":
-          description: List of supported banks for the specified country.
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    bankCode:
-                      type: string
-                      description: Bank code used for payments.
-                      example: "01"
-                    bankName:
-                      type: string
-                      description: Full bank name.
-                      example: "Kenya Commercial Bank"
-                  required: [bankCode, bankName]
-        "401":
-          description: Invalid or missing API key.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        "422":
-          description: Validation error — unsupported country code.
           content:
             application/json:
               schema:

@@ -60,7 +60,6 @@
           "pages": [
             "validate",
             "validate-qr",
-            "banks",
             "merchants"
           ]
         },
