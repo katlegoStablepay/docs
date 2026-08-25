@@ -323,25 +323,21 @@ components:
           type: boolean
           description: Whether the QR resolved to a payable destination.
           example: true
-        destination:
+        merchantDetails:
           type: object
-          description: The resolved payee.
+          description: The resolved merchant.
           properties:
             kind:
               type: string
-              enum: [bank, till]
-              description: The destination type resolved from the QR.
+              enum: [BANK, TILL]
             beneficiaryName:
               type: string
-              description: Registered name of the payee.
-              example: "NGUYEN VAN A"
+              example: "Doe J"
             bankBin:
               type: string
-              description: Bank identifier encoded on a bank QR.
-              example: "970454"
+              example: "123456"
             accountNumber:
               type: string
-              description: Account number encoded on a bank QR.
               example: "99MTGDMYVND"
             payNumber:
               type: string
@@ -365,7 +361,7 @@ components:
           type: string
           format: date-time
           description: Expiry of the resolveToken.
-      required: [country, isValid, destination]
+      required: [country, isValid, merchantDetails]
 
     # -------------------------------------------------------------------------
     # Errors
@@ -530,7 +526,7 @@ paths:
                   example: "00020101021238570010A00000072701270006970454011399MTGDMYVND0208QRIBFTTA5303704540410005802VN62200816Thanh toan don hang6304ABCD"
                 country:
                   type: string
-                  enum: [TZ, VN]
+                  enum: [AR, BR, PH, TZ, VN]
                   description: Recipient country code.
               required: [qrString, country]
             examples:
@@ -558,10 +554,10 @@ paths:
                     country: "VN"
                     currency: "VND"
                     isValid: true
-                    destination:
-                      kind: "bank"
-                      beneficiaryName: "NGUYEN VAN A"
-                      bankBin: "970454"
+                    merchantDetails:
+                      kind: "BANK"
+                      beneficiaryName: "Doe J"
+                      bankBin: "123456"
                       accountNumber: "99MTGDMYVND"
                     amount: 100000
                     dynamic: true
@@ -573,8 +569,8 @@ paths:
                     country: "TZ"
                     currency: "TZS"
                     isValid: true
-                    destination:
-                      kind: "till"
+                    merchantDetails:
+                      kind: "TILL"
                       beneficiaryName: "JANE STORE"
                       payNumber: "123456"
                     amount: null
