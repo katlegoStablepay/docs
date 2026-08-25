@@ -1,0 +1,181 @@
+openapi: 3.0.3
+info:
+  title: Stablepay Money API — Merchant Validation
+  description: |
+    Merchant-scoped view of the account validation endpoint. Documents
+    POST /v1/account/validate for TILL and PAYBILL merchant numbers.
+  version: 0.5.0
+  contact:
+    name: Stablepay Engineering
+    email: hello@stablepay.io
+
+servers:
+  - url: https://api.stablepay.ai
+    description: Production
+
+security:
+  - BearerAuth: []
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      description: |
+        Stablepay API key. Include as `Authorization: Bearer <key>`.
+
+  schemas:
+
+    # -------------------------------------------------------------------------
+    # Shared / enums
+    # -------------------------------------------------------------------------
+    PaymentMethod:
+      type: string
+      enum: [PAYBILL, TILL]
+      description: The supported payment method used to deliver funds to the recipient.
+
+    # -------------------------------------------------------------------------
+    # Account
+    # -------------------------------------------------------------------------
+    ValidateMerchantResponse:
+      type: object
+      properties:
+        accountName:
+          type: string
+          description: Registered merchant name.
+          example: "Super Coffee"
+        accountNumber:
+          type: string
+          description: |
+            The merchant number resolved.
+          example: "123456678"
+        paymentCode:
+          type: string
+          nullable: true
+          description: |
+            Carry this value forward directly as `paymentCode` on the payment endpoint.
+          example: "LUKU"
+        country:
+          type: string
+          description: Merchant country code.
+          example: "KE"
+        currency:
+          type: string
+          description: Fiat currency derived from the country code. Use as destinationCurrency (payment) in subsequent calls.
+          example: "KES"
+        paymentMethod:
+          type: string
+          description: Payment method as supplied in the request.
+          example: "TILL"
+      required: [accountName, accountNumber, paymentCode, country, currency, paymentMethod]
+
+    # -------------------------------------------------------------------------
+    # Errors
+    # -------------------------------------------------------------------------
+    ErrorResponse:
+      type: object
+      properties:
+        statusCode:
+          type: integer
+          example: 400
+        code:
+          type: string
+          description: Machine-readable error code.
+          example: validation_error
+        message:
+          type: string
+          description: Human-readable error message.
+          example: accountNumber must be a valid merchant number.
+      required: [statusCode, message]
+
+tags:
+  - name: Account
+    description: Resolve recipient and merchant details before submitting a payment.
+
+paths:
+  /v1/account/validate:
+    post:
+      operationId: validateMerchant
+      summary: Validate a merchant
+      description: |
+        Resolve a merchant number to its registered name.
+      tags: [Account]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                accountNumber:
+                  type: string
+                  description: |
+                    The merchant number to resolve.
+                  example: "123456"
+                country:
+                  type: string
+                  enum: [AR, BR, KE, PH, TZ, VN]
+                  description: Merchant country code.
+                paymentMethod:
+                  $ref: '#/components/schemas/PaymentMethod'
+                  description: The supported payment method used to deliver funds to the merchant.
+                paymentCode:
+                  type: string
+                  description: |
+                    Required when paymentMethod is PAYBILL (TZ).
+                    Available PAYBILL (TZ) options: PAYBILLCODE.
+                  example: "LUKU"
+              required: [accountNumber, country, paymentMethod]
+            examples:
+              keTill:
+                summary: KE TILL merchant number
+                value:
+                  accountNumber: "123456"
+                  country: "KE"
+                  paymentMethod: "TILL"
+              tzPaybill:
+                summary: TZ PAYBILL merchant number
+                value:
+                  accountNumber: "10987654321"
+                  country: "TZ"
+                  paymentMethod: "PAYBILL"
+                  paymentCode: "LUKU"
+      responses:
+        "200":
+          description: Merchant resolved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidateMerchantResponse'
+              examples:
+                keTill:
+                  summary: KE TILL (merchant name resolution)
+                  value:
+                    accountName: "Jane Doe"
+                    accountNumber: "123456"
+                    country: "KE"
+                    currency: "KES"
+                    paymentMethod: "TILL"
+                tzPaybill:
+                  summary: TZ PAYBILL merchant
+                  value:
+                    accountName: "Kilimanjaro Traders"
+                    accountNumber: "10987654321"
+                    paymentCode: "LUKU"
+                    country: "TZ"
+                    currency: "TZS"
+                    paymentMethod: "PAYBILL"
+        "401":
+          description: Invalid or missing API key.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "422":
+          description: Validation error, unsupported currency/method combination, or merchant not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'

@@ -59,6 +59,7 @@
           "group": "Account",
           "pages": [
             "validate",
+            "validate-merchant",
             "validate-qr",
             "banks",
             "merchants"
