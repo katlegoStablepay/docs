@@ -68,6 +68,7 @@
         {
           "group": "Payments",
           "pages": [
+            "create-payment",
             "create-payout",
             "collect-payin",
             "get-payment",
