@@ -818,7 +818,20 @@ paths:
                   accountName: Super Coffee
                   accountNumber: "123456"
                   reference: csh-txn-20260506-001
-                  paymentCode: "12345"
+                  paymentIdentifier: "123456"
+              tzsPaybillBsc:
+                summary: TZS via PAYBILL on BSC
+                value:
+                  fiatAmount: 5000
+                  sourceCurrency: USDC
+                  destinationCurrency: TZS
+                  country: TZ
+                  blockchain: BSC
+                  paymentMethod: PAYBILL
+                  accountName: Kilimanjaro Traders
+                  accountNumber: "10987654321"
+                  reference: csh-txn-20260506-003
+                  paymentCode: LUKU
               tzsTillSolana:
                 summary: TZS via TILL on Solana
                 value:
@@ -831,7 +844,6 @@ paths:
                   accountName: Kilimanjaro Traders
                   accountNumber: "10987654"
                   reference: csh-txn-20260506-002
-                  paymentCode: "TIPS"
       responses:
         "202":
           description: Payment accepted. Processing is async. Poll or await webhook.
