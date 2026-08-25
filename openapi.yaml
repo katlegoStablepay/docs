@@ -633,15 +633,15 @@ paths:
           schema:
             type: number
             example: 1000
-          description: Amount to convert
+          description: Amount to convert.
         - name: sourceCurrency
           in: query
           required: true
           schema:
             type: string
             description: |
-             The currency to convert from (fiat or stablecoin).
-            enum: [KES, TZS, NGN]
+             The currency to convert from.
+            enum: [ARS, BRL, KES, PHP, TZS, VND]
           example: KES
         - name: destinationCurrency
           in: query
@@ -650,7 +650,7 @@ paths:
             type: string
             description: |
               The currency to convert to.
-            enum: [USDC]
+            enum: [USDC, USDT]
           example: USDC
         - name: paymentMethod
           in: query
