@@ -278,33 +278,31 @@ components:
       properties:
         accountName:
           type: string
-          description: Registered account holder name is resolved for Kenya (MPESA, PAYBILL & TILL) and Nigeria (BANK). Returns the phone number for corridors that only support operator detection.
-          example: "Jane Doe"
+          description: Registered merchant name.
+          example: "Super Coffee"
         accountNumber:
           type: string
           description: |
-            The account number of the payment method.
-            Must be in E.164 format with the + prefix when paymentMethod is MOMO.
-          example: "+254712345678"
+            The merchant number resolved.
+          example: "123456678"
         paymentCode:
           type: string
           nullable: true
           description: |
-            Carry this value forward directly as `paymentCode` on the payment endpoints.
-            PAYBILL / TILL: No code applies for these methods.
-          example: "MPESA"
+            Carry this value forward directly as `paymentCode` on the payment endpoint.
+          example: "LUKU"
         country:
           type: string
-          description: Recipient country code as supplied in the request.
+          description: Merchant country code.
           example: "KE"
         currency:
           type: string
-          description: Fiat currency derived from the country code. Use as sourceCurrency (payin) or destinationCurrency (payout) in subsequent calls.
+          description: Fiat currency derived from the country code. Use as destinationCurrency (payment) in subsequent calls.
           example: "KES"
         paymentMethod:
           type: string
           description: Payment method as supplied in the request.
-          example: "MOMO"
+          example: "TILL"
       required: [accountName, accountNumber, paymentCode, country, currency, paymentMethod]
 
     ValidateQrResponse:
@@ -425,7 +423,7 @@ paths:
               keTill:
                 summary: KE TILL merchant number
                 value:
-                  accountNumber: "12345678901"
+                  accountNumber: "123456"
                   country: "KE"
                   paymentMethod: "TILL"
               tzPaybill:
@@ -447,7 +445,7 @@ paths:
                   summary: KE TILL (merchant name resolution)
                   value:
                     accountName: "Jane Doe"
-                    accountNumber: "12345678901"
+                    accountNumber: "123456"
                     country: "KE"
                     currency: "KES"
                     paymentMethod: "TILL"
