@@ -51,7 +51,7 @@ components:
 
     Blockchain:
       type: string
-      enum: [BSC, SOLANA]
+      enum: [SOLANA]
       description: Supported blockchains for onchain settlement.
 
     PaymentCode:
@@ -283,27 +283,27 @@ paths:
                 - accountNumber
                 - reference
             examples:
-              kesPaybillBsc:
-                summary: KES via PAYBILL on BSC
+              kesPaybillSolana:
+                summary: KES via PAYBILL on Solana
                 value:
                   fiatAmount: 1350
                   sourceCurrency: USDC
                   destinationCurrency: KES
                   country: KE
-                  blockchain: BSC
+                  blockchain: SOLANA
                   paymentMethod: PAYBILL
                   accountName: Jane Coffee
                   accountNumber: "123456"
                   reference: csh-txn-20260506-001
                   paymentIdentifier: "123456"
-              tzsPaybillBsc:
-                summary: TZS via PAYBILL on BSC
+              tzsPaybillSolana:
+                summary: TZS via PAYBILL on Solana
                 value:
                   fiatAmount: 5000
                   sourceCurrency: USDC
                   destinationCurrency: TZS
                   country: TZ
-                  blockchain: BSC
+                  blockchain: SOLANA
                   paymentMethod: PAYBILL
                   accountName: Kilimanjaro Traders
                   accountNumber: "10987654321"
