@@ -3,7 +3,7 @@ info:
   title: Stablepay Money API — Merchant Validation
   description: |
     Merchant-scoped view of the account validation endpoint. Documents
-    POST /v1/account/validate for TILL and PAYBILL merchant numbers.
+    POST /v1/merchants/validate for TILL and PAYBILL merchant numbers.
   version: 0.5.0
   contact:
     name: Stablepay Engineering
@@ -95,6 +95,28 @@ components:
           example: "TILL"
       required: [accountName, accountNumber, paymentCode, country, currency, paymentMethod]
 
+    FxConvertResponse:
+      type: object
+      properties:
+        convertedAmount:
+          type: string
+          description: Total converted amount in the destination currency (inclusive of network fee, optional issuer fee and payment fee).
+          example: "10.680"
+        exchangeRate:
+          type: string
+          description: Market exchange rate sourced from local liquidity partners (inclusive of network fee and optional issuer fee)
+          example: "128.218000"
+        paymentFee:
+          type: string
+          description: |
+            The fee comprises the mobile network operator or bank processing fee.
+          example: "20"
+        expiryTimestamp:
+          type: integer
+          format: int64
+          description: Unix timestamp (seconds) after which this rate expires.
+          example: 1750334460
+      required: [convertedAmount, exchangeRate, paymentFee, expiryTimestamp]
     # -------------------------------------------------------------------------
     # Errors
     # -------------------------------------------------------------------------
@@ -119,9 +141,11 @@ tags:
     description: Resolve recipient and merchant details before submitting a payment.
   - name: Payments
     description: Submit and track stablecoin-to-fiat merchant payments.
-
+  - name: FX
+    description: Live FX rate conversion between stablecoins and local fiat currencies.
+    
 paths:
-  /v1/account/validate:
+  /v1/merchants/validate:
     post:
       operationId: validateMerchant
       summary: Validate a merchant
@@ -392,3 +416,110 @@ paths:
                 code: provider_unavailable
                 message: "circuit open — retrying in ~45s"
 
+  /v1/fx/convert:
+    get:
+      operationId: fxConvert
+      summary: Get a live FX rate (informational)
+      description: |
+        Returns a live indicative exchange rate and fee breakdown.
+      tags: [FX]
+      parameters:
+        - name: amount
+          in: query
+          required: true
+          schema:
+            type: number
+            example: 1000
+          description: Amount to convert.
+        - name: sourceCurrency
+          in: query
+          required: true
+          schema:
+            type: string
+            description: |
+             The currency to convert from.
+            enum: [ARS, BRL, KES, PHP, TZS, VND]
+          example: KES
+        - name: destinationCurrency
+          in: query
+          required: true
+          schema:
+            type: string
+            description: |
+              The currency to convert to.
+            enum: [USDC, USDT]
+          example: USDC
+        - name: paymentMethod
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [PAYBILL, TILL]
+          example: PAYBILL
+        - name: direction
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [payout]
+          description: |
+            payout: issuer sends stablecoin → recipient receives fiat.
+          example: payout
+        - name: optionalIssuerFee
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [YES, NO]
+          example: "NO"
+      responses:
+        "200":
+          description: Indicative FX rate and fee breakdown for the requested corridor.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FxConvertResponse'
+              examples:
+                moneyoutKes:
+                  summary: Money-out — KES via M-Pesa
+                  value:
+                    convertedAmount: "10.680"
+                    exchangeRate: "128.218000"
+                    paymentFee: "20"
+                    expiresAt: "2024-01-15T10:31:30.000Z"
+                moneyoutXaf:
+                  summary: Money-out — XAF via MTN
+                  value:
+                    convertedAmount: "8.120"
+                    exchangeRate: "622.500000"
+                    paymentFee: "50"
+                    expiresAt: "2024-01-15T10:31:00.000Z"
+                moneyinGhs:
+                  summary: Money-in — customer pays GHS, issuer receives USDC
+                  value:
+                    convertedAmount: "6.062"
+                    exchangeRate: "12.866920"
+                    paymentFee: "2"
+                    expiresAt: "2024-01-15T10:31:30.000Z"
+                moneyinXaf:
+                  summary: Money-in — customer pays XAF, issuer receives USDC
+                  value:
+                    convertedAmount: "0.441"
+                    exchangeRate: "666.600000"
+                    paymentFee: "6"
+                    expiresAt: "2024-01-15T10:31:00.000Z"
+        "401":
+          description: Invalid or missing API key.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "422":
+          description: Validation error — invalid currency pair, unsupported corridor, or missing parameter.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                statusCode: 422
+                message: Moneyin is only supported for GHS, KES, NGN, TZS, UGX, ZMW, XAF, XOF, CDF.
