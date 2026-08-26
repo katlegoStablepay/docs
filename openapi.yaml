@@ -720,7 +720,7 @@ paths:
                   example: "00020101021238570010A00000072701270006970454011399MTGDMYVND0208QRIBFTTA5303704540410005802VN62200816Thanh toan don hang6304ABCD"
                 country:
                   type: string
-                  enum: [AR, BR, PH, TZ, VN]
+                  enum: [AR, BR, KE, PH, TZ, VN]
                   description: Recipient country code.
               required: [qrString, country]
             examples:
