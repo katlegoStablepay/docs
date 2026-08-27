@@ -1109,7 +1109,7 @@ paths:
                   description: |
                     Required when paymentMethod is PAYBILL (TZ) or TRANSFER.
                     Available PAYBILL (TZ) options: PAYBILLCODE.
-                    Available TRANSFER options: MPESA, AIRTEL.
+                    Available TRANSFER options: MPESA, AIRTEL, TIGO, HALOTEL.
                     Available TRANSFER (NG) options: OPAY, MONIEPOINT, PALMPAY.
                 paymentIdentifier:
                   type: string
