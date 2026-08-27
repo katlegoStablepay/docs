@@ -1107,8 +1107,10 @@ paths:
                 paymentCode:
                   $ref: '#/components/schemas/MerchantPaymentCode'
                   description: |
-                    Required when paymentMethod is PAYBILL (TZ).
+                    Required when paymentMethod is PAYBILL (TZ) or TRANSFER.
                     Available PAYBILL (TZ) options: PAYBILLCODE.
+                    Available TRANSFER options: MPESA, AIRTEL.
+                    Available TRANSFER (NG) options: OPAY, MONIEPOINT, PALMPAY.
                 paymentIdentifier:
                   type: string
                   description: "A method-specific identifier required for processing the payment. Examples include the Paybill business number (PAYBILL), or other market specific references."
