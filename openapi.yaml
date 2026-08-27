@@ -1,6 +1,6 @@
 openapi: 3.0.3
 info:
-  title: Stablepay Money API
+  title: Stablepay Money API (STAGING)
   description: |
     The Stablepay Money API enables wallet issuers to execute stablecoin-to-fiat
     payouts across Sub-Saharan Africa via M-Pesa, mobile money, and bank transfers.
@@ -10,8 +10,8 @@ info:
     email: hello@stablepay.io
 
 servers:
-  - url: https://api.stablepay.ai
-    description: Production
+  - url: https://stablepay-money-api-production.up.railway.app/
+    description: Staging
 
 security:
   - BearerAuth: []
