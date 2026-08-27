@@ -145,7 +145,7 @@ tags:
     description: Live FX rate conversion between stablecoins and local fiat currencies.
     
 paths:
-  /v1/merchants/validate:
+  /v1/merchant/validate:
     post:
       operationId: validateMerchant
       summary: Validate a merchant
@@ -231,7 +231,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-  /v1/payments/create-payment:
+  /v1/payments/pay:
     post:
       operationId: createPayment
       summary: Create Payment
@@ -416,9 +416,9 @@ paths:
                 code: provider_unavailable
                 message: "circuit open — retrying in ~45s"
 
-  /v1/fx/convert:
+  /v1/merchant/fx:
     get:
-      operationId: fxConvert
+      operationId: merchantFxConvert
       summary: Get a live FX rate (informational)
       description: |
         Returns a live indicative exchange rate and fee breakdown.

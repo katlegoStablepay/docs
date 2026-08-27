@@ -39,7 +39,7 @@
     }
   },
   "api": {
-    "openapi": "openapi.yaml",
+    "openapi": ["openapi.yaml", "merchant-openapi.yaml"],
     "playground": {
       "display": "interactive"
     },
