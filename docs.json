@@ -59,6 +59,7 @@
           "group": "Account",
           "pages": [
             "validate",
+            "validate-merchant",
             "validate-qr",
             "banks",
             "merchants"
@@ -71,6 +72,7 @@
             "create-payout",
             "collect-payin",
             "get-payment",
+            "fx-merchant",
             "convert"
           ]
         },
