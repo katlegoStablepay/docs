@@ -90,7 +90,68 @@ components:
       enum: [BJ, BF, CD, CI, SN]
       description: |
         For XOF payments, the recipient country must be specified.
-    
+
+    # -------------------------------------------------------------------------
+    # Merchant / enums
+    # -------------------------------------------------------------------------
+    MerchantPaymentMethod:
+      type: string
+      enum: [PAYBILL, TILL]
+      description: The supported payment method used to deliver funds to the merchant/recipient.
+
+    MerchantCurrencyOut:
+      type: string
+      enum: [ARS, BRL, KES, PHP, TZS, VND]
+      description: Fiat currency received by the merchant/recipient.
+
+    MerchantCountry:
+      type: string
+      enum: [AR, BR, KE, PH, TZ, VN]
+      description: Merchant/Recipient country code.
+
+    MerchantBlockchain:
+      type: string
+      enum: [SOLANA]
+      description: Supported blockchains for onchain settlement.
+
+    MerchantPaymentCode:
+      type: string
+      description: |
+        Required when paymentMethod is PAYBILL (TZ).
+        Available PAYBILL (TZ) options: PAYBILLCODE.
+
+    ValidateMerchantResponse:
+      type: object
+      properties:
+        accountName:
+          type: string
+          description: Registered merchant/recipient name.
+          example: "Jane Coffee"
+        accountNumber:
+          type: string
+          description: |
+            The merchant/recipient number resolved.
+          example: "123456678"
+        paymentCode:
+          type: string
+          nullable: true
+          description: |
+            Carry this value forward directly as `paymentCode` on the payment endpoint.
+          example: "LUKU"
+        country:
+          type: string
+          description: Merchant/Recipient country code.
+          example: "KE"
+        currency:
+          type: string
+          description: Fiat currency derived from the country code. Use as destinationCurrency (payment) in subsequent calls.
+          example: "KES"
+        paymentMethod:
+          type: string
+          description: Payment method as supplied in the request.
+          example: "TILL"
+      required: [accountName, accountNumber, paymentCode, country, currency, paymentMethod]
+
     # -------------------------------------------------------------------------
     # FX convert (informational, no rate lock)
     # -------------------------------------------------------------------------
@@ -890,6 +951,384 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+
+  # ---------------------------------------------------------------------------
+  # Merchant
+  # ---------------------------------------------------------------------------
+  /v1/merchant/validate:
+    post:
+      operationId: validateMerchant
+      summary: Validate a merchant
+      description: |
+        Resolve a merchant number to its registered name.
+      tags: [Account]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                accountNumber:
+                  type: string
+                  description: |
+                    The merchant number to resolve.
+                  example: "123456"
+                country:
+                  type: string
+                  enum: [AR, BR, KE, PH, TZ, VN]
+                  description: Merchant country code.
+                paymentMethod:
+                  $ref: '#/components/schemas/MerchantPaymentMethod'
+                  description: The supported payment method used to deliver funds to the merchant.
+                paymentCode:
+                  type: string
+                  description: |
+                    Required when paymentMethod is PAYBILL (TZ).
+                    Available PAYBILL (TZ) options: PAYBILLCODE.
+                  example: "LUKU"
+              required: [accountNumber, country, paymentMethod]
+            examples:
+              keTill:
+                summary: KE TILL merchant number
+                value:
+                  accountNumber: "123456"
+                  country: "KE"
+                  paymentMethod: "TILL"
+              tzPaybill:
+                summary: TZ PAYBILL merchant number
+                value:
+                  accountNumber: "10987654321"
+                  country: "TZ"
+                  paymentMethod: "PAYBILL"
+                  paymentCode: "LUKU"
+      responses:
+        "200":
+          description: Merchant resolved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidateMerchantResponse'
+              examples:
+                keTill:
+                  summary: KE TILL (merchant name resolution)
+                  value:
+                    accountName: "Jane Doe"
+                    accountNumber: "123456"
+                    country: "KE"
+                    currency: "KES"
+                    paymentMethod: "TILL"
+                tzPaybill:
+                  summary: TZ PAYBILL merchant
+                  value:
+                    accountName: "Kilimanjaro Traders"
+                    accountNumber: "10987654321"
+                    paymentCode: "LUKU"
+                    country: "TZ"
+                    currency: "TZS"
+                    paymentMethod: "PAYBILL"
+        "401":
+          description: Invalid or missing API key.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "422":
+          description: Validation error, unsupported currency/method combination, or merchant not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/payments/pay:
+    post:
+      operationId: createPayment
+      summary: Create Payment
+      description: Submit a stablecoin-to-fiat payment to a merchant.
+      tags: [Payments]
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+          description: Client-generated UUID. Required to prevent duplicate payments.
+          example: 550e8400-e29b-41d4-a716-446655440000
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                fiatAmount:
+                  type: number
+                  description: The payment amount in local currency.
+                  example: 1350
+                sourceCurrency:
+                  $ref: '#/components/schemas/CurrencyIn'
+                  description: "Stablecoin sent onchain for payment settlement."
+                destinationCurrency:
+                  $ref: '#/components/schemas/MerchantCurrencyOut'
+                  description: Fiat currency received by the merchant.
+                country:
+                  $ref: '#/components/schemas/MerchantCountry'
+                blockchain:
+                  $ref: '#/components/schemas/MerchantBlockchain'
+                  description: Supported blockchains for onchain settlement.
+                paymentMethod:
+                  $ref: '#/components/schemas/MerchantPaymentMethod'
+                  description: The supported payment method used to deliver funds to the merchant.
+                accountName:
+                  type: string
+                  description: Registered merchant name.
+                  example: Jane Coffee
+                accountNumber:
+                  type: string
+                  description: |
+                    The merchant account number.
+                  example: "123456"
+                reference:
+                  type: string
+                  description: Wallet issuer's unique reference.
+                  example: csh-txn-20260506-001
+                paymentCode:
+                  $ref: '#/components/schemas/MerchantPaymentCode'
+                  description: |
+                    Required when paymentMethod is PAYBILL (TZ).
+                    Available PAYBILL (TZ) options: PAYBILLCODE.
+                paymentIdentifier:
+                  type: string
+                  description: "A method-specific identifier required for processing the payment. Examples include the Paybill business number (PAYBILL), or other market specific references."
+                  example: "123456"
+                customerId:
+                  type: string
+                  description: The customer this payment is for. Required when KYC is enabled for your account.
+                  example: cus_01KXG3R0X8DXTKB849FFFEPT7Y
+              required:
+                - fiatAmount
+                - sourceCurrency
+                - destinationCurrency
+                - country
+                - blockchain
+                - paymentMethod
+                - accountName
+                - accountNumber
+                - reference
+            examples:
+              kesPaybillSolana:
+                summary: KES via PAYBILL on Solana
+                value:
+                  fiatAmount: 1350
+                  sourceCurrency: USDC
+                  destinationCurrency: KES
+                  country: KE
+                  blockchain: SOLANA
+                  paymentMethod: PAYBILL
+                  accountName: Jane Coffee
+                  accountNumber: "123456"
+                  reference: csh-txn-20260506-001
+                  paymentIdentifier: "123456"
+              tzsPaybillSolana:
+                summary: TZS via PAYBILL on Solana
+                value:
+                  fiatAmount: 5000
+                  sourceCurrency: USDC
+                  destinationCurrency: TZS
+                  country: TZ
+                  blockchain: SOLANA
+                  paymentMethod: PAYBILL
+                  accountName: Kilimanjaro Traders
+                  accountNumber: "10987654321"
+                  reference: csh-txn-20260506-003
+                  paymentCode: LUKU
+              tzsTillSolana:
+                summary: TZS via TILL on Solana
+                value:
+                  fiatAmount: 5000
+                  sourceCurrency: USDT
+                  destinationCurrency: TZS
+                  country: TZ
+                  blockchain: SOLANA
+                  paymentMethod: TILL
+                  accountName: Kilimanjaro Traders
+                  accountNumber: "10987654"
+                  reference: csh-txn-20260506-002
+      responses:
+        "202":
+          description: Payment accepted. Processing is async. Poll or await webhook.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  paymentId:
+                    type: string
+                    description: Use this ID to track the payment status.
+                    example: pay_01HV8KZMRJPQR9S7T3XABCDEF
+                  status:
+                    type: string
+                    example: provider_accepted
+                  providerRef:
+                    type: string
+                    nullable: true
+                    description: Provider's internal transaction ID.
+                  createdAt:
+                    type: string
+                    format: date-time
+                required: [paymentId, status, createdAt]
+        "400":
+          description: Validation error (missing field or bad format).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "401":
+          description: Invalid or missing API key.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "409":
+          description: Idempotency key conflict — same key used with a different request body.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "422":
+          description: |
+            Insufficient on-chain USDC balance — the tenant's wallet holds less USDC than the
+            payment requires.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                statusCode: 422
+                code: insufficient_balance
+                message: "Insufficient balance on SOLANA: requested 10.500000 USDC, available 3.200000 USDC."
+        "502":
+          description: |
+            Provider circuit breaker is open — the payment provider has experienced repeated
+            failures and is temporarily unavailable. The response includes an estimated
+            retry time. No payment record is created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                statusCode: 502
+                code: provider_unavailable
+                message: "circuit open — retrying in ~45s"
+
+  /v1/merchant/fx:
+    get:
+      operationId: merchantFxConvert
+      summary: Get a live FX rate (informational)
+      description: |
+        Returns a live indicative exchange rate and fee breakdown.
+      tags: [FX]
+      parameters:
+        - name: amount
+          in: query
+          required: true
+          schema:
+            type: number
+            example: 1000
+          description: Amount to convert.
+        - name: sourceCurrency
+          in: query
+          required: true
+          schema:
+            type: string
+            description: |
+             The currency to convert from.
+            enum: [ARS, BRL, KES, PHP, TZS, VND]
+          example: KES
+        - name: destinationCurrency
+          in: query
+          required: true
+          schema:
+            type: string
+            description: |
+              The currency to convert to.
+            enum: [USDC, USDT]
+          example: USDC
+        - name: paymentMethod
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [PAYBILL, TILL]
+          example: PAYBILL
+        - name: direction
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [payout]
+          description: |
+            payout: issuer sends stablecoin → recipient receives fiat.
+          example: payout
+        - name: optionalIssuerFee
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [YES, NO]
+          example: "NO"
+      responses:
+        "200":
+          description: Indicative FX rate and fee breakdown for the requested corridor.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FxConvertResponse'
+              examples:
+                moneyoutKes:
+                  summary: Money-out — KES via M-Pesa
+                  value:
+                    convertedAmount: "10.680"
+                    exchangeRate: "128.218000"
+                    paymentFee: "20"
+                    expiresAt: "2024-01-15T10:31:30.000Z"
+                moneyoutXaf:
+                  summary: Money-out — XAF via MTN
+                  value:
+                    convertedAmount: "8.120"
+                    exchangeRate: "622.500000"
+                    paymentFee: "50"
+                    expiresAt: "2024-01-15T10:31:00.000Z"
+                moneyinGhs:
+                  summary: Money-in — customer pays GHS, issuer receives USDC
+                  value:
+                    convertedAmount: "6.062"
+                    exchangeRate: "12.866920"
+                    paymentFee: "2"
+                    expiresAt: "2024-01-15T10:31:30.000Z"
+                moneyinXaf:
+                  summary: Money-in — customer pays XAF, issuer receives USDC
+                  value:
+                    convertedAmount: "0.441"
+                    exchangeRate: "666.600000"
+                    paymentFee: "6"
+                    expiresAt: "2024-01-15T10:31:00.000Z"
+        "401":
+          description: Invalid or missing API key.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "422":
+          description: Validation error — invalid currency pair, unsupported corridor, or missing parameter.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                statusCode: 422
+                message: Moneyin is only supported for GHS, KES, NGN, TZS, UGX, ZMW, XAF, XOF, CDF.
 
   # ---------------------------------------------------------------------------
   # FX convert
