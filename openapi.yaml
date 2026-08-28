@@ -99,12 +99,6 @@ components:
       enum: [MERCHANT, PAYBILL, TRANSFER]
       description: The supported payment method used to deliver funds to the merchant or recipient.
 
-    MerchantMethod:
-      type: string
-      enum: [MERCHANT, PAYBILL]
-      description: |
-        The supported payment method used to deliver funds to the merchant.
-
     MerchantMethodFx:
       type: string
       enum: [MERCHANT, PAYBILL, TRANSFER]
@@ -116,12 +110,6 @@ components:
       enum: [MERCHANT, PAYBILL]
       description: |
         The supported payment method used to deliver funds to the merchant.
-
-    MerchantMethodFx:
-      type: string
-      enum: [MERCHANT, PAYBILL, TRANSFER]
-      description: |
-        The supported payment method used to deliver funds to the merchant/recipient.
 
     MerchantCurrencyOut:
       type: string
