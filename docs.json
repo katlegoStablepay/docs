@@ -53,12 +53,12 @@
   "navigation": {
   "tabs": [
     {
-      "tab": "Stablepay Onchain API",
+      "tab": "Stablepay Network API",
       "groups": [
         {
           "group": "Account",
           "pages": [
-            "validate",
+            "validate-account",
             "validate-merchant",
             "validate-qr",
             "banks",
@@ -68,12 +68,12 @@
         {
           "group": "Payments",
           "pages": [
-            "create-a-payment",
+            "create-payment",
             "create-payout",
-            "collect-payin",
+            "create-payin",
             "get-payment",
             "fx-merchant",
-            "convert"
+            "fx-ramp"
           ]
         },
         {
