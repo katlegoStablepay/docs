@@ -97,7 +97,19 @@ components:
     MerchantPaymentMethod:
       type: string
       enum: [MERCHANT, PAYBILL, TRANSFER]
-      description: The supported payment method used to deliver funds to the merchant/recipient.
+      description: The supported payment method used to deliver funds to the merchant or recipient.
+
+    MerchantMethod:
+      type: string
+      enum: [MERCHANT, PAYBILL]
+      description: |
+        The supported payment method used to deliver funds to the merchant.
+
+    MerchantMethodFx:
+      type: string
+      enum: [MERCHANT, PAYBILL, TRANSFER]
+      description: |
+        The supported payment method used to deliver funds to the merchant or recipient.
 
     MerchantMethod:
       type: string
@@ -114,12 +126,12 @@ components:
     MerchantCurrencyOut:
       type: string
       enum: [ARS, BRL, KES, NGN, PHP, TZS, VND, ZAR, ZMW]
-      description: Fiat currency received by the merchant/recipient.
+      description: Fiat currency received by the merchant or recipient.
 
     MerchantCountry:
       type: string
       enum: [AR, BR, KE, NG, PH, TZ, VN, ZA, ZM]
-      description: Merchant/Recipient country code.
+      description: Merchant or recipient country code.
 
     MerchantBlockchain:
       type: string
@@ -128,9 +140,8 @@ components:
 
     MerchantPaymentCode:
       type: string
-      description: |
-        Required when paymentMethod is PAYBILL (TZ).
-        Available PAYBILL (TZ) options: PAYBILLCODE.
+      enum: [MPESA, TIPS, AIRTEL, TIGO, HALOTEL, OPAY, MONIEPOINT, PALMPAY]
+      description: Method-specific code for the payment.
 
     ValidateMerchantResponse:
       type: object
@@ -1056,7 +1067,7 @@ paths:
     post:
       operationId: createPayment
       summary: Create Payment
-      description: Submit a stablecoin-to-fiat payment to a merchant/recipient.
+      description: Submit a stablecoin-to-fiat payment to a merchant or recipient.
       tags: [Payments]
       parameters:
         - name: Idempotency-Key
@@ -1082,7 +1093,7 @@ paths:
                   description: "Stablecoin sent onchain for payment settlement."
                 destinationCurrency:
                   $ref: '#/components/schemas/MerchantCurrencyOut'
-                  description: Fiat currency received by the merchant/recipient.
+                  description: Fiat currency received by the merchant or recipient.
                 country:
                   $ref: '#/components/schemas/MerchantCountry'
                 blockchain:
@@ -1090,15 +1101,15 @@ paths:
                   description: Supported blockchains for onchain settlement.
                 paymentMethod:
                   $ref: '#/components/schemas/MerchantPaymentMethod'
-                  description: The supported payment method used to deliver funds to the merchant/recipient.
+                  description: The supported payment method used to deliver funds to the merchant or recipient.
                 accountName:
                   type: string
-                  description: Registered merchant/recipient name.
+                  description: Registered merchant or recipient name.
                   example: Jane Coffee
                 accountNumber:
                   type: string
                   description: |
-                    The merchant/recipient account number.
+                    The merchant or recipient account number.
                   example: "123456"
                 reference:
                   type: string
@@ -1106,14 +1117,12 @@ paths:
                   example: csh-txn-20260506-001
                 paymentCode:
                   $ref: '#/components/schemas/MerchantPaymentCode'
-                  description: |
-                    Required when paymentMethod is PAYBILL (TZ) or TRANSFER.
-                    Available PAYBILL (TZ) options: PAYBILLCODE.
-                    Available TRANSFER options: MPESA, AIRTEL, TIGO, HALOTEL.
-                    Available TRANSFER (NG) options: OPAY, MONIEPOINT, PALMPAY.
                 paymentIdentifier:
                   type: string
-                  description: "A method-specific identifier required for processing the payment. Examples include the Paybill business number (PAYBILL), or other market specific references."
+                  description: |
+                    Required when paymentMethod is PAYBILL.
+                    A method-specific identifier required for processing the payment. 
+                    Available PAYBILL options: PAYBILL business number (KE), PAYBILLCODE (TZ).
                   example: "123456"
                 customerId:
                   type: string
@@ -1129,6 +1138,7 @@ paths:
                 - accountName
                 - accountNumber
                 - reference
+                - paymentCode
             examples:
               kesPaybillSolana:
                 summary: KES via PAYBILL on Solana
@@ -1142,6 +1152,7 @@ paths:
                   accountName: Jane Coffee
                   accountNumber: "123456"
                   reference: csh-txn-20260506-001
+                  paymentCode: MPESA
                   paymentIdentifier: "123456"
               tzsPaybillSolana:
                 summary: TZS via PAYBILL on Solana
@@ -1155,7 +1166,8 @@ paths:
                   accountName: Kilimanjaro Traders
                   accountNumber: "10987654321"
                   reference: csh-txn-20260506-003
-                  paymentCode: LUKU
+                  paymentCode: TIPS
+                  paymentIdentifier: "LUKU"
               tzsTillSolana:
                 summary: TZS via TILL on Solana
                 value:
@@ -1168,6 +1180,7 @@ paths:
                   accountName: Kilimanjaro Traders
                   accountNumber: "10987654"
                   reference: csh-txn-20260506-002
+                  paymentCode: TIPS
       responses:
         "202":
           description: Payment accepted. Processing is async. Poll or await webhook.
@@ -1243,7 +1256,7 @@ paths:
         Returns a live indicative exchange rate and fee breakdown.
       tags: [FX]
       parameters:
-        - name: amount
+        - name: fiatAmount
           in: query
           required: true
           schema:
@@ -1350,7 +1363,7 @@ paths:
           schema:
             type: number
             example: 1000
-          description: Amount to convert
+          description: Amount to convert.
         - name: sourceCurrency
           in: query
           required: true
