@@ -1693,14 +1693,16 @@ paths:
                   description: |
                     Available MNO options: MPESA, MTN, AIRTEL, TIGO, ZAMTEL, HALOTEL, VODAFONE, VODACOM, ORANGE, MOOV, FREE, TIPS.
                     Available BANK options: OPAY, BANKCODE.
-                    Available PAYBILL (TZ) options: PAYBILLCODE.
                 reference:
                   type: string
                   description: Wallet issuer's unique reference.
                   example: csh-txn-20260506-001
                 paymentIdentifier:
                   type: string
-                  description: "A method-specific identifier required for processing the payment. Examples include BVN (BANK) Paybill business number (PAYBILL), or other market specific references."
+                  description: |
+                    Required when paymentMethod is PAYBILL.
+                    A method-specific identifier required for processing the payment. 
+                    Available PAYBILL options: PAYBILL business number (KE), PAYBILLCODE (TZ).
                   example: "123456"
                 customerId:
                   type: string
