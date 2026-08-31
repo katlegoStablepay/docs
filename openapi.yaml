@@ -671,7 +671,9 @@ paths:
                   enum: [GH, KE, NG, TZ, UG, ZM, CM, CI, SN, BJ, BF, CD, ZA]
                   description: Recipient country code.
                 paymentMethod:
-                  $ref: '#/components/schemas/PaymentMethod'
+                  type: string
+                  enum: [BANK, MOMO, PAYBILL, TILL, QR]
+                  description: The supported payment method used to deliver funds to the recipient.
                 paymentCode:
                   type: string
                   description: |
@@ -1506,6 +1508,10 @@ paths:
                 paymentIdentifier:
                   type: string
                   description: A method-specific identifier required for processing the payment. Examples include BVN (BANK) or other market specific references.
+                redirectUrl:
+                  type: string
+                  description: "The URL to redirect to after payment completion."
+                  example: "https://your-app.example.com/return"              
                 customerId:
                   type: string
                   description: The customer this payment is for. Required when KYC is enabled for your account.
@@ -1546,6 +1552,7 @@ paths:
                   paymentCode: OPAY
                   email: jane@example.com
                   reference: order_ngn001
+                  redirectUrl: "https://your-app.example.com/return"
       responses:
         "202":
           description: |
