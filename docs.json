@@ -59,8 +59,6 @@
           "group": "Account",
           "pages": [
             "validate-account",
-            "validate-merchant",
-            "validate-qr",
             "banks",
             "merchants"
           ]
@@ -69,10 +67,8 @@
           "group": "Payments",
           "pages": [
             "create-payment",
-            "create-payout",
             "create-payin",
             "get-payment",
-            "fx-merchant",
             "fx-ramp"
           ]
         },
