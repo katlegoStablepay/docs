@@ -113,12 +113,12 @@ components:
 
     MerchantCurrencyOut:
       type: string
-      enum: [ARS, BRL, KES, NGN, PHP, TZS, VND, ZAR, ZMW]
+      enum: [KES, NGN, TZS, ZAR, ZMW]
       description: Fiat currency received by the merchant or recipient.
 
     MerchantCountry:
       type: string
-      enum: [AR, BR, KE, NG, PH, TZ, VN, ZA, ZM]
+      enum: [KE, NG, TZ, ZA, ZM]
       description: Merchant or recipient country code.
 
     MerchantBlockchain:
@@ -571,11 +571,11 @@ components:
         country:
           type: string
           description: Recipient country code as supplied in the request.
-          example: "VN"
+          example: "TZ"
         currency:
           type: string
           description: Fiat currency derived from the country code. Use as destinationCurrency in subsequent calls.
-          example: "VND"
+          example: "TZS"
         isValid:
           type: boolean
           description: Whether the QR resolved to a payable destination.
@@ -595,7 +595,7 @@ components:
               example: "123456"
             accountNumber:
               type: string
-              example: "99MTGDMYVND"
+              example: "99MTGDMYTZS"
             payNumber:
               type: string
               description: Till number encoded on a Lipa Namba QR.
@@ -789,18 +789,13 @@ paths:
                 qrString:
                   type: string
                   description: The QR payload to decode.
-                  example: "00020101021238570010A00000072701270006970454011399MTGDMYVND0208QRIBFTTA5303704540410005802VN62200816Thanh toan don hang6304ABCD"
+                  example: "00020101021238570010A00000072701270006970454011399MTGDMYTZD0208QRIBFTTA5303704540410005802TF62200816Baked toan goodies6304ABCD"
                 country:
                   type: string
-                  enum: [AR, BR, KE, NG, PH, TZ, VN, ZA, ZM]
+                  enum: [KE, NG, TZ, ZA, ZM]
                   description: Merchant country code.
               required: [qrString, country]
             examples:
-              vndBankQr:
-                summary: VND bank QR
-                value:
-                  qrString: "00020101021238570010A00000072701270006970454011399MTGDMYVND0208QRIBFTTA5303704540410005802VN62200816Thanh toan don hang6304ABCD"
-                  country: "VN"
               tzsTillQr:
                 summary: TZS Lipa Namba QR
                 value:
@@ -814,21 +809,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/ValidateQrResponse'
               examples:
-                vndBankQr:
-                  summary: VND bank QR
-                  value:
-                    country: "VN"
-                    currency: "VND"
-                    isValid: true
-                    merchantDetails:
-                      kind: "BANK"
-                      beneficiaryName: "Doe J"
-                      bankBin: "123456"
-                      accountNumber: "99MTGDMYVND"
-                    amount: 100000
-                    dynamic: true
-                    resolveToken: "qr_01HV8KZMRJPQR9S7T3XABCDEF"
-                    tokenExpiresAt: "2026-08-25T12:05:00Z"
                 tzsTillQr:
                   summary: TZS Lipa Namba QR
                   value:
@@ -989,7 +969,7 @@ paths:
                   example: "123456"
                 country:
                   type: string
-                  enum: [AR, BR, KE, NG, PH, TZ, VN, ZA, ZM]
+                  enum: [KE, NG, TZ, ZA, ZM]
                   description: Merchant country code.
                 paymentMethod:
                   $ref: '#/components/schemas/MerchantMethod'
@@ -1267,7 +1247,7 @@ paths:
             type: string
             description: |
               The currency to convert to.
-            enum: [ARS, BRL, KES, NGN, PHP, TZS, VND, ZAR, ZMW]
+            enum: [KES, NGN, TZS, ZAR, ZMW]
           example: USDC
         - name: paymentMethod
           in: query
@@ -1693,14 +1673,16 @@ paths:
                   description: |
                     Available MNO options: MPESA, MTN, AIRTEL, TIGO, ZAMTEL, HALOTEL, VODAFONE, VODACOM, ORANGE, MOOV, FREE, TIPS.
                     Available BANK options: OPAY, BANKCODE.
-                    Available PAYBILL (TZ) options: PAYBILLCODE.
                 reference:
                   type: string
                   description: Wallet issuer's unique reference.
                   example: csh-txn-20260506-001
                 paymentIdentifier:
                   type: string
-                  description: "A method-specific identifier required for processing the payment. Examples include BVN (BANK) Paybill business number (PAYBILL), or other market specific references."
+                  description: |
+                    Required when paymentMethod is PAYBILL.
+                    A method-specific identifier required for processing the payment. 
+                    Available PAYBILL options: PAYBILL business number (KE), PAYBILLCODE (TZ).
                   example: "123456"
                 customerId:
                   type: string
