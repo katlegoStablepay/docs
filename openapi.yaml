@@ -536,12 +536,12 @@ components:
       properties:
         accountName:
           type: string
-          description: Registered account holder name for merchant or recipient. Returns the phone number for corridors that only support operator detection.
+          description: Resolved account holder name for merchant or recipient. Returns the phone number for corridors that only support operator detection.
           example: "Jane Doe"
         accountNumber:
           type: string
           description: |
-            The bank account number, mobile money number, merchant identifier, or payment QR code.
+            The resolved bank account number, mobile money number, or merchant identifier.
           example: "+254712345678"
         paymentCode:
           type: string
