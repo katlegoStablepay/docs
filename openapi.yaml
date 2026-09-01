@@ -536,13 +536,12 @@ components:
       properties:
         accountName:
           type: string
-          description: Registered account holder name is resolved for Kenya (MPESA, PAYBILL & TILL) and Nigeria (BANK). Returns the phone number for corridors that only support operator detection.
+          description: Registered account holder name for merchant or recipient. Returns the phone number for corridors that only support operator detection.
           example: "Jane Doe"
         accountNumber:
           type: string
           description: |
-            The account number of the payment method.
-            Must be in E.164 format with the + prefix when paymentMethod is MOMO.
+            The bank account number, mobile money number, merchant identifier, or payment QR code.
           example: "+254712345678"
         paymentCode:
           type: string
@@ -553,7 +552,7 @@ components:
           example: "MPESA"
         country:
           type: string
-          description: Recipient country code as supplied in the request.
+          description: Merchant or recipient country code as supplied in the request.
           example: "KE"
         currency:
           type: string
@@ -563,7 +562,17 @@ components:
           type: string
           description: Payment method as supplied in the request.
           example: "MOMO"
-      required: [accountName, accountNumber, paymentCode, country, currency, paymentMethod]
+        accountType:
+          type: string
+          enum: [PERSON, MERCHANT]
+          description: Whether the resolved account belongs to a person or a merchant.
+          example: "PERSON"
+        resolveToken:
+          type: string
+          nullable: true
+          description: Shortlived token for merchant validated.
+          example: "eyJhciOi......iJ9MzILBkpU"
+      required: [accountName, accountNumber, paymentCode, country, currency, paymentMethod, accountType, resolveToken]
 
     ValidateQrResponse:
       type: object
@@ -668,11 +677,11 @@ paths:
                 country:
                   type: string
                   enum: [GH, KE, NG, TZ, UG, ZM, CM, CI, SN, BJ, BF, CD, ZA]
-                  description: Recipient country code.
+                  description: Merchant or recipient country code.
                 paymentMethod:
                   type: string
                   enum: [BANK, MOMO, PAYBILL, TILL, QR]
-                  description: The supported payment method used to deliver funds to the recipient.
+                  description: The supported payment method used to deliver funds to the merchant or recipient.
                 paymentCode:
                   type: string
                   description: |
