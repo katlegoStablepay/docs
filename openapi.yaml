@@ -649,7 +649,7 @@ paths:
       operationId: validateAccount
       summary: Validate a recipient account
       description: |
-        Resolve an account number or phone number to its registered name.
+        Resolve payment details across bank accounts, mobile money, merchants, and QR codes.
       tags: [Account]
       security:
         - BearerAuth: []
@@ -663,8 +663,7 @@ paths:
                 accountNumber:
                   type: string
                   description: |
-                    The account number of the payment method.
-                    Must be in E.164 format with the + prefix when paymentMethod is MOMO.
+                    The bank account number, mobile money number, merchant identifier, or payment QR code.
                   example: "+254712345678"
                 country:
                   type: string
@@ -678,7 +677,7 @@ paths:
                   type: string
                   description: |
                     Required when paymentMethod is BANK or PAYBILL (TZ).
-                    Available BANK options: OPAY, BANKCODE.
+                    Available BANK options: OPAY, PALMPAY, MONIEPOINT, or BANKCODE.
                     Available PAYBILL (TZ) options: PAYBILLCODE.
                   example: "OPAY"
               required: [accountNumber, country, paymentMethod]
@@ -1630,7 +1629,7 @@ paths:
     post:
       operationId: submitMoneyout
       summary: Submit a money-out payment
-      description: Submit a stablecoin-to-fiat payout.
+      description: Submit a stablecoin-to-fiat payment to a merchant or recipient.
       tags: [Payments]
       parameters:
         - name: Idempotency-Key
@@ -1656,24 +1655,24 @@ paths:
                   description: "Stablecoin sent onchain for payment settlement."
                 destinationCurrency:
                   $ref: '#/components/schemas/CurrencyOut'
-                  description: Fiat currency received by the recipient.
+                  description: Fiat currency received by the merchant or recipient.
                 country:
                   $ref: '#/components/schemas/Country'
+                  description: Merchant or recipient country code.
                 blockchain:
                   $ref: '#/components/schemas/Blockchain'
                   description: Supported blockchains for onchain settlement.
                 paymentMethod:
                   $ref: '#/components/schemas/PaymentMethod'
-                  description: The supported payment method used to deliver funds to the recipient.
+                  description: The supported payment method used to deliver funds to the merchant or recipient.
                 accountName:
                   type: string
-                  description: Recipient full name associated with the payment method.
+                  description: Merchant or recipient full name associated with the payment method.
                   example: Jane Doe
                 accountNumber:
                   type: string
                   description: |
-                    The account number of the payment method.
-                    Must be in E.164 format with the + prefix when paymentMethod is MOMO.
+                    The bank account number, mobile money number, or merchant identifier.
                   example: "+254712345678"
                 paymentCode:
                   $ref: '#/components/schemas/PaymentCode'
