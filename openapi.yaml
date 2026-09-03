@@ -436,7 +436,7 @@ components:
         verificationUrl:
           type: string
           nullable: true
-          description: Current hosted verification URL. Returned with refresh=true for resubmittable statuses (pending, in_progress, soft_declined); null for approved/review and terminal states.
+          description: Current hosted verification URL. Returned with refresh=true for resubmittable statuses (pending, in_progress, soft_declined); omitted otherwise.
           example: https://verify.didit.me/session/XXXX
         identity:
           type: object
@@ -2043,13 +2043,14 @@ paths:
           required: true
           schema:
             type: string
+          description: The customer's cus_ ID or your own externalId.
           example: cus_01KXG3R0X8DXTKB849FFFEPT7Y
         - name: refresh
           in: query
           required: false
           schema:
             type: boolean
-          description: When true, fetches the live status and verified identity.
+          description: When true, fetches the live status, verified identity and the current verificationUrl for resubmittable statuses.
       responses:
         "200":
           description: Customer found.
@@ -2057,24 +2058,43 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CustomerGetResponse'
-              example:
-                id: cus_01...
-                externalId: user001
-                type: individual
-                countryCode: KE
-                kycStatus: review
-                kycAttempts: 1
-                riskLevel: null
-                metadata: {}
-                verifiedAt: null
-                createdAt: "2023-11-07T05:31:56Z"
-                updatedAt: "2023-11-07T05:31:56Z"
-                identity: null
-                reviewWarnings:
-                  - code: COULD_NOT_PERFORM_AML_SCREENING
-                    severity: error
-                    feature: aml_screenings
-                    message: Could not retrieve data from KYC for performing AML Screening.
+              examples:
+                review:
+                  summary: Under review — verificationUrl omitted
+                  value:
+                    id: cus_01...
+                    externalId: user001
+                    type: individual
+                    countryCode: KE
+                    kycStatus: review
+                    kycAttempts: 1
+                    riskLevel: null
+                    metadata: {}
+                    verifiedAt: null
+                    createdAt: "2023-11-07T05:31:56Z"
+                    updatedAt: "2023-11-07T05:31:56Z"
+                    identity: null
+                    reviewWarnings:
+                      - code: COULD_NOT_PERFORM_AML_SCREENING
+                        severity: error
+                        feature: aml_screenings
+                        message: Could not retrieve data from KYC for performing AML Screening.
+                softDeclined:
+                  summary: Resubmittable (refresh=true) — verificationUrl returned
+                  value:
+                    id: cus_01...
+                    externalId: user001
+                    type: individual
+                    countryCode: KE
+                    kycStatus: soft_declined
+                    kycAttempts: 1
+                    riskLevel: null
+                    metadata: {}
+                    verifiedAt: null
+                    createdAt: "2023-11-07T05:31:56Z"
+                    updatedAt: "2023-11-07T05:35:00.000Z"
+                    verificationUrl: https://verify.didit.me/session/abcd1234
+                    identity: null
         "404":
           description: Customer not found.
           content:
