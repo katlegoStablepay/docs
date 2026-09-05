@@ -564,9 +564,9 @@ components:
           example: "MOMO"
         accountType:
           type: string
-          enum: [PERSON, MERCHANT]
-          description: Whether the resolved account belongs to a person or a merchant.
-          example: "PERSON"
+          enum: [CONSUMER, MERCHANT]
+          description: Resolves to CONSUMER for a personal account, or MERCHANT for a business account.
+          example: "CONSUMER"
         resolveToken:
           type: string
           nullable: true
@@ -700,14 +700,14 @@ paths:
               kesBank:
                 summary: KES bank account
                 value:
-                  accountNumber: "+254712345678"
+                  accountNumber: "1234567890"
                   country: "KE"
                   paymentMethod: "BANK"
                   paymentCode: "01"
               ngnBank:
                 summary: NGN bank account
                 value:
-                  accountNumber: "+254712345678"
+                  accountNumber: "0123456789"
                   country: "NG"
                   paymentMethod: "BANK"
                   paymentCode: "OPAY"
@@ -740,6 +740,8 @@ paths:
                     country: "KE"
                     currency: "KES"
                     paymentMethod: "MOMO"
+                    accountType: "CONSUMER"
+                    resolveToken: null
                 ghsMomo:
                   summary: GHS MoMo (operator detected, phone used as name)
                   value:
@@ -749,15 +751,19 @@ paths:
                     country: "GH"
                     currency: "GHS"
                     paymentMethod: "MOMO"
+                    accountType: "CONSUMER"
+                    resolveToken: null
                 kesBank:
                   summary: KES bank account
                   value:
                     accountName: "John Kamau"
-                    accountNumber: "+254712345678"
+                    accountNumber: "1234567890"
                     paymentCode: "01"
                     country: "KE"
                     currency: "KES"
                     paymentMethod: "BANK"
+                    accountType: "CONSUMER"
+                    resolveToken: null
                 xafMomo:
                   summary: Cameroon MoMo (operator detected from phone prefix)
                   value:
@@ -767,6 +773,8 @@ paths:
                     country: "CM"
                     currency: "XAF"
                     paymentMethod: "MOMO"
+                    accountType: "CONSUMER"
+                    resolveToken: null
         "401":
           description: Invalid or missing API key.
           content:
