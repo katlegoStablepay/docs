@@ -49,12 +49,12 @@ components:
 
     CurrencyIn:
       type: string
-      enum: [USDC, USDT]
+      enum: [USDC]
       description: Stablecoin sent onchain for payment settlement.
 
     Blockchain:
       type: string
-      enum: [BSC, SOLANA]
+      enum: [SOLANA]
       description: Supported blockchains for onchain settlement.
 
     PaymentMethod:
@@ -1158,7 +1158,7 @@ paths:
                 summary: TZS via TILL on Solana
                 value:
                   fiatAmount: 5000
-                  sourceCurrency: USDT
+                  sourceCurrency: USDC
                   destinationCurrency: TZS
                   country: TZ
                   blockchain: SOLANA
@@ -1256,7 +1256,7 @@ paths:
             type: string
             description: |
              The currency to convert from.
-            enum: [USDC, USDT]
+            enum: [USDC]
           example: KES
         - name: destinationCurrency
           in: query
@@ -1357,7 +1357,7 @@ paths:
             type: string
             description: |
              The currency to convert from (fiat or stablecoin).
-            enum: [CDF, GHS, KES, NGN, TZS, UGX, XAF, XOF, ZAR, ZMW, USDC, USDT]
+            enum: [CDF, GHS, KES, NGN, TZS, UGX, XAF, XOF, ZAR, ZMW, USDC]
           example: KES
         - name: destinationCurrency
           in: query
@@ -1366,7 +1366,7 @@ paths:
             type: string
             description: |
               The currency to convert to.
-            enum: [USDC, USDT, CDF, GHS, KES, NGN, TZS, UGX, XAF, XOF, ZAR, ZMW]
+            enum: [USDC, CDF, GHS, KES, NGN, TZS, UGX, XAF, XOF, ZAR, ZMW]
           example: USDC
         - name: paymentMethod
           in: query
@@ -1486,11 +1486,11 @@ paths:
                   description: Fiat currency sent onchain for payment settlement.
                 destinationCurrency:
                   type: string
-                  enum: [USDC, USDT]
+                  enum: [USDC]
                   description: Stablecoin received by the recipient.
                 blockchain:
                   type: string
-                  enum: [BSC, SOLANA]
+                  enum: [SOLANA]
                   description: Supported blockchains for onchain settlement.
                 paymentMethod:
                   type: string
@@ -1539,7 +1539,7 @@ paths:
                   fiatAmount: "5000"
                   sourceCurrency: KES
                   destinationCurrency: USDC
-                  blockchain: BSC
+                  blockchain: SOLANA
                   paymentMethod: MOMO
                   accountNumber: "+254712345678"
                   accountName: Jane Doe
@@ -1563,7 +1563,7 @@ paths:
                   fiatAmount: "10000"
                   sourceCurrency: NGN
                   destinationCurrency: USDC
-                  blockchain: BSC
+                  blockchain: SOLANA
                   paymentMethod: BANK
                   paymentCode: OPAY
                   email: jane@example.com
@@ -1640,7 +1640,7 @@ paths:
               example:
                 statusCode: 422
                 code: validation_error
-                message: "KES requires blockchain=BSC (Honeycoin corridor)"
+                message: "KES requires blockchain=SOLANA for MOMO payments."
 
   /v1/payments/out:
     post:
@@ -1694,8 +1694,10 @@ paths:
                 paymentCode:
                   $ref: '#/components/schemas/PaymentCode'
                   description: |
-                    Available MNO options: MPESA, MTN, AIRTEL, TIGO, ZAMTEL, HALOTEL, VODAFONE, VODACOM, ORANGE, MOOV, FREE, TIPS.
-                    Available BANK options: OPAY, BANKCODE.
+                    Available MOMO options: MPESA, MTN, AIRTEL, TIGO, ZAMTEL, HALOTEL, VODAFONE, VODACOM, ORANGE, MOOV, FREE.
+                    Available BANK options: OPAY, PALMPAY, MONIEPOINT, BANKCODE.
+                    Available PAYBILL options: MPESA, TIPS.
+                    Available TILL options: MPESA, TIPS.
                 reference:
                   type: string
                   description: Wallet issuer's unique reference.
@@ -1723,14 +1725,14 @@ paths:
                 - paymentCode
                 - reference
             examples:
-              kesBscMomo:
-                summary: KES via M-Pesa on BSC
+              kesSolanaMomo:
+                summary: KES via M-Pesa on Solana
                 value:
                   fiatAmount: 1350
                   sourceCurrency: USDC
                   destinationCurrency: KES
                   country: KE
-                  blockchain: BSC
+                  blockchain: SOLANA
                   paymentMethod: MOMO
                   accountName: Jane Doe
                   accountNumber: "+254712345678"
