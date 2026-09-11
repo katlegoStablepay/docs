@@ -49,7 +49,7 @@ components:
 
     CurrencyIn:
       type: string
-      enum: [USDC]
+      enum: [USDC, USDT]
       description: Stablecoin sent onchain for payment settlement.
 
     Blockchain:
