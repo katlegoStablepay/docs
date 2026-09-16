@@ -189,8 +189,10 @@ components:
           example: 1750334460
         rateId:
           type: string
-          description: Identifier for the quoted rate. Locked for 1 hour.
-          example: "rate_01XXXXXXXXXXXXXXXXXXXXXXXX"
+          description: |
+            Identifier for the quoted rate. Locked for 1 hour.
+            Format: `<issuerCode>_<RI|RO><countryCode><ULID>` — `RI` for money-in quotes, `RO` for money-out quotes.
+          example: "RATE_ROXX01ARZ3NDEKTSV4RRFFQ69G5FAV"
       required: [convertedAmount, exchangeRate, paymentFee, expiryTimestamp, rateId]
 
     # -------------------------------------------------------------------------
@@ -1299,7 +1301,7 @@ paths:
                     exchangeRate: "128.218000"
                     paymentFee: "20"
                     expiresAt: "2024-01-15T10:31:30.000Z"
-                    rateId: "rate_01XXXXXXXXXXXXXXXXXXXXXXXX"
+                    rateId: "RATE_ROXX01ARZ3NDEKTSV4RRFFQ69G5FAV"
                 moneyoutXaf:
                   summary: Money-out — XAF via MTN
                   value:
@@ -1307,7 +1309,7 @@ paths:
                     exchangeRate: "622.500000"
                     paymentFee: "50"
                     expiresAt: "2024-01-15T10:31:00.000Z"
-                    rateId: "rate_01XXXXXXXXXXXXXXXXXXXXXXXX"
+                    rateId: "RATE_ROXX01ARZ3NDEKTSV4RRFFQ69G5FAV"
                 moneyinGhs:
                   summary: Money-in — customer pays GHS, issuer receives USDC
                   value:
@@ -1315,7 +1317,7 @@ paths:
                     exchangeRate: "12.866920"
                     paymentFee: "2"
                     expiresAt: "2024-01-15T10:31:30.000Z"
-                    rateId: "rate_01XXXXXXXXXXXXXXXXXXXXXXXX"
+                    rateId: "RATE_RIXX01ARZ3NDEKTSV4RRFFQ69G5FAV"
                 moneyinXaf:
                   summary: Money-in — customer pays XAF, issuer receives USDC
                   value:
@@ -1323,7 +1325,7 @@ paths:
                     exchangeRate: "666.600000"
                     paymentFee: "6"
                     expiresAt: "2024-01-15T10:31:00.000Z"
-                    rateId: "rate_01XXXXXXXXXXXXXXXXXXXXXXXX"
+                    rateId: "RATE_RIXX01ARZ3NDEKTSV4RRFFQ69G5FAV"
         "401":
           description: Invalid or missing API key.
           content:
@@ -1423,7 +1425,7 @@ paths:
                     exchangeRate: "128.218000"
                     paymentFee: "20"
                     expiresAt: "2024-01-15T10:31:30.000Z"
-                    rateId: "rate_01XXXXXXXXXXXXXXXXXXXXXXXX"
+                    rateId: "RATE_ROXX01ARZ3NDEKTSV4RRFFQ69G5FAV"
                 moneyoutXaf:
                   summary: Money-out — XAF via MTN
                   value:
@@ -1431,7 +1433,7 @@ paths:
                     exchangeRate: "622.500000"
                     paymentFee: "50"
                     expiresAt: "2024-01-15T10:31:00.000Z"
-                    rateId: "rate_01XXXXXXXXXXXXXXXXXXXXXXXX"
+                    rateId: "RATE_ROXX01ARZ3NDEKTSV4RRFFQ69G5FAV"
                 moneyinGhs:
                   summary: Money-in — customer pays GHS, issuer receives USDC
                   value:
@@ -1439,7 +1441,7 @@ paths:
                     exchangeRate: "12.866920"
                     paymentFee: "2"
                     expiresAt: "2024-01-15T10:31:30.000Z"
-                    rateId: "rate_01XXXXXXXXXXXXXXXXXXXXXXXX"
+                    rateId: "RATE_RIXX01ARZ3NDEKTSV4RRFFQ69G5FAV"
                 moneyinXaf:
                   summary: Money-in — customer pays XAF, issuer receives USDC
                   value:
@@ -1447,7 +1449,7 @@ paths:
                     exchangeRate: "666.600000"
                     paymentFee: "6"
                     expiresAt: "2024-01-15T10:31:00.000Z"
-                    rateId: "rate_01XXXXXXXXXXXXXXXXXXXXXXXX"
+                    rateId: "RATE_RIXX01ARZ3NDEKTSV4RRFFQ69G5FAV"
         "401":
           description: Invalid or missing API key.
           content:
@@ -1546,8 +1548,10 @@ paths:
                   example: cus_01KXG3R0X8DXTKB849FFFEPT7Y
                 rateId:
                   type: string
-                  description: Identifier for the quoted rate. Locked for 1 hour.
-                  example: "rate_01XXXXXXXXXXXXXXXXXXXXXXXX"
+                  description: |
+                    Identifier for the quoted rate. Locked for 1 hour.
+                    Format: `<issuerCode>_RI<countryCode><ULID>` for money-in payments.
+                  example: "RATE_RIXX01ARZ3NDEKTSV4RRFFQ69G5FAV"
             examples:
               kesMomo:
                 summary: KES via M-Pesa
@@ -1561,7 +1565,7 @@ paths:
                   accountName: Jane Doe
                   paymentCode: MPESA
                   reference: order_abc123
-                  rateId: "rate_01XXXXXXXXXXXXXXXXXXXXXXXX"
+                  rateId: "RATE_RIXX01ARZ3NDEKTSV4RRFFQ69G5FAV"
               xafMomo:
                 summary: XAF via Orange MoMo
                 value:
@@ -1574,7 +1578,7 @@ paths:
                   accountName: tester
                   paymentCode: ORANGE
                   reference: order_xyz456
-                  rateId: "rate_01XXXXXXXXXXXXXXXXXXXXXXXX"
+                  rateId: "RATE_RIXX01ARZ3NDEKTSV4RRFFQ69G5FAV"
               ngnBankOpay:
                 summary: NGN via OPAY deeplink
                 value:
@@ -1587,7 +1591,7 @@ paths:
                   email: jane@example.com
                   reference: order_ngn001
                   redirectUrl: "https://your-app.example.com/return"
-                  rateId: "rate_01XXXXXXXXXXXXXXXXXXXXXXXX"
+                  rateId: "RATE_RIXX01ARZ3NDEKTSV4RRFFQ69G5FAV"
       responses:
         "202":
           description: |
@@ -1734,8 +1738,10 @@ paths:
                   example: cus_01KXG3R0X8DXTKB849FFFEPT7Y
                 rateId:
                   type: string
-                  description: Identifier for the quoted rate. Locked for 1 hour.
-                  example: "rate_01XXXXXXXXXXXXXXXXXXXXXXXX"
+                  description: |
+                    Identifier for the quoted rate. Locked for 1 hour.
+                    Format: `<issuerCode>_RO<countryCode><ULID>` for money-out payments.
+                  example: "RATE_ROXX01ARZ3NDEKTSV4RRFFQ69G5FAV"
                 depositTxHash:
                   type: string
                   description: Transaction hash of the stablecoin deposit sent to the issuer's stablecoin wallet.
@@ -1765,7 +1771,7 @@ paths:
                   accountNumber: "+254712345678"
                   paymentCode: MPESA
                   reference: csh-txn-20260506-001
-                  rateId: "rate_01XXXXXXXXXXXXXXXXXXXXXXXX"
+                  rateId: "RATE_ROXX01ARZ3NDEKTSV4RRFFQ69G5FAV"
                   depositTxHash: "4Nd1mZQhJb7oVdz3sMKtjRTn9AA7Fer6HsRVDkbgxsF2eATdt6xUpNc2WcqLKt4d2Ce4Y2xJ7DoZq1t9UyF8x4Zt"
               xafSolana:
                 summary: XAF via MTN MoMo on Solana
@@ -1780,7 +1786,7 @@ paths:
                   accountNumber: "+237612345678"
                   paymentCode: MTN
                   reference: csh-txn-20260506-002
-                  rateId: "rate_01XXXXXXXXXXXXXXXXXXXXXXXX"
+                  rateId: "RATE_ROXX01ARZ3NDEKTSV4RRFFQ69G5FAV"
                   depositTxHash: "4Nd1mZQhJb7oVdz3sMKtjRTn9AA7Fer6HsRVDkbgxsF2eATdt6xUpNc2WcqLKt4d2Ce4Y2xJ7DoZq1t9UyF8x4Zt"
       responses:
         "202":
