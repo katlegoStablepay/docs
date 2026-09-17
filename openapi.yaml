@@ -191,7 +191,6 @@ components:
           type: string
           description: |
             Identifier for the quoted rate. Locked for 1 hour.
-            Format: `<issuerCode>_<RI|RO><countryCode><ULID>` — `RI` for money-in quotes, `RO` for money-out quotes.
           example: "RATE_ROXX01ARZ3NDEKTSV4RRFFQ69G5FAV"
       required: [convertedAmount, exchangeRate, paymentFee, expiryTimestamp, rateId]
 
@@ -1288,7 +1287,7 @@ paths:
           example: "NO"
       responses:
         "200":
-          description: Indicative FX rate and fee breakdown for the requested corridor.
+          description: Stablepay FX rate and fee breakdown for the requested corridor.
           content:
             application/json:
               schema:
@@ -1348,9 +1347,9 @@ paths:
   /v1/fx/convert:
     get:
       operationId: fxConvert
-      summary: Get a live FX rate (informational)
+      summary: Get a Stablepay FX rate.
       description: |
-        Returns a live indicative exchange rate and fee breakdown.
+        Returns an exchange rate and fee breakdown.
       tags: [FX]
       parameters:
         - name: amount
