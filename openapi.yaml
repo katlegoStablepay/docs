@@ -1549,7 +1549,6 @@ paths:
                   type: string
                   description: |
                     Identifier for the quoted rate. Locked for 1 hour.
-                    Format: `<issuerCode>_RI<countryCode><ULID>` for money-in payments.
                   example: "RATE_RIXX01ARZ3NDEKTSV4RRFFQ69G5FAV"
             examples:
               kesMomo:
@@ -1739,7 +1738,6 @@ paths:
                   type: string
                   description: |
                     Identifier for the quoted rate. Locked for 1 hour.
-                    Format: `<issuerCode>_RO<countryCode><ULID>` for money-out payments.
                   example: "RATE_ROXX01ARZ3NDEKTSV4RRFFQ69G5FAV"
                 depositTxHash:
                   type: string
