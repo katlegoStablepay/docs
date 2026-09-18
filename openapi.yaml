@@ -54,7 +54,7 @@ components:
 
     Blockchain:
       type: string
-      enum: [BSC, SOLANA]
+      enum: [SOLANA]
       description: Supported blockchains for onchain settlement.
 
     PaymentMethod:
@@ -187,7 +187,12 @@ components:
           format: int64
           description: Unix timestamp (seconds) after which this rate expires.
           example: 1750334460
-      required: [convertedAmount, exchangeRate, paymentFee, expiryTimestamp]
+        rateId:
+          type: string
+          description: |
+            Identifier for the quoted rate. Locked for 1 hour.
+          example: "RATE_ROXX01ARZ3NDEKTSV4RRFFQ69G5FAV"
+      required: [convertedAmount, exchangeRate, paymentFee, expiryTimestamp, rateId]
 
     # -------------------------------------------------------------------------
     # Payment
@@ -1158,7 +1163,7 @@ paths:
                 summary: TZS via TILL on Solana
                 value:
                   fiatAmount: 5000
-                  sourceCurrency: USDT
+                  sourceCurrency: USDC
                   destinationCurrency: TZS
                   country: TZ
                   blockchain: SOLANA
@@ -1256,7 +1261,7 @@ paths:
             type: string
             description: |
              The currency to convert from.
-            enum: [USDC, USDT]
+            enum: [USDC]
           example: KES
         - name: destinationCurrency
           in: query
@@ -1282,7 +1287,7 @@ paths:
           example: "NO"
       responses:
         "200":
-          description: Indicative FX rate and fee breakdown for the requested corridor.
+          description: Stablepay FX rate and fee breakdown for the requested corridor.
           content:
             application/json:
               schema:
@@ -1295,6 +1300,7 @@ paths:
                     exchangeRate: "128.218000"
                     paymentFee: "20"
                     expiresAt: "2024-01-15T10:31:30.000Z"
+                    rateId: "RATE_ROXX01ARZ3NDEKTSV4RRFFQ69G5FAV"
                 moneyoutXaf:
                   summary: Money-out — XAF via MTN
                   value:
@@ -1302,6 +1308,7 @@ paths:
                     exchangeRate: "622.500000"
                     paymentFee: "50"
                     expiresAt: "2024-01-15T10:31:00.000Z"
+                    rateId: "RATE_ROXX01ARZ3NDEKTSV4RRFFQ69G5FAV"
                 moneyinGhs:
                   summary: Money-in — customer pays GHS, issuer receives USDC
                   value:
@@ -1309,6 +1316,7 @@ paths:
                     exchangeRate: "12.866920"
                     paymentFee: "2"
                     expiresAt: "2024-01-15T10:31:30.000Z"
+                    rateId: "RATE_RIXX01ARZ3NDEKTSV4RRFFQ69G5FAV"
                 moneyinXaf:
                   summary: Money-in — customer pays XAF, issuer receives USDC
                   value:
@@ -1316,6 +1324,7 @@ paths:
                     exchangeRate: "666.600000"
                     paymentFee: "6"
                     expiresAt: "2024-01-15T10:31:00.000Z"
+                    rateId: "RATE_RIXX01ARZ3NDEKTSV4RRFFQ69G5FAV"
         "401":
           description: Invalid or missing API key.
           content:
@@ -1338,9 +1347,9 @@ paths:
   /v1/fx/convert:
     get:
       operationId: fxConvert
-      summary: Get a live FX rate (informational)
+      summary: Get a Stablepay FX rate.
       description: |
-        Returns a live indicative exchange rate and fee breakdown.
+        Returns an exchange rate and fee breakdown.
       tags: [FX]
       parameters:
         - name: amount
@@ -1357,7 +1366,7 @@ paths:
             type: string
             description: |
              The currency to convert from (fiat or stablecoin).
-            enum: [CDF, GHS, KES, NGN, TZS, UGX, XAF, XOF, ZAR, ZMW, USDC, USDT]
+            enum: [CDF, GHS, KES, NGN, TZS, UGX, XAF, XOF, ZAR, ZMW, USDC]
           example: KES
         - name: destinationCurrency
           in: query
@@ -1366,7 +1375,7 @@ paths:
             type: string
             description: |
               The currency to convert to.
-            enum: [USDC, USDT, CDF, GHS, KES, NGN, TZS, UGX, XAF, XOF, ZAR, ZMW]
+            enum: [USDC, CDF, GHS, KES, NGN, TZS, UGX, XAF, XOF, ZAR, ZMW]
           example: USDC
         - name: paymentMethod
           in: query
@@ -1415,6 +1424,7 @@ paths:
                     exchangeRate: "128.218000"
                     paymentFee: "20"
                     expiresAt: "2024-01-15T10:31:30.000Z"
+                    rateId: "RATE_ROXX01ARZ3NDEKTSV4RRFFQ69G5FAV"
                 moneyoutXaf:
                   summary: Money-out — XAF via MTN
                   value:
@@ -1422,6 +1432,7 @@ paths:
                     exchangeRate: "622.500000"
                     paymentFee: "50"
                     expiresAt: "2024-01-15T10:31:00.000Z"
+                    rateId: "RATE_ROXX01ARZ3NDEKTSV4RRFFQ69G5FAV"
                 moneyinGhs:
                   summary: Money-in — customer pays GHS, issuer receives USDC
                   value:
@@ -1429,6 +1440,7 @@ paths:
                     exchangeRate: "12.866920"
                     paymentFee: "2"
                     expiresAt: "2024-01-15T10:31:30.000Z"
+                    rateId: "RATE_RIXX01ARZ3NDEKTSV4RRFFQ69G5FAV"
                 moneyinXaf:
                   summary: Money-in — customer pays XAF, issuer receives USDC
                   value:
@@ -1436,6 +1448,7 @@ paths:
                     exchangeRate: "666.600000"
                     paymentFee: "6"
                     expiresAt: "2024-01-15T10:31:00.000Z"
+                    rateId: "RATE_RIXX01ARZ3NDEKTSV4RRFFQ69G5FAV"
         "401":
           description: Invalid or missing API key.
           content:
@@ -1486,11 +1499,11 @@ paths:
                   description: Fiat currency sent onchain for payment settlement.
                 destinationCurrency:
                   type: string
-                  enum: [USDC, USDT]
+                  enum: [USDC]
                   description: Stablecoin received by the recipient.
                 blockchain:
                   type: string
-                  enum: [BSC, SOLANA]
+                  enum: [SOLANA]
                   description: Supported blockchains for onchain settlement.
                 paymentMethod:
                   type: string
@@ -1532,6 +1545,11 @@ paths:
                   type: string
                   description: The customer this payment is for. Required when KYC is enabled for your account.
                   example: cus_01KXG3R0X8DXTKB849FFFEPT7Y
+                rateId:
+                  type: string
+                  description: |
+                    Identifier for the quoted rate. Locked for 1 hour.
+                  example: "RATE_RIXX01ARZ3NDEKTSV4RRFFQ69G5FAV"
             examples:
               kesMomo:
                 summary: KES via M-Pesa
@@ -1539,12 +1557,13 @@ paths:
                   fiatAmount: "5000"
                   sourceCurrency: KES
                   destinationCurrency: USDC
-                  blockchain: BSC
+                  blockchain: SOLANA
                   paymentMethod: MOMO
                   accountNumber: "+254712345678"
                   accountName: Jane Doe
                   paymentCode: MPESA
                   reference: order_abc123
+                  rateId: "RATE_RIXX01ARZ3NDEKTSV4RRFFQ69G5FAV"
               xafMomo:
                 summary: XAF via Orange MoMo
                 value:
@@ -1557,18 +1576,20 @@ paths:
                   accountName: tester
                   paymentCode: ORANGE
                   reference: order_xyz456
+                  rateId: "RATE_RIXX01ARZ3NDEKTSV4RRFFQ69G5FAV"
               ngnBankOpay:
                 summary: NGN via OPAY deeplink
                 value:
                   fiatAmount: "10000"
                   sourceCurrency: NGN
                   destinationCurrency: USDC
-                  blockchain: BSC
+                  blockchain: SOLANA
                   paymentMethod: BANK
                   paymentCode: OPAY
                   email: jane@example.com
                   reference: order_ngn001
                   redirectUrl: "https://your-app.example.com/return"
+                  rateId: "RATE_RIXX01ARZ3NDEKTSV4RRFFQ69G5FAV"
       responses:
         "202":
           description: |
@@ -1640,7 +1661,7 @@ paths:
               example:
                 statusCode: 422
                 code: validation_error
-                message: "KES requires blockchain=BSC (Honeycoin corridor)"
+                message: "KES requires blockchain=SOLANA for MOMO payments."
 
   /v1/payments/out:
     post:
@@ -1694,8 +1715,10 @@ paths:
                 paymentCode:
                   $ref: '#/components/schemas/PaymentCode'
                   description: |
-                    Available MNO options: MPESA, MTN, AIRTEL, TIGO, ZAMTEL, HALOTEL, VODAFONE, VODACOM, ORANGE, MOOV, FREE, TIPS.
-                    Available BANK options: OPAY, BANKCODE.
+                    Available MOMO options: MPESA, MTN, AIRTEL, TIGO, ZAMTEL, HALOTEL, VODAFONE, VODACOM, ORANGE, MOOV, FREE.
+                    Available BANK options: OPAY, PALMPAY, MONIEPOINT, BANKCODE.
+                    Available PAYBILL options: MPESA, TIPS.
+                    Available TILL options: MPESA, TIPS.
                 reference:
                   type: string
                   description: Wallet issuer's unique reference.
@@ -1704,13 +1727,22 @@ paths:
                   type: string
                   description: |
                     Required when paymentMethod is PAYBILL.
-                    A method-specific identifier required for processing the payment. 
+                    A method-specific identifier required for processing the payment.
                     Available PAYBILL options: PAYBILL business number (KE), PAYBILLCODE (TZ).
                   example: "123456"
                 customerId:
                   type: string
                   description: The customer this payment is for. Required when KYC is enabled for your account.
                   example: cus_01KXG3R0X8DXTKB849FFFEPT7Y
+                rateId:
+                  type: string
+                  description: |
+                    Identifier for the quoted rate. Locked for 1 hour.
+                  example: "RATE_ROXX01ARZ3NDEKTSV4RRFFQ69G5FAV"
+                depositTxHash:
+                  type: string
+                  description: Transaction hash of the stablecoin deposit sent to the issuer's stablecoin wallet.
+                  example: "4Nd1mZQhJb7oVdz3sMKtjRTn9AA7Fer6HsRVDkbgxsF2eATdt6xUpNc2WcqLKt4d2Ce4Y2xJ7DoZq1t9UyF8x4Zt"
               required:
                 - fiatAmount
                 - sourceCurrency
@@ -1723,19 +1755,21 @@ paths:
                 - paymentCode
                 - reference
             examples:
-              kesBscMomo:
-                summary: KES via M-Pesa on BSC
+              kesSolanaMomo:
+                summary: KES via M-Pesa on Solana
                 value:
                   fiatAmount: 1350
                   sourceCurrency: USDC
                   destinationCurrency: KES
                   country: KE
-                  blockchain: BSC
+                  blockchain: SOLANA
                   paymentMethod: MOMO
                   accountName: Jane Doe
                   accountNumber: "+254712345678"
                   paymentCode: MPESA
                   reference: csh-txn-20260506-001
+                  rateId: "RATE_ROXX01ARZ3NDEKTSV4RRFFQ69G5FAV"
+                  depositTxHash: "4Nd1mZQhJb7oVdz3sMKtjRTn9AA7Fer6HsRVDkbgxsF2eATdt6xUpNc2WcqLKt4d2Ce4Y2xJ7DoZq1t9UyF8x4Zt"
               xafSolana:
                 summary: XAF via MTN MoMo on Solana
                 value:
@@ -1749,6 +1783,8 @@ paths:
                   accountNumber: "+237612345678"
                   paymentCode: MTN
                   reference: csh-txn-20260506-002
+                  rateId: "RATE_ROXX01ARZ3NDEKTSV4RRFFQ69G5FAV"
+                  depositTxHash: "4Nd1mZQhJb7oVdz3sMKtjRTn9AA7Fer6HsRVDkbgxsF2eATdt6xUpNc2WcqLKt4d2Ce4Y2xJ7DoZq1t9UyF8x4Zt"
       responses:
         "202":
           description: Payment accepted. Processing is async. Poll or await webhook.
@@ -1760,7 +1796,7 @@ paths:
                   paymentId:
                     type: string
                     description: Use this ID to track the payment status.
-                    example: pay_01HV8KZMRJPQR9S7T3XABCDEF
+                    example: ISS_XX01ARZ3NDEKTSV4RRFFQ69G5FAV
                   status:
                     type: string
                     example: provider_accepted
@@ -1908,7 +1944,7 @@ paths:
                 ngnOpayPayout:
                   summary: NGN OPAY payout
                   value:
-                    id: pay_01KY7JCNWDSDFVRQABCW0K1233G
+                    id: ISS_SP01ARZ3NDEKTSV4RRFFQ69G5FAV
                     status: succeeded
                     direction: money_out
                     paymentMethod: BANK
