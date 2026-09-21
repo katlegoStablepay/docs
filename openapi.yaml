@@ -1860,7 +1860,7 @@ paths:
     get:
       operationId: getPayment
       summary: Get a payment
-      description: Retrieve a single payment by ID.
+      description: Retrieve a single payment by ID or external reference.
       tags: [Payments]
       parameters:
         - name: paymentId
@@ -1868,7 +1868,7 @@ paths:
           required: true
           schema:
             type: string
-          description: The `pay_`-prefixed payment ID.
+          description: The payment ID or external reference.
           example: pay_01HV8KZMRJPQR9S7T3XABCDEF
       responses:
         "200":
@@ -1881,43 +1881,43 @@ paths:
                 succeeded:
                   summary: Succeeded money-out payment
                   value:
-                    id: pay_01JXXXX
+                    id: LEE_NG01M31ATZ7YABC123UANM32E
                     status: succeeded
                     direction: money_out
-                    paymentMethod: MOMO
+                    paymentMethod: BANK
                     sourceCurrency: USDC
-                    amountStablecoin: "37.395"
-                    fiatAmount: "24500"
-                    destinationCurrency: XOF
-                    providerRef: hc_abc123
-                    reference: csh-abc123
+                    amountStablecoin: "0.787"
+                    fiatAmount: "1000"
+                    destinationCurrency: NGN
+                    providerRef: AbCd2fv3ovnefe2
+                    reference: issuer_payment_001
                     errorCode: null
                     failureReason: null
                     customerMessage: null
                     depositInstruction: null
                     redirectUrl: null
-                    paymentCode: MTN
+                    paymentCode: BANK
                     createdAt: "2026-05-06T10:31:00.000Z"
                     updatedAt: "2026-05-06T10:31:45.000Z"
                 failed:
                   summary: Failed payment
                   value:
-                    id: pay_01JYYYY
+                    id: ABC_NG01M2IEFDNF4INFQD41O
                     status: failed
                     direction: money_out
-                    paymentMethod: MOMO
+                    paymentMethod: BANK
                     sourceCurrency: USDC
-                    amountStablecoin: "10.000"
-                    fiatAmount: "6500"
-                    destinationCurrency: XOF
-                    providerRef: hc_def456
-                    reference: csh-def456
-                    errorCode: insufficient_funds
-                    failureReason: "Recipient account has insufficient funds to complete the transaction."
-                    customerMessage: null
+                    amountStablecoin: "0.787"
+                    fiatAmount: "1000"
+                    destinationCurrency: NGN
+                    providerRef: AbCd2fv3ovnefe2
+                    reference: issue_payment_001
+                    errorCode: payment_failed
+                    failureReason: "The payment could not be completed. Please contact support with the payment ID if this persists."
+                    customerMessage: "Your payment could not be completed. Please try again."
                     depositInstruction: null
                     redirectUrl: null
-                    paymentCode: MTN
+                    paymentCode: BANK
                     createdAt: "2026-05-06T10:31:00.000Z"
                     updatedAt: "2026-05-06T10:32:10.000Z"
                 ngnOpayPayin:
