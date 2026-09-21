@@ -1881,7 +1881,7 @@ paths:
                 succeeded:
                   summary: Succeeded money-out payment
                   value:
-                    id: LEE_NG01M31ATZ7YABC123UANM32E
+                    id: ABC_NG01M2IEFDNF4INFQD41O3R
                     status: succeeded
                     direction: money_out
                     paymentMethod: BANK
