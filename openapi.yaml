@@ -1860,7 +1860,7 @@ paths:
     get:
       operationId: getPayment
       summary: Get a payment
-      description: Retrieve a single payment by ID or external reference.
+      description: Retrieve a single payment by ID or reference.
       tags: [Payments]
       parameters:
         - name: paymentId
@@ -1868,7 +1868,7 @@ paths:
           required: true
           schema:
             type: string
-          description: The payment ID or external reference.
+          description: The payment ID or reference.
           example: pay_01HV8KZMRJPQR9S7T3XABCDEF
       responses:
         "200":
