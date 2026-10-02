@@ -1698,7 +1698,8 @@ paths:
                   $ref: '#/components/schemas/Country'
                   description: Merchant or recipient country code.
                 blockchain:
-                  $ref: '#/components/schemas/Blockchain'
+                  type: string
+                  enum: [SOLANA, ARC]
                   description: Supported blockchains for onchain settlement.
                 paymentMethod:
                   $ref: '#/components/schemas/PaymentMethod'
