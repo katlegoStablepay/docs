@@ -54,7 +54,7 @@ components:
 
     Blockchain:
       type: string
-      enum: [SOLANA]
+      enum: [SOLANA, ARC]
       description: Supported blockchains for onchain settlement.
 
     PaymentMethod:
