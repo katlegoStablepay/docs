@@ -1281,8 +1281,13 @@ paths:
         - name: paymentCode
           in: query
           required: false
+          description: |
+              Mobile network operator or bank code.
+              MNO options: MPESA, MTN, AIRTEL, TIGO, ZAMTEL, HALOTEL, VODAFONE, VODACOM, ORANGE, MOOV, FREE.
+              Bank options: PAYSHAP, OPAY, PALMPAY, MONIEPOINT.
+              Use the List Supported Banks endpoint to look up the bankCode for recipient's bank.
           schema:
-            $ref: '#/components/schemas/PaymentCode'
+            type: string
           example: MPESA
         - name: optionalIssuerFee
           in: query
@@ -1410,14 +1415,13 @@ paths:
         - name: paymentCode
           in: query
           required: false
-          schema:
-            $ref: '#/components/schemas/PaymentCode'
-            description: |
+          description: |
               Mobile network operator or bank code.
               MNO options: MPESA, MTN, AIRTEL, TIGO, ZAMTEL, HALOTEL, VODAFONE, VODACOM, ORANGE, MOOV, FREE.
               Bank options: OPAY, PALMPAY, MONIEPOINT.
               Use the List Supported Banks endpoint to look up the bankCode for recipient's bank.
-
+          schema:
+            type: string
           example: MPESA
         - name: country
           in: query
