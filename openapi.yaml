@@ -1284,8 +1284,7 @@ paths:
           description: |
               Mobile network operator or bank code.
               MNO options: MPESA, MTN, AIRTEL, TIGO, ZAMTEL, HALOTEL, VODAFONE, VODACOM, ORANGE, MOOV, FREE.
-              Bank options: PAYSHAP, OPAY, PALMPAY, MONIEPOINT.
-              Use the List Supported Banks endpoint to look up the bankCode for recipient's bank.
+              Bank options: OPAY, PALMPAY, MONIEPOINT, PAYSHAP.
           schema:
             type: string
           example: MPESA
@@ -1418,8 +1417,7 @@ paths:
           description: |
               Mobile network operator or bank code.
               MNO options: MPESA, MTN, AIRTEL, TIGO, ZAMTEL, HALOTEL, VODAFONE, VODACOM, ORANGE, MOOV, FREE.
-              Bank options: OPAY, PALMPAY, MONIEPOINT.
-              Use the List Supported Banks endpoint to look up the bankCode for recipient's bank.
+              Bank options: OPAY, PALMPAY, MONIEPOINT, PAYSHAP.
           schema:
             type: string
           example: MPESA
@@ -1739,13 +1737,13 @@ paths:
                   $ref: '#/components/schemas/PaymentCode'
                   description: |
                     Available MOMO options: MPESA, MTN, AIRTEL, TIGO, ZAMTEL, HALOTEL, VODAFONE, VODACOM, ORANGE, MOOV, FREE.
-                    Available BANK options: OPAY, PALMPAY, MONIEPOINT, BANKCODE.
+                    Available BANK options: OPAY, PALMPAY, MONIEPOINT, PAYSHAP, BANKCODE.
                     Available PAYBILL options: MPESA, TIPS.
                     Available TILL options: MPESA, TIPS.
                 reference:
                   type: string
                   description: Wallet issuer's unique reference.
-                  example: csh-txn-20260506-001
+                  example: csh-txn-20260506001
                 paymentIdentifier:
                   type: string
                   description: |
