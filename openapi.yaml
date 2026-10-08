@@ -128,7 +128,7 @@ components:
 
     MerchantPaymentCode:
       type: string
-      enum: [MPESA, TIPS, AIRTEL, TIGO, HALOTEL, OPAY, MONIEPOINT, PALMPAY]
+      enum: [MPESA, TIPS, ZNPS, AIRTEL, TIGO, HALOTEL, OPAY, MONIEPOINT, PALMPAY]
       description: Method-specific code for the payment.
 
     ValidateMerchantResponse:
@@ -919,7 +919,7 @@ paths:
           required: true
           schema:
             type: string
-            enum: [TZ]
+            enum: [TZ, ZM]
           description: Merchant country code.
       responses:
         "200":
@@ -1113,7 +1113,7 @@ paths:
                   description: |
                     Required when paymentMethod is PAYBILL.
                     A method-specific identifier required for processing the payment. 
-                    Available PAYBILL options: PAYBILL business number (KE), PAYBILLCODE (TZ).
+                    Available PAYBILL options: PAYBILL business number (KE, ZM), PAYBILLCODE (TZ).
                   example: "123456"
                 customerId:
                   type: string
@@ -1738,7 +1738,7 @@ paths:
                   description: |
                     Available MOMO options: MPESA, MTN, AIRTEL, TIGO, ZAMTEL, HALOTEL, VODAFONE, VODACOM, ORANGE, MOOV, FREE.
                     Available BANK options: OPAY, PALMPAY, MONIEPOINT, PAYSHAP, BANKCODE.
-                    Available PAYBILL options: MPESA, TIPS.
+                    Available PAYBILL options: MPESA, TIPS, ZNPS.
                     Available TILL options: MPESA, TIPS.
                 reference:
                   type: string
