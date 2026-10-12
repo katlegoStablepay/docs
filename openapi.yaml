@@ -919,7 +919,7 @@ paths:
           required: true
           schema:
             type: string
-            enum: [TZ, ZM]
+            enum: [TZ]
           description: Merchant country code.
       responses:
         "200":
