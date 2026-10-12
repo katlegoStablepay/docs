@@ -1877,6 +1877,110 @@ paths:
                 code: provider_unavailable
                 message: "circuit open — retrying in ~45s"
 
+  /v1/payments:
+    get:
+      operationId: listPayments
+      summary: List payments
+      description: |
+        Returns a list of payments.
+      tags: [Payments]
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+          description: Number of payments to return.
+          example: 20
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+          description: Number of payments to skip.
+          example: 0
+        - name: reference
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Exact match on your own reference.
+          example: issuer_payment_001
+        - name: direction
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [money_in, money_out]
+          description: Filter by payment direction.
+          example: money_out
+      responses:
+        "200":
+          description: Paginated list of payments, newest first.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PaymentResponse'
+                  total:
+                    type: integer
+                    description: Total payments matching the filters, ignoring limit and offset.
+                    example: 42
+                  limit:
+                    type: integer
+                    description: Limit applied to this response.
+                    example: 20
+                  offset:
+                    type: integer
+                    description: Offset applied to this response.
+                    example: 0
+                required: [data, total, limit, offset]
+              example:
+                data:
+                  - id: ABC_NG01M2IEFDNF4INFQD41O3R
+                    status: succeeded
+                    direction: money_out
+                    paymentMethod: BANK
+                    sourceCurrency: USDC
+                    amountStablecoin: "0.787"
+                    fiatAmount: "1000"
+                    destinationCurrency: NGN
+                    providerRef: AbCd2fv3ovnefe2
+                    reference: issuer_payment_001
+                    errorCode: null
+                    failureReason: null
+                    customerMessage: null
+                    depositInstruction: null
+                    redirectUrl: null
+                    paymentCode: BANK
+                    createdAt: "2026-05-06T10:31:00.000Z"
+                    updatedAt: "2026-05-06T10:31:45.000Z"
+                total: 42
+                limit: 20
+                offset: 0
+        "401":
+          description: Invalid or missing API key.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "422":
+          description: Validation error — direction must be money_in or money_out.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                statusCode: 422
+                message: "direction must be 'money_in' or 'money_out'. Received: outbound"
+
   /v1/payments/{paymentId}:
     get:
       operationId: getPayment

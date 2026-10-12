@@ -69,6 +69,7 @@
             "create-payment",
             "create-payin",
             "get-payment",
+            "list-payments",
             "fx-rate"
           ]
         },
