@@ -1885,6 +1885,22 @@ paths:
         Returns a list of payments.
       tags: [Payments]
       parameters:
+        - name: from
+          in: query
+          required: false
+          schema:
+            type: string
+          description: |
+            Only payments created at or after this time.
+          example: "2026-10-11"
+        - name: to
+          in: query
+          required: false
+          schema:
+            type: string
+          description: |
+            Only payments created before this time.
+          example: "2026-10-12"
         - name: limit
           in: query
           required: false
@@ -1972,14 +1988,29 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         "422":
-          description: Validation error — direction must be money_in or money_out.
+          description: |
+            Validation error — direction is not money_in or money_out, from or to is not a
+            valid ISO 8601 date, or from is not earlier than to.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-              example:
-                statusCode: 422
-                message: "direction must be 'money_in' or 'money_out'. Received: outbound"
+              examples:
+                direction:
+                  summary: Unknown direction
+                  value:
+                    statusCode: 422
+                    message: "direction must be 'money_in' or 'money_out'. Received: outbound"
+                badDate:
+                  summary: Malformed from or to
+                  value:
+                    statusCode: 422
+                    message: "from must be an ISO 8601 date (2026-10-11) or date-time with offset (2026-10-11T00:00:00Z). Received: 11-10-2026"
+                range:
+                  summary: from is not earlier than to
+                  value:
+                    statusCode: 422
+                    message: "from must be earlier than to."
 
   /v1/payments/{paymentId}:
     get:
