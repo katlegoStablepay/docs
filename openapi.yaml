@@ -498,6 +498,48 @@ components:
     # -------------------------------------------------------------------------
     # Webhooks outbound
     # -------------------------------------------------------------------------
+    PaymentRefundedEvent:
+      type: object
+      description: |
+        Body of the `payment.refunded` webhook. Sent when the stablecoin from a failed
+        payout has been returned to the sender and the refund is confirmed on-chain.
+      properties:
+        paymentId:
+          type: string
+          description: The payment that was refunded.
+          example: ABC_NG01M2IEFDNF4INFQD41O3R
+        status:
+          type: string
+          description: Always `failed`. The payout failed; the refund is tracked separately in `refundStatus`.
+          example: failed
+        refundStatus:
+          type: string
+          description: Always `confirmed`.
+          example: confirmed
+        refundTxHash:
+          type: string
+          nullable: true
+          description: On-chain hash of the refund transaction. `null` if not available.
+          example: 5xKQ1mT8rVqZ3nJfLpYw9cHdA2bGeR7sUvN4oXiM6tPk
+        refundAddress:
+          type: string
+          nullable: true
+          description: Wallet the funds were returned to. `null` if not available.
+          example: 7Ynv4PqLm2JcRtWbF9sHdKxA3eUgZ8oTiN5rXwM1QvCb
+        amountStable:
+          type: string
+          nullable: true
+          description: Stablecoin amount refunded (6 decimals). `null` if not available.
+          example: "0.787000"
+      required: [paymentId, status, refundStatus, refundTxHash, refundAddress, amountStable]
+      example:
+        paymentId: ABC_NG01M2IEFDNF4INFQD41O3R
+        status: failed
+        refundStatus: confirmed
+        refundTxHash: 5xKQ1mT8rVqZ3nJfLpYw9cHdA2bGeR7sUvN4oXiM6tPk
+        refundAddress: 7Ynv4PqLm2JcRtWbF9sHdKxA3eUgZ8oTiN5rXwM1QvCb
+        amountStable: "0.787000"
+
     WebhookEventResponse:
       type: object
       properties:
@@ -2534,7 +2576,7 @@ paths:
                   items:
                     type: string
                   description: Event types to subscribe to. Empty array = all events.
-                  example: ["payment.succeeded", "payment.failed", "payment.processing", "customer.kyc.updated"]
+                  example: ["payment.succeeded", "payment.failed", "payment.processing", "payment.refunded", "customer.kyc.updated"]
               required: [url]
             example:
               url: https://app.walletIssuer.io/webhooks/stablepay
@@ -2593,6 +2635,46 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/WebhookEventResponse'
+              examples:
+                payment.succeeded:
+                  summary: payment.succeeded
+                  value:
+                    - id: 3c90c3cc-0d44-4b50-8888-8dd25736052a
+                      eventType: payment.succeeded
+                      entityId: ABC_NG01M2IEFDNF4INFQD41O3R
+                      url: https://app.walletIssuer.io/webhooks/stablepay
+                      status: delivered
+                      attempt: 1
+                      lastError: null
+                      nextRetryAt: null
+                      createdAt: "2026-10-12T09:14:02.000Z"
+                      updatedAt: "2026-10-12T09:14:03.000Z"
+                payment.refunded:
+                  summary: payment.refunded
+                  description: |
+                    A refunded payout shows up as two entries, newest first: `payment.refunded`,
+                    then the earlier `payment.failed` for the same payment (`entityId`).
+                  value:
+                    - id: 8f14e45f-ceea-467a-9b8e-2a7c5d1e9b10
+                      eventType: payment.refunded
+                      entityId: ABC_NG01M2IEFDNF4INFQD41O3R
+                      url: https://app.walletIssuer.io/webhooks/stablepay
+                      status: delivered
+                      attempt: 1
+                      lastError: null
+                      nextRetryAt: null
+                      createdAt: "2026-10-12T10:02:41.000Z"
+                      updatedAt: "2026-10-12T10:02:42.000Z"
+                    - id: 1b6453c2-7a0e-4f5d-8c3b-9e2f6a4d7c81
+                      eventType: payment.failed
+                      entityId: ABC_NG01M2IEFDNF4INFQD41O3R
+                      url: https://app.walletIssuer.io/webhooks/stablepay
+                      status: delivered
+                      attempt: 1
+                      lastError: null
+                      nextRetryAt: null
+                      createdAt: "2026-10-12T09:31:10.000Z"
+                      updatedAt: "2026-10-12T09:31:11.000Z"
 
   /v1/webhooks/replay/{event_id}:
     post:
