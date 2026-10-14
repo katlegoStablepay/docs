@@ -520,12 +520,12 @@ components:
           type: string
           nullable: true
           description: On-chain hash of the refund transaction. `null` if not available.
-          example: 5xKQ1mT8rVqZ3nJfLpYw9cHdA2bGeR7sUvN4oXiM6tPk
+          example: 5VfYmQ2kRtNpXwJbGhAeZsUcTnVpLgDkRyXmWtB9CqHd3PnLsEaWxZrFjMvTkYbQuRdNhGcJpAeVtXmWsB7Df2Kq
         refundAddress:
           type: string
           nullable: true
           description: Wallet the funds were returned to. `null` if not available.
-          example: 7Ynv4PqLm2JcRtWbF9sHdKxA3eUgZ8oTiN5rXwM1QvCb
+          example: 4Nd1mXKqRtPvYbGfJhAeZwQsUcTnVpLgDkRyXmWtB9Cq
         amountStable:
           type: string
           nullable: true
@@ -536,9 +536,90 @@ components:
         paymentId: ABC_NG01M2IEFDNF4INFQD41O3R
         status: failed
         refundStatus: confirmed
-        refundTxHash: 5xKQ1mT8rVqZ3nJfLpYw9cHdA2bGeR7sUvN4oXiM6tPk
-        refundAddress: 7Ynv4PqLm2JcRtWbF9sHdKxA3eUgZ8oTiN5rXwM1QvCb
+        refundTxHash: 5VfYmQ2kRtNpXwJbGhAeZsUcTnVpLgDkRyXmWtB9CqHd3PnLsEaWxZrFjMvTkYbQuRdNhGcJpAeVtXmWsB7Df2Kq
+        refundAddress: 4Nd1mXKqRtPvYbGfJhAeZwQsUcTnVpLgDkRyXmWtB9Cq
         amountStable: "0.787000"
+
+    Reversal:
+      type: object
+      properties:
+        reversalId:
+          type: string
+          description: The reversal ID. Use it to check the claim's status.
+          example: ISS_RV01K5D3W8ZQ4FZXQJHBVYFT9K3F
+        paymentId:
+          type: string
+          description: The payout being reversed.
+          example: ISS_KE01K5D3W8ZQ4FZXQJHBVYFT9K3E
+        stablepayReference:
+          type: string
+          description: The payment reference supplied on the claim.
+          example: ISS_KE01K5D3W8ZQ4FZXQJHBVYFT9K3E
+        reversalReference:
+          type: string
+          description: The recipient's reversal confirmation reference.
+          example: QGR7X8T2PL
+        blockchain:
+          type: string
+          description: Chain the reversal is paid on. Taken from the original payout.
+          example: SOLANA
+        status:
+          type: string
+          enum: [pending_review, approved, sending, confirmed, rejected, failed]
+          description: |
+            pending_review: lodged, awaiting verification. No money has moved.
+            approved: verified by Stablepay; the reversal is queued.
+            sending: the reversal is in flight.
+            confirmed: the reversal is confirmed on-chain.
+            rejected: could not be verified. No money moved.
+            failed: the reversal was attempted and did not complete.
+          example: pending_review
+        reversalAmountUsdc:
+          type: string
+          description: Full original amount returned, in USDC.
+          example: "10.500000"
+        toAddress:
+          type: string
+          description: Your funding wallet on that chain. Resolved by Stablepay, never supplied on the claim.
+          example: 4Nd1mXKqRtPvYbGfJhAeZwQsUcTnVpLgDkRyXmWtB9Cq
+        reversalTxHash:
+          type: string
+          nullable: true
+          description: On-chain hash of the reversal transaction. Null until the reversal is sent.
+          example: null
+        failureReason:
+          type: string
+          nullable: true
+          description: Why the reversal failed. Null unless status is failed.
+          example: null
+        reason:
+          type: string
+          nullable: true
+          description: The note supplied on the claim, or the rejection note.
+          example: customer requested reversal
+        createdAt:
+          type: string
+          format: date-time
+          description: When the claim was lodged.
+        reviewedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the claim was approved or rejected. Null while pending_review.
+          example: null
+        sentAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the reversal was broadcast. Null until sent.
+          example: null
+        confirmedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the reversal was confirmed on-chain. Null until confirmed.
+          example: null
+      required: [reversalId, paymentId, stablepayReference, reversalReference, blockchain, status, reversalAmountUsdc, toAddress, reversalTxHash, failureReason, reason, createdAt, reviewedAt, sentAt, confirmedAt]
 
     WebhookEventResponse:
       type: object
@@ -1977,7 +2058,7 @@ paths:
           example: money_out
       responses:
         "200":
-          description: Paginated list of payments, newest first.
+          description: Paginated list of payments.
           content:
             application/json:
               schema:
@@ -2162,6 +2243,290 @@ paths:
                     updatedAt: "2026-07-23T13:25:19.327Z"
         "404":
           description: Payment not found or belongs to another tenant.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # ---------------------------------------------------------------------------
+  # Reversals
+  # ---------------------------------------------------------------------------
+  /v1/reversals:
+    get:
+      operationId: listReversals
+      summary: List reversals
+      description: Returns your reversals, newest first.
+      tags: [Reversals]
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [pending_review, approved, sending, confirmed, rejected, failed]
+          description: Filter by reversal status.
+          example: pending_review
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 50
+            maximum: 200
+          description: Number of reversals to return. Values above 200 are capped at 200.
+          example: 50
+        - name: from
+          in: query
+          required: false
+          schema:
+            type: string
+          description: |
+            Only reversals created at or after this time.
+          example: "2026-10-11"
+        - name: to
+          in: query
+          required: false
+          schema:
+            type: string
+          description: |
+            Only reversals created before this time.
+          example: "2026-10-12"
+      responses:
+        "200":
+          description: Your reversals, newest first.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Reversal'
+                required: [data]
+              example:
+                data:
+                  - reversalId: ISS_RV01K5D3W8ZQ4FZXQJHBVYFT9K3F
+                    paymentId: ISS_KE01K5D3W8ZQ4FZXQJHBVYFT9K3E
+                    stablepayReference: ISS_KE01K5D3W8ZQ4FZXQJHBVYFT9K3E
+                    reversalReference: QGR7X8T2PL
+                    blockchain: SOLANA
+                    status: pending_review
+                    reversalAmountUsdc: "10.500000"
+                    toAddress: 4Nd1mXKqRtPvYbGfJhAeZwQsUcTnVpLgDkRyXmWtB9Cq
+                    reversalTxHash: null
+                    failureReason: null
+                    reason: customer requested reversal
+                    createdAt: "2026-10-14T09:12:04.000Z"
+                    reviewedAt: null
+                    sentAt: null
+                    confirmedAt: null
+        "401":
+          description: Invalid or missing API key.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "422":
+          description: |
+            Validation error — from or to is not a valid ISO 8601 date, or from is not
+            earlier than to.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                badDate:
+                  summary: Malformed from or to
+                  value:
+                    statusCode: 422
+                    message: "from must be an ISO 8601 date (2026-10-11) or date-time with offset (2026-10-11T00:00:00Z). Received: 11-10-2026"
+                range:
+                  summary: from is not earlier than to
+                  value:
+                    statusCode: 422
+                    message: "from must be earlier than to."
+    post:
+      operationId: requestReversal
+      summary: Request a reversal
+      description: |
+        Submit a reversal claim against a succeeded payout that the recipient has reversed.
+        Submitting a second claim for the same payout returns the
+        existing one.
+      tags: [Reversals]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                stablepayReference:
+                  type: string
+                  description: The original payout's payment ID.
+                  example: ISS_KE01K5D3W8ZQ4FZXQJHBVYFT9K3E
+                reversalReference:
+                  type: string
+                  description: The recipient's official reversal confirmation reference. Stablepay verifies this with the provider.
+                  example: QGR7X8T2PL
+                reason:
+                  type: string
+                  description: Your own note about the claim.
+                  example: customer requested reversal
+              required: [stablepayReference, reversalReference]
+            example:
+              stablepayReference: ISS_KE01K5D3W8ZQ4FZXQJHBVYFT9K3E
+              reversalReference: QGR7X8T2PL
+              reason: customer requested reversal
+      responses:
+        "201":
+          description: Claim lodged, or the existing claim for this payout.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Reversal'
+                  - type: object
+                    properties:
+                      alreadyExisted:
+                        type: boolean
+                        description: True when a claim for this payout had already been lodged.
+                        example: false
+              example:
+                reversalId: ISS_RV01K5D3W8ZQ4FZXQJHBVYFT9K3F
+                paymentId: ISS_KE01K5D3W8ZQ4FZXQJHBVYFT9K3E
+                stablepayReference: ISS_KE01K5D3W8ZQ4FZXQJHBVYFT9K3E
+                reversalReference: QGR7X8T2PL
+                blockchain: SOLANA
+                status: pending_review
+                reversalAmountUsdc: "10.500000"
+                toAddress: 4Nd1mXKqRtPvYbGfJhAeZwQsUcTnVpLgDkRyXmWtB9Cq
+                reversalTxHash: null
+                failureReason: null
+                reason: customer requested reversal
+                createdAt: "2026-10-14T09:12:04.000Z"
+                reviewedAt: null
+                sentAt: null
+                confirmedAt: null
+                alreadyExisted: false
+        "400":
+          description: |
+            The payout cannot be reversed — no such payment on your account, it is not a
+            payout, or it has not succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                notFound:
+                  summary: No such payment on this account
+                  value:
+                    code: payout_reversal_payment_not_found
+                    message: No payment ISS_KE01K5D3W8ZQ4FZXQJHBVYFT9K3E for this account.
+                notSucceeded:
+                  summary: Payout has not succeeded
+                  value:
+                    code: payout_reversal_not_succeeded
+                    message: "Payment ISS_KE01K5D3W8ZQ4FZXQJHBVYFT9K3E is 'failed', not 'succeeded' — only a settled payout can be reversed."
+                notPayout:
+                  summary: Not an outbound payout
+                  value:
+                    code: payout_reversal_not_money_out
+                    message: Payment ISS_KE01K5D3W8ZQ4FZXQJHBVYFT9K3E is not an outbound payout — only payouts can be reversed.
+        "401":
+          description: Invalid or missing API key.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /v1/reversals/{reversalId}:
+    get:
+      operationId: getReversal
+      summary: Get a reversal
+      description: Retrieve a reversal and its current status.
+      tags: [Reversals]
+      parameters:
+        - name: reversalId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The reversal ID.
+          example: ISS_RV01K5D3W8ZQ4FZXQJHBVYFT9K3F
+      responses:
+        "200":
+          description: Reversal found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reversal'
+              examples:
+                pendingReview:
+                  summary: Awaiting verification
+                  value:
+                    reversalId: ISS_RV01K5D3W8ZQ4FZXQJHBVYFT9K3F
+                    paymentId: ISS_KE01K5D3W8ZQ4FZXQJHBVYFT9K3E
+                    stablepayReference: ISS_KE01K5D3W8ZQ4FZXQJHBVYFT9K3E
+                    reversalReference: QGR7X8T2PL
+                    blockchain: SOLANA
+                    status: pending_review
+                    reversalAmountUsdc: "10.500000"
+                    toAddress: 4Nd1mXKqRtPvYbGfJhAeZwQsUcTnVpLgDkRyXmWtB9Cq
+                    reversalTxHash: null
+                    failureReason: null
+                    reason: customer requested reversal
+                    createdAt: "2026-10-14T09:12:04.000Z"
+                    reviewedAt: null
+                    sentAt: null
+                    confirmedAt: null
+                confirmed:
+                  summary: Funds returned and confirmed on-chain
+                  value:
+                    reversalId: ISS_RV01K5D3W8ZQ4FZXQJHBVYFT9K3F
+                    paymentId: ISS_KE01K5D3W8ZQ4FZXQJHBVYFT9K3E
+                    stablepayReference: ISS_KE01K5D3W8ZQ4FZXQJHBVYFT9K3E
+                    reversalReference: QGR7X8T2PL
+                    blockchain: SOLANA
+                    status: confirmed
+                    reversalAmountUsdc: "10.500000"
+                    toAddress: 4Nd1mXKqRtPvYbGfJhAeZwQsUcTnVpLgDkRyXmWtB9Cq
+                    reversalTxHash: 5VfYmQ2kRtNpXwJbGhAeZsUcTnVpLgDkRyXmWtB9CqHd3PnLsEaWxZrFjMvTkYbQuRdNhGcJpAeVtXmWsB7Df2Kq
+                    failureReason: null
+                    reason: customer requested reversal
+                    createdAt: "2026-10-14T09:12:04.000Z"
+                    reviewedAt: "2026-10-14T11:40:00.000Z"
+                    sentAt: "2026-10-14T11:41:12.000Z"
+                    confirmedAt: "2026-10-14T11:41:38.000Z"
+                rejected:
+                  summary: Could not be verified
+                  value:
+                    reversalId: ISS_RV01K5D3W8ZQ4FZXQJHBVYFT9K3F
+                    paymentId: ISS_KE01K5D3W8ZQ4FZXQJHBVYFT9K3E
+                    stablepayReference: ISS_KE01K5D3W8ZQ4FZXQJHBVYFT9K3E
+                    reversalReference: QGR7X8T2PL
+                    blockchain: SOLANA
+                    status: rejected
+                    reversalAmountUsdc: "10.500000"
+                    toAddress: 4Nd1mXKqRtPvYbGfJhAeZwQsUcTnVpLgDkRyXmWtB9Cq
+                    reversalTxHash: null
+                    failureReason: null
+                    reason: reversal reference could not be verified with the provider
+                    createdAt: "2026-10-14T09:12:04.000Z"
+                    reviewedAt: "2026-10-14T11:40:00.000Z"
+                    sentAt: null
+                    confirmedAt: null
+        "400":
+          description: Reversal not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: payout_reversal_not_found
+                message: Payout reversal ISS_RV01K5D3W8ZQ4FZXQJHBVYFT9K3F not found.
+        "401":
+          description: Invalid or missing API key.
           content:
             application/json:
               schema:
@@ -2725,6 +3090,8 @@ tags:
     description: Live on-chain USDC and native token balances for the tenant's custody wallets.
   - name: Analytics
     description: Pre-aggregated payment analytics — volume, success rates, corridor breakdowns, and daily time series.
+  - name: Reversals
+    description: Reversals of succeeded payouts.
   - name: Customers
     description: |
       KYC API for DeFi wallets. Onboard and verify your end-users, then link

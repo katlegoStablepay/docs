@@ -74,6 +74,14 @@
           ]
         },
         {
+          "group": "Reversals",
+          "pages": [
+            "reversals/request-reversal",
+            "reversals/get-reversal",
+            "reversals/list-reversals"
+          ]
+        },
+        {
           "group": "Customers",
           "pages": [
             "customers/create-customer",
