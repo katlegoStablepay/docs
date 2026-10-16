@@ -128,8 +128,10 @@ components:
 
     MerchantPaymentCode:
       type: string
-      enum: [MPESA, TIPS, ZNPS, AIRTEL, TIGO, HALOTEL, OPAY, MONIEPOINT, PALMPAY]
-      description: Method-specific code for the payment.
+      anyOf:
+        - enum: [MPESA, TIPS, AIRTEL, TIGO, HALOTEL, OPAY, MONIEPOINT, PALMPAY]
+        - pattern: '^ZM-[A-Z0-9_-]+$'
+      description: Method-specific code for the payment. Zambian billers use ZM-BILLERCODE (e.g. ZM-ELEC-ZESCO).
 
     ValidateMerchantResponse:
       type: object
@@ -1235,8 +1237,8 @@ paths:
                   type: string
                   description: |
                     Required when paymentMethod is PAYBILL.
-                    A method-specific identifier required for processing the payment. 
-                    Available PAYBILL options: PAYBILL business number (KE, ZM), PAYBILLCODE (TZ).
+                    A method-specific identifier required for processing the payment.
+                    Available PAYBILL options: PAYBILL business number (KE), customer phone number (ZM).
                   example: "123456"
                 customerId:
                   type: string
@@ -1861,7 +1863,7 @@ paths:
                   description: |
                     Available MOMO options: MPESA, MTN, AIRTEL, TIGO, ZAMTEL, HALOTEL, VODAFONE, VODACOM, ORANGE, MOOV, FREE.
                     Available BANK options: OPAY, PALMPAY, MONIEPOINT, PAYSHAP, BANKCODE.
-                    Available PAYBILL options: MPESA, TIPS, ZNPS.
+                    Available PAYBILL options: MPESA, BILLERCODE (TZ, ZM).
                     Available TILL options: MPESA, TIPS.
                 reference:
                   type: string
@@ -1872,7 +1874,7 @@ paths:
                   description: |
                     Required when paymentMethod is PAYBILL.
                     A method-specific identifier required for processing the payment.
-                    Available PAYBILL options: PAYBILL business number (KE), PAYBILLCODE (TZ).
+                    Available PAYBILL options: PAYBILL business number (KE), customer phone number (ZM).
                   example: "123456"
                 customerId:
                   type: string
