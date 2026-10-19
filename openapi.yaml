@@ -1864,7 +1864,7 @@ paths:
                     Available MOMO options: MPESA, MTN, AIRTEL, TIGO, ZAMTEL, HALOTEL, VODAFONE, VODACOM, ORANGE, MOOV, FREE.
                     Available BANK options: OPAY, PALMPAY, MONIEPOINT, PAYSHAP, BANKCODE.
                     Available PAYBILL options: MPESA, BILLERCODE (TZ, ZM).
-                    Available TILL options: MPESA, TIPS.
+                    Available TILL options: MPESA, PAYSHAP, TIPS.
                 reference:
                   type: string
                   description: Wallet issuer's unique reference.
