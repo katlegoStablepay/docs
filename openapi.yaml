@@ -997,7 +997,7 @@ paths:
           required: true
           schema:
             type: string
-            enum: [NG, ZA]
+            enum: [KE, NG, ZA]
           description: Recipient country code.
       responses:
         "200":
